@@ -300,31 +300,26 @@
                                     +{{ adviceResult.diff }}đ
                                 </div>
                             </div>
-<!-- Cảnh báo tiêu chí đã có trong hoạt động đang tắt -->
-<div
-    v-if="adviceResult.diff > 0 && adviceResult.duplicateActivities.length > 0"
-    class="mt-4 space-y-2"
->
-    <div
-        v-for="(activityName, idx) in adviceResult.duplicateActivities"
-        :key="idx"
-        class="flex items-start gap-2 text-sm font-semibold
-               text-amber-800 bg-amber-50 border border-amber-200
-               rounded-lg px-3 py-2.5"
-    >
-        <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-600"></i>
-        <p>Hoạt động {{ activityName }} đã có tiêu chí này.</p>
-    </div>
-</div>
-                            <div v-if="adviceResult.diff < adviceResult.testedCriteriaMax"
-     class="flex gap-2 text-sm text-slate-800">
-                                
+                            
+                            <!-- Cảnh báo tiêu chí đã có trong hoạt động đang tắt -->
+                            <div v-if="adviceResult.diff > 0 && adviceResult.duplicateActivities.length > 0" class="mt-4 space-y-2">
+                                <div v-for="(activityName, idx) in adviceResult.duplicateActivities" :key="idx"
+                                     class="flex items-start gap-2 text-sm font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+                                    <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-600"></i>
+                                    <p>Hoạt động {{ activityName }} đã có tiêu chí này.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Cảnh báo chạm trần: Chỉ hiện khi điểm thực nhận nhỏ hơn điểm của tiêu chí -->
+                            <div v-if="adviceResult.diff < adviceResult.testedCriteriaMax" class="mt-4 p-3 bg-white/70 rounded-lg border border-white space-y-2">
+                                <div class="flex gap-2 text-sm text-slate-800">
                                     <i class="fa-solid fa-circle-info text-amber-500 mt-1"></i>
                                     <p class="leading-relaxed">
                                         <strong class="text-red-600">Chú ý:</strong> Điểm thực nhận (<strong class="text-amber-600">+{{ adviceResult.diff }}đ</strong>) 
                                         thấp hơn điểm của tiêu chí (<strong class="text-emerald-600">+{{ adviceResult.testedCriteriaMax }}đ</strong>) 
                                         vì Nhóm hoặc Mục chứa tiêu chí này đã <strong>đạt giới hạn điểm tối đa</strong>.
                                     </p>
+                                </div>
                             </div>
                             
                             <div class="mt-4 p-3 bg-white border border-slate-200 rounded-lg">
@@ -364,23 +359,43 @@
 
             <!-- Activity List -->
             <section class="bg-white rounded-2xl shadow-sm border border-slate-200">
-                <div class="p-4 sm:p-5 border-b border-slate-100 flex justify-between items-center">
+                <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3">
                     <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <i class="fa-solid fa-list-check text-indigo-600"></i> Danh Sách Hoạt Động ({{ activities.length }})
                     </h2>
+
+                    <!-- Bộ lọc Bật / Tắt -->
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                        <button @click="activityFilter = 'all'"
+                                class="px-3 py-1.5 rounded-lg transition-all"
+                                :class="activityFilter === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'">
+                            Tất cả
+                        </button>
+                        <button @click="activityFilter = 'enabled'"
+                                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
+                                :class="activityFilter === 'enabled' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Bật
+                        </button>
+                        <button @click="activityFilter = 'disabled'"
+                                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
+                                :class="activityFilter === 'disabled' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'">
+                            <span class="w-2 h-2 rounded-full bg-slate-400"></span> Tắt
+                        </button>
+                    </div>
+
                     <button @click="confirmReset" class="text-sm text-red-600 hover:text-red-800 font-semibold px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
                         Xóa hết
                     </button>
                 </div>
 
                 <div class="p-4 sm:p-5 bg-slate-50/50">
-                    <div v-if="activities.length === 0" class="text-center py-10 text-slate-400">
+                    <div v-if="filteredActivities.length === 0" class="text-center py-10 text-slate-400">
                         <i class="fa-regular fa-folder-open text-4xl mb-3 opacity-50"></i>
-                        <p class="text-sm font-medium">Chưa có hoạt động nào được lưu.</p>
+                        <p class="text-sm font-medium">Chưa có hoạt động nào được lưu hoặc phù hợp với bộ lọc.</p>
                     </div>
 
                     <transition-group name="list" tag="div" class="space-y-4">
-                        <div v-for="item in sortedActivities" :key="item.act.id" 
+                        <div v-for="item in filteredActivities" :key="item.act.id" 
                              class="bg-white p-4 sm:p-5 rounded-xl border shadow-sm relative group transition-all"
                              :class="[
                                  editingIndex === item.index ? 'ring-2 ring-indigo-400' : 'border-slate-200',
@@ -537,8 +552,7 @@
 <script>
 const { createApp, ref, computed, watch, onMounted } = Vue;
 
-// Firebase Web App configuration. Replace these placeholders with the config
-// from Firebase Console > Project settings > Your apps > SDK setup.
+// Firebase Web App configuration.
 const firebaseConfig = {
     apiKey: "AIzaSyD5FtVk80b5ZHuow4jiUVk7RzfdmX0rW98",
     authDomain: "hienrenluyen.firebaseapp.com",
@@ -690,6 +704,9 @@ createApp({
         const categories = ref(ALL_CATEGORIES);
         const activities = ref([]);
         const openCategories = ref({ c1: true, c2: true, c3: false, c4: false, c5: false });
+        
+        // Thêm biến trạng thái bộ lọc
+        const activityFilter = ref('all');
 
         // Authentication and per-user cloud data state.
         const currentUser = ref(null);
@@ -716,10 +733,10 @@ createApp({
         const testActivity = ref(getDefaultTestActivity());
         const showAdvice = ref(false);
         const adviceResult = ref({
-    diff: 0,
-    reassignments: [],
-    duplicateActivities: []
-});
+            diff: 0,
+            reassignments: [],
+            duplicateActivities: []
+        });
         const toast = ref({ show: false, message: '' });
 
         const triggerToast = (msg) => {
@@ -728,7 +745,6 @@ createApp({
             setTimeout(() => { toast.value.show = false; }, 3000);
         };
 
-        // Authentication helpers
         const friendlyFirebaseError = (error) => {
             const code = error && error.code ? error.code : '';
             const messages = {
@@ -815,11 +831,8 @@ createApp({
                 if (snapshot.exists) {
                     const stored = snapshot.data().activities;
                     activities.value = Array.isArray(stored) ? stored : [];
-                    // Never copy old local data into another user's account after cloud data exists.
                     if (!legacyMigrationDone) localStorage.setItem(legacyMigrationKey, user.uid);
                 } else {
-                    // Migrate legacy localStorage at most once on this browser, so a second
-                    // registered account cannot inherit the first user's old local data.
                     let localActivities = [];
                     if (!legacyMigrationDone) {
                         try {
@@ -896,7 +909,6 @@ createApp({
             });
         }
 
-        // Save cloud changes with a short debounce so rapid edits do not create excessive writes.
         watch(activities, (newVal) => {
             if (!currentUser.value || !dataLoaded.value || !firestoreDb) return;
             const uid = currentUser.value.uid;
@@ -916,10 +928,7 @@ createApp({
             }, 700);
         }, { deep: true, flush: 'sync' });
 
-        onMounted(() => {
-            // Authentication observer above loads the signed-in user's cloud data.
-            // Legacy localStorage is only read to migrate data into a new account.
-        });
+        onMounted(() => {});
 
         // Evaluator
         const evaluateConfig = (config, acts) => {
@@ -978,14 +987,22 @@ createApp({
 
         const baseScoreResult = computed(() => getOptimalScore(activities.value));
 
-        const sortedActivities = computed(() => {
-            return activities.value.map((act, index) => ({ act, index })).sort((a, b) => {
-                const aEnabled = a.act.enabled !== false;
-                const bEnabled = b.act.enabled !== false;
-                if (!aEnabled && bEnabled) return -1;
-                if (aEnabled && !bEnabled) return 1;
-                return 0; // Giữ nguyên thứ tự nếu cùng trạng thái
-            });
+        const filteredActivities = computed(() => {
+            return activities.value
+                .map((act, index) => ({ act, index }))
+                .filter(item => {
+                    const isEnabled = item.act.enabled !== false;
+                    if (activityFilter.value === 'enabled') return isEnabled;
+                    if (activityFilter.value === 'disabled') return !isEnabled;
+                    return true; // 'all'
+                })
+                .sort((a, b) => {
+                    const aEnabled = a.act.enabled !== false;
+                    const bEnabled = b.act.enabled !== false;
+                    if (!aEnabled && bEnabled) return -1;
+                    if (aEnabled && !bEnabled) return 1;
+                    return 0; // Giữ nguyên thứ tự nếu cùng trạng thái
+                });
         });
 
         const toggleActivity = (idx) => {
@@ -1002,7 +1019,6 @@ createApp({
         // Edit Functionality
         const editActivity = (index) => {
             const act = activities.value[index];
-            // Load into test activity
             testActivity.value = {
                 name: act.name,
                 options: act.options.map(opt => ({
@@ -1026,14 +1042,12 @@ createApp({
         const runAdvice = () => {
             if (!testActivity.value.name.trim()) return triggerToast("⚠️ Nhập tên hoạt động trước!");
             
-            // Baseline is always the current saved state.
             let oldRes = baseScoreResult.value;
             let cleanOptions = testActivity.value.options.filter(o => o.criteriaId).map(o => ({ criteriaId: o.criteriaId }));
             if (cleanOptions.length === 0) return triggerToast("⚠️ Vui lòng chọn ít nhất 1 tiêu chí!");
 
             let simulatedActivity = { name: testActivity.value.name, options: cleanOptions };
             
-            // Prepare the test array based on whether we are adding new or updating existing
             let testActs = [...activities.value];
             let targetIndex;
             if (editingIndex.value !== null) {
@@ -1045,15 +1059,13 @@ createApp({
             }
             
             let newRes = getOptimalScore(testActs);
-            
             let diff = newRes.score - oldRes.score;
             let testedActivityChoiceIdx = newRes.config[targetIndex];
             let testedCriteriaId = testActs[targetIndex].options[testedActivityChoiceIdx].criteriaId;
             
-            // Calculate Reassignments (only tracking changes in existing activities, excluding the one being edited)
             let reassignments = [];
             for (let i = 0; i < activities.value.length; i++) {
-                if (i === editingIndex.value) continue; // Skip the one being edited
+                if (i === editingIndex.value) continue;
                 
                 if (oldRes.config[i] !== newRes.config[i]) {
                     let oldTc = activities.value[i].options[oldRes.config[i]].criteriaId;
@@ -1067,138 +1079,4 @@ createApp({
                 }
             }
 
-          // Tìm các hoạt động đang tắt có tiêu chí trùng với hoạt động mới
-const duplicateActivities =
-    editingIndex.value === null && diff > 0
-        ? activities.value
-            .filter(act =>
-                act.enabled === false &&
-                (act.options || []).some(oldOption =>
-                    cleanOptions.some(newOption =>
-                        newOption.criteriaId === oldOption.criteriaId
-                    )
-                )
-            )
-            .map(act => act.name)
-        : [];
-
-adviceResult.value = {
-    baseScore: oldRes.score,
-    newScore: newRes.score,
-    diff,
-    testedCriteriaId,
-    testedCriteriaMax: getCriteriaMaxPoints(testedCriteriaId),
-    reassignments,
-    duplicateActivities
-};
-            showAdvice.value = true;
-        };
-
-        const commitActivity = () => {
-            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Nhập tên hoạt động!");
-            let cleanOptions = testActivity.value.options.filter(o => o.criteriaId).map(o => ({ criteriaId: o.criteriaId }));
-            if (cleanOptions.length === 0) return triggerToast("⚠️ Vui lòng chọn ít nhất 1 tiêu chí!");
-
-            const newAct = {
-                id: Date.now() + Math.random(),
-                name: testActivity.value.name,
-                options: cleanOptions,
-                enabled: false
-            };
-            
-            if (editingIndex.value !== null) {
-                newAct.enabled = activities.value[editingIndex.value].enabled !== false;
-                newAct.id = activities.value[editingIndex.value].id || newAct.id;
-                activities.value[editingIndex.value] = newAct;
-                triggerToast(`✔️ Đã cập nhật "${testActivity.value.name}"`);
-                editingIndex.value = null;
-            } else {
-                activities.value.unshift(newAct);
-                triggerToast(`✔️ Đã thêm "${testActivity.value.name}"`);
-            }
-            
-            testActivity.value = getDefaultTestActivity();
-            showAdvice.value = false;
-        };
-
-        // UI Helpers
-        const getCatScore = (id) => baseScoreResult.value.breakdown?.categories?.[id] || 0;
-        const getGroupScore = (id) => baseScoreResult.value.breakdown?.groups?.[id] || 0;
-        const getCriteriaScore = (id) => baseScoreResult.value.breakdown?.criteria?.[id] || 0;
-        
-        const getCriteriaName = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].name : "Không rõ";
-        const getCriteriaMaxPoints = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].maxPoints : 0;
-        
-        const getFilteredCriteriaOptions = (query) => {
-            let q = removeAccents(query);
-            return FLAT_CRITERIA.filter(i => i.searchKey.includes(q)).slice(0, 15);
-        };
-        
-        const selectCriteriaForOption = (opt, tc) => { 
-            opt.criteriaId = tc.id; 
-            opt.searchQuery = `[${tc.id}] ${tc.name}`; 
-            opt.showDropdown = false; 
-        };
-        const clearSearchOption = (opt) => { opt.criteriaId = ''; opt.searchQuery = ''; opt.showDropdown = true; };
-        
-        const addTestOption = () => { 
-            testActivity.value.options.push({ criteriaId: '', searchQuery: '', showDropdown: false }); 
-            showAdvice.value = false; 
-        };
-        const removeTestOption = (idx) => { testActivity.value.options.splice(idx, 1); showAdvice.value = false; };
-        
-        const removeActivity = (idx) => { 
-            if (confirm("Xóa hoạt động này?")) {
-                activities.value.splice(idx, 1); 
-                showAdvice.value = false; 
-                if (editingIndex.value === idx) cancelEdit();
-            }
-        };
-        
-        const confirmReset = () => { if(confirm("Xóa toàn bộ danh sách hoạt động?")) { activities.value = []; showAdvice.value = false; cancelEdit(); triggerToast("Đã làm sạch dữ liệu!"); }};
-        const exportJSON = () => {
-            const el = document.createElement('a');
-            el.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activities.value)));
-            el.setAttribute("download", `drl_hust_${Date.now()}.json`);
-            el.click();
-        };
-        const handleFileImport = (e) => {
-            const file = e.target.files[0]; if(!file) return;
-            const r = new FileReader();
-            r.onload = ev => { 
-                let parsed = JSON.parse(ev.target.result);
-                parsed.forEach(a => { if(!a.id) a.id = Date.now() + Math.random(); });
-                activities.value = parsed; 
-                triggerToast("Nhập dữ liệu thành công!"); cancelEdit(); 
-            };
-            r.readAsText(file); e.target.value = '';
-        };
-
-        const scoreRank = computed(() => {
-            const s = baseScoreResult.value.score;
-            if (s >= 90) return 'XUẤT SẮC'; if (s >= 80) return 'GIỎI';
-            if (s >= 65) return 'KHÁ'; if (s >= 50) return 'TRUNG BÌNH'; return 'YẾU';
-        });
-        const rankBadgeClass = computed(() => {
-            const s = baseScoreResult.value.score;
-            if (s >= 90) return 'bg-amber-400 text-black border-amber-500'; 
-            if (s >= 80) return 'bg-emerald-400 text-black border-emerald-500';
-            if (s >= 65) return 'bg-sky-400 text-black border-sky-500'; 
-            return 'bg-slate-700 text-slate-200 border-slate-600';
-        });
-
-        return {
-            firebaseConfigured, currentUser, authReady, dataLoaded, dataLoadError, authMode,
-            authEmail, authPassword, authBusy, authError, authInfo, saveState,
-            setAuthMode, submitAuth, sendPasswordReset, retryLoadData, logout,
-            categories, activities, testActivity, showAdvice, adviceResult, toast, baseScoreResult, openCategories,
-            editingIndex, scoreRank, rankBadgeClass, sortedActivities, toggleActivity,
-            getCatScore, getGroupScore, getCriteriaScore, getCriteriaName, getCriteriaMaxPoints,
-            getFilteredCriteriaOptions, selectCriteriaForOption, clearSearchOption, addTestOption, removeTestOption,
-            runAdvice, commitActivity, editActivity, cancelEdit, removeActivity, confirmReset, exportJSON, handleFileImport
-        };
-    }
-}).mount('#app');
-</script>
-</body>
-</html>
+            // Tìm các hoạt động đang tắt có tiêu chí trùng với tiêu chí được chọn
