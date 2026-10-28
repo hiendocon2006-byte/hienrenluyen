@@ -40,7 +40,7 @@
     <section v-if="!firebaseConfigured" class="min-h-screen flex items-center justify-center p-4">
         <div class="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-200 p-7 sm:p-9">
             <div class="w-14 h-14 rounded-2xl bg-red-700 text-white flex items-center justify-center shadow mb-5"><i class="fa-solid fa-calculator text-2xl"></i></div>
-            <h1 class="text-2xl font-black text-slate-900">Điểm Rèn Luyện by Đức Hiền</h1>
+            <h1 class="text-2xl font-black text-slate-900">Điểm Rèn Luyện<br>by Đức Hiền</h1>
             <p class="text-slate-600 mt-2">Web đã có phần đăng nhập, nhưng chưa được kết nối với dự án Firebase của m.</p>
             <div class="mt-5 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900 space-y-2">
                 <p class="font-bold">Cần thiết lập một lần:</p>
@@ -82,7 +82,7 @@
         <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
             <div class="bg-slate-900 text-white p-7 sm:p-8">
                 <div class="w-12 h-12 rounded-xl bg-red-700 flex items-center justify-center shadow mb-4"><i class="fa-solid fa-calculator text-xl"></i></div>
-                <h1 class="text-2xl font-black tracking-tight">Điểm Rèn Luyện HUST by Đức Hiền</h1>
+                <h1 class="text-2xl font-black tracking-tight">Điểm Rèn Luyện HUST<br>by Đức Hiền</h1>
                 <p class="text-sm text-slate-300 mt-2">{{ authMode === 'login' ? 'Đăng nhập để tiếp tục tính điểm' : 'Tạo tài khoản để lưu dữ liệu riêng' }}</p>
             </div>
             <form @submit.prevent="submitAuth" class="p-7 sm:p-8 space-y-4">
