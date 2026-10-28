@@ -1055,7 +1055,7 @@ createApp({
                 id: Date.now() + Math.random(),
                 name: testActivity.value.name,
                 options: cleanOptions,
-                enabled: true
+                enabled: false
             };
             
             if (editingIndex.value !== null) {
@@ -1065,7 +1065,7 @@ createApp({
                 triggerToast(`✔️ Đã cập nhật "${testActivity.value.name}"`);
                 editingIndex.value = null;
             } else {
-                activities.value.push(newAct);
+                activities.value.unshift(newAct);
                 triggerToast(`✔️ Đã thêm "${testActivity.value.name}"`);
             }
             
