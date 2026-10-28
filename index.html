@@ -316,7 +316,9 @@
         <p>Hoạt động {{ activityName }} đã có tiêu chí này.</p>
     </div>
 </div>
-                                <div class="flex gap-2 text-sm text-slate-800">
+                            <div v-if="adviceResult.diff < adviceResult.testedCriteriaMax"
+     class="flex gap-2 text-sm text-slate-800">
+                                
                                     <i class="fa-solid fa-circle-info text-amber-500 mt-1"></i>
                                     <p class="leading-relaxed">
                                         <strong class="text-red-600">Chú ý:</strong> Điểm thực nhận (<strong class="text-amber-600">+{{ adviceResult.diff }}đ</strong>) 
