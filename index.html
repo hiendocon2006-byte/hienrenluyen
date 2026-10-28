@@ -85,7 +85,9 @@
     <section v-else-if="!currentUser" class="min-h-screen flex items-center justify-center p-4 sm:p-6">
         <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
             <div class="bg-slate-900 text-white p-7 sm:p-8">
-                <div class="w-12 h-12 rounded-xl bg-red-700 flex items-center justify-center shadow mb-4"><i class="fa-solid fa-calculator text-xl"></i></div>
+               <img src="./favicon.png"
+     alt="Logo"
+     class="h-16 w-16 sm:h-20 sm:w-20 object-contain shrink-0">
                 <h1 class="text-2xl font-black tracking-tight">Điểm Rèn Luyện HUST<br>by Đức Hiền</h1>
                 <p class="text-sm text-slate-300 mt-2">{{ authMode === 'login' ? 'Đăng nhập để tiếp tục tính điểm' : 'Tạo tài khoản để lưu dữ liệu riêng' }}</p>
             </div>
@@ -125,10 +127,9 @@
     <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
         <div class="w-full px-4 sm:px-6 py-3 flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
-                <div class="bg-red-700 p-2.5 rounded-xl text-white shadow-md">
-                 <img src="./favicon.png" alt="Logo"
-     class="w-7 h-7 object-contain">
-                </div>
+             <img src="./favicon.png"
+     alt="Logo"
+     class="h-16 w-16 sm:h-20 sm:w-20 object-contain shrink-0">
                 <div>
                     <h1 class="font-extrabold text-lg sm:text-xl text-slate-800 tracking-tight leading-tight">
                         Điểm Rèn Luyện Hust
