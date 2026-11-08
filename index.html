@@ -46,22 +46,22 @@
         <div class="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-200 p-7 sm:p-9">
             <img src="./favicon.png" alt="Logo" class="h-10 w-auto max-w-[160px] object-contain">
             <h1 class="text-2xl font-black text-slate-900">Điểm Rèn Luyện<br>by SiviFal</h1>
-            <p class="text-slate-600 mt-2">Hệ thống yêu cầu thiết lập cơ sở dữ liệu Firebase trước khi sử dụng.</p>
+            <p class="text-slate-600 mt-2">Web đã có phần đăng nhập, nhưng chưa được kết nối với dự án Firebase của m.</p>
             <div class="mt-5 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900 space-y-2">
-                <p class="font-bold">Hướng dẫn thiết lập (1 lần duy nhất):</p>
+                <p class="font-bold">Cần thiết lập một lần:</p>
                 <p>1. Tạo dự án Firebase và thêm ứng dụng Web.</p>
                 <p>2. Bật Authentication bằng Email/Password và tạo Cloud Firestore.</p>
-                <p>3. Trong mã nguồn file <code>index.html</code>, tìm <code>const firebaseConfig</code> và thay thế bằng cấu hình dự án của bạn.</p>
-                <p>4. Cài đặt quy tắc bảo mật Firestore (tham khảo file <code>firestore.rules.txt</code>).</p>
+                <p>3. Trong file <code>index.html</code>, tìm <code>const firebaseConfig</code> và thay các giá trị <code>PASTE_...</code> bằng cấu hình Firebase của m.</p>
+                <p>4. Cài quy tắc Firestore theo file <code>firestore.rules.txt</code> đi kèm bộ tải xuống.</p>
             </div>
-            <p class="text-xs text-slate-500 mt-5">Lưu ý: Tuyệt đối không để lộ mật khẩu, khóa service account hoặc các thông tin bí mật cấp máy chủ vào file HTML này.</p>
+            <p class="text-xs text-slate-500 mt-5">Không đặt mật khẩu, khóa tài khoản dịch vụ (service account) hoặc thông tin bí mật nào vào file HTML.</p>
         </div>
     </section>
 
     <section v-else-if="!authReady" class="min-h-screen flex items-center justify-center p-6">
         <div class="bg-white rounded-2xl border border-slate-200 shadow p-8 text-center max-w-sm w-full">
             <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-600 mb-4"></i>
-            <h2 class="font-bold text-slate-800">Đang kết nối hệ thống...</h2>
+            <h2 class="font-bold text-slate-800">Đang kết nối hệ thống tài khoản...</h2>
             <p class="text-sm text-slate-500 mt-2">Vui lòng chờ trong giây lát.</p>
         </div>
     </section>
@@ -70,12 +70,12 @@
         <div class="bg-white rounded-2xl border border-slate-200 shadow p-8 text-center max-w-md w-full">
             <template v-if="!dataLoadError">
                 <i class="fa-solid fa-cloud-arrow-down fa-bounce text-3xl text-indigo-600 mb-4"></i>
-                <h2 class="font-bold text-slate-800">Đang đồng bộ dữ liệu...</h2>
-                <p class="text-sm text-slate-500 mt-2">Tải hồ sơ hoạt động của tài khoản <strong>{{ currentUser.email }}</strong>.</p>
+                <h2 class="font-bold text-slate-800">Đang tải dữ liệu của m...</h2>
+                <p class="text-sm text-slate-500 mt-2">Dữ liệu hoạt động được lưu riêng cho tài khoản <strong>{{ currentUser.email }}</strong>.</p>
             </template>
             <template v-else>
                 <i class="fa-solid fa-triangle-exclamation text-3xl text-amber-500 mb-4"></i>
-                <h2 class="font-bold text-slate-800">Lỗi đồng bộ dữ liệu</h2>
+                <h2 class="font-bold text-slate-800">Chưa tải được dữ liệu</h2>
                 <p class="text-sm text-red-600 mt-2">{{ dataLoadError }}</p>
                 <button @click="retryLoadData" class="mt-5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Thử lại</button>
                 <button @click="logout" class="mt-3 ml-2 px-5 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 font-bold">Đăng xuất</button>
@@ -88,7 +88,7 @@
             <div class="bg-slate-900 text-white p-7 sm:p-8">
                <img src="./favicon.png" alt="Logo" class="h-16 w-16 sm:h-20 sm:w-20 object-contain shrink-0">
                 <h1 class="text-2xl font-black tracking-tight">Điểm Rèn Luyện HUST<br>by SiviFal</h1>
-                <p class="text-sm text-slate-300 mt-2">{{ authMode === 'login' ? 'Đăng nhập để quản lý điểm rèn luyện' : 'Tạo tài khoản để lưu trữ hồ sơ trực tuyến' }}</p>
+                <p class="text-sm text-slate-300 mt-2">{{ authMode === 'login' ? 'Đăng nhập để tiếp tục tính điểm' : 'Tạo tài khoản để lưu dữ liệu riêng' }}</p>
             </div>
             <form @submit.prevent="submitAuth" class="p-7 sm:p-8 space-y-4">
                 <div v-if="authMode === 'register'">
@@ -101,8 +101,8 @@
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-slate-700 mb-1.5">Mật khẩu</label>
-                    <input v-model="authPassword" type="password" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'" minlength="6" required class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tối thiểu 6 ký tự">
-                    <p v-if="authMode === 'register'" class="text-xs text-slate-500 mt-1.5">Khuyến nghị sử dụng mật khẩu riêng, không trùng mật khẩu email cá nhân/trường học.</p>
+                    <input v-model="authPassword" type="password" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'" minlength="6" required class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ít nhất 6 ký tự">
+                    <p v-if="authMode === 'register'" class="text-xs text-slate-500 mt-1.5">Dùng mật khẩu riêng, không trùng mật khẩu email/trường học.</p>
                 </div>
                 <div v-if="authError" class="rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm p-3" role="alert">{{ authError }}</div>
                 <div v-if="authInfo" class="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-3" role="status">{{ authInfo }}</div>
@@ -112,10 +112,10 @@
                 </button>
                 <button v-if="authMode === 'login'" type="button" @click="sendPasswordReset" class="w-full text-sm font-semibold text-slate-500 hover:text-indigo-700">Quên mật khẩu?</button>
                 <div class="border-t border-slate-100 pt-4 text-center text-sm text-slate-600">
-                    <template v-if="authMode === 'login'">Chưa có tài khoản? <button type="button" @click="setAuthMode('register')" class="font-extrabold text-indigo-600 hover:text-indigo-800">Đăng ký ngay</button></template>
+                    <template v-if="authMode === 'login'">Chưa có tài khoản? <button type="button" @click="setAuthMode('register')" class="font-extrabold text-indigo-600 hover:text-indigo-800">Đăng ký</button></template>
                     <template v-else>Đã có tài khoản? <button type="button" @click="setAuthMode('login')" class="font-extrabold text-indigo-600 hover:text-indigo-800">Đăng nhập</button></template>
                 </div>
-                <p class="text-xs leading-relaxed text-center text-slate-400">Dữ liệu hồ sơ rèn luyện được mã hóa và lưu trữ riêng tư. Vui lòng bảo mật tài khoản cá nhân.</p>
+                <p class="text-xs leading-relaxed text-center text-slate-400">Dữ liệu hoạt động được lưu theo tài khoản. Không chia sẻ mật khẩu với người khác.</p>
             </form>
         </div>
     </section>
@@ -132,7 +132,7 @@
                         <h1 class="font-extrabold text-lg sm:text-xl text-slate-800 tracking-tight leading-tight">
                             Điểm Rèn Luyện Hust
                         </h1>
-                        <p class="text-xs text-slate-500 font-medium">Hệ thống tối ưu và quản lý điểm rèn luyện</p>
+                        <p class="text-xs text-slate-500 font-medium">Rèn luyện không khó, có AI lo</p>
                     </div>
                 </div>
 
@@ -196,13 +196,13 @@
                             <label class="block text-sm font-bold text-slate-700 mb-1.5">Tên hoạt động:</label>
                             <input v-model="testActivity.name" type="text" 
                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                                   placeholder="VD: Tham gia Mùa hè xanh, NCKH cấp trường, Cán bộ lớp...">
+                                   placeholder="VD: Tham gia Mùa hè xanh, NCKH cấp trường...">
                         </div>
 
                         <div class="space-y-3">
                             <div class="flex justify-between items-end">
                                 <label class="block text-sm font-bold text-slate-700">Các tiêu chí hoạt động này đáp ứng:</label>
-                                <span class="text-[11px] text-slate-500 italic">Thuật toán sẽ tự động dò tìm và gán vào 1 tiêu chí tối ưu nhất</span>
+                                <span class="text-[11px] text-slate-500 italic">Hệ thống sẽ tự chọn 1 tiêu chí tối ưu nhất</span>
                             </div>
 
                             <transition-group name="list" tag="div" class="space-y-3">
@@ -217,7 +217,7 @@
                                                @focus="opt.showDropdown = true"
                                                @input="opt.showDropdown = true"
                                                class="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium text-slate-800"
-                                               placeholder="Nhập để tìm tiêu chí (vd: tham gia, NCKH, ban cán sự)...">
+                                               placeholder="Nhập để tìm tiêu chí (vd: tham gia, NCKH)...">
                                         <button v-if="opt.searchQuery" @click="clearSearchOption(opt)" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-2">
                                             <i class="fa-solid fa-circle-xmark"></i>
                                         </button>
@@ -256,147 +256,202 @@
                             </transition-group>
 
                             <button @click="addTestOption" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1.5 mt-2">
-                                <i class="fa-solid fa-plus-circle"></i> Bổ sung thêm tiêu chí cho hoạt động này (Tùy chọn)
+                                <i class="fa-solid fa-plus-circle"></i> Thêm tiêu chí dự phòng cho hoạt động này
                             </button>
                         </div>
 
                         <div class="flex flex-col sm:flex-row gap-3 pt-2">
                             <button @click="runAdvice" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-code-compare"></i> Phân Tích Thuật Toán
+                                <i class="fa-solid fa-code-compare"></i> Phân Tích
                             </button>
                             <button @click="commitActivity" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-floppy-disk"></i> {{ editingIndex !== null ? 'Lưu Thay Đổi' : 'Xác Nhận Thêm' }}
+                                <i class="fa-solid fa-floppy-disk"></i> {{ editingIndex !== null ? 'Lưu Thay Đổi' : 'Thêm Vào Danh Sách' }}
                             </button>
                         </div>
                     </div>
 
-                    <!-- ADVICE ENGINE BOX: MULTI-SCENARIO -->
+                    <!-- ADVICE ENGINE BOX: phân tích hai kịch bản duyệt -->
                     <transition name="fade">
-                        <div v-if="showAdvice" class="mt-6 pt-5 border-t border-slate-200">
-                            
-                            <div v-if="adviceResult.hasDisabled" class="mb-4">
-                                <h4 class="font-black text-lg text-slate-800 flex items-center gap-2">
-                                    <i class="fa-solid fa-code-branch text-indigo-500"></i> Báo Cáo Phân Tích Đa Kịch Bản
-                                </h4>
-                                <p class="text-sm text-slate-600 mt-1">Hệ thống phát hiện bạn đang có hoạt động bị "Tắt" (có thể đang chờ phê duyệt). Do đó, thuật toán đưa ra 2 giả định để bạn nắm rõ mức điểm tăng thêm ở mọi trường hợp:</p>
+                        <div v-if="showAdvice" class="mt-6 pt-5 border-t border-slate-200 space-y-4">
+                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <h3 class="font-black text-slate-900 flex items-center gap-2">
+                                    <i class="fa-solid fa-diagram-project text-indigo-600"></i>
+                                    PHÂN TÍCH TÁC ĐỘNG CỦA HOẠT ĐỘNG MỚI
+                                </h3>
+                                <p class="text-sm text-slate-600 mt-1">
+                                    Hệ thống tối ưu lại cách phân bổ tiêu chí trên toàn bộ hoạt động trong từng kịch bản.
+                                    Hoạt động đang tắt không được mặc định là đã duyệt. Hoạt động mới đang được mô phỏng như được duyệt để đánh giá tác động nếu được chấp nhận.
+                                </p>
                             </div>
 
-                            <div class="space-y-5">
-                                <div v-for="(sc, index) in scenarios" :key="index" 
-                                     class="rounded-xl border border-slate-200 overflow-hidden shadow-sm"
-                                     :class="sc.diff > 0 ? 'bg-white' : 'bg-slate-50'">
-                                    
-                                    <!-- Header Kịch bản -->
-                                    <div class="p-4 border-b border-slate-200" :class="sc.diff > 0 ? 'bg-emerald-50/50' : 'bg-amber-50/50'">
-                                        <h5 v-if="adviceResult.hasDisabled" class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">
-                                            {{ sc.title }}
-                                        </h5>
-                                        <h5 v-else class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">
-                                            <i class="fa-solid fa-microchip text-indigo-500 mr-1"></i> Báo cáo kết quả phân tích
-                                        </h5>
+                            <!-- Scenario A: disabled activities not approved -->
+                            <div class="rounded-xl border-2 border-emerald-200 bg-white p-4 sm:p-5 space-y-3">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <h4 class="font-extrabold text-emerald-900">
+                                        <i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i>
+                                        KỊCH BẢN 1: Hoạt động đang tắt KHÔNG được duyệt
+                                    </h4>
+                                    <span class="text-xs font-bold rounded-full px-3 py-1"
+                                          :class="adviceResult.notApproved.diff > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'">
+                                        {{ adviceResult.notApproved.diff > 0 ? 'Có tăng điểm' : 'Không tăng điểm' }}
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="rounded-lg bg-slate-50 p-3">
+                                        <div class="text-xs text-slate-500 font-semibold">Điểm trước khi thêm</div>
+                                        <div class="text-2xl font-black text-slate-800">{{ adviceResult.notApproved.baseScore }}/100</div>
+                                    </div>
+                                    <div class="rounded-lg bg-emerald-50 p-3">
+                                        <div class="text-xs text-emerald-700 font-semibold">Điểm sau khi thêm</div>
+                                        <div class="text-2xl font-black text-emerald-700">{{ adviceResult.notApproved.newScore }}/100</div>
+                                    </div>
+                                </div>
+                                <div class="text-sm font-bold" :class="adviceResult.notApproved.diff > 0 ? 'text-emerald-700' : 'text-amber-700'">
+                                    Mức thay đổi: {{ adviceResult.notApproved.diff > 0 ? '+' : '' }}{{ adviceResult.notApproved.diff }} điểm
+                                </div>
 
-                                        <div class="flex justify-between items-center gap-4">
-                                            <div>
-                                                <h4 class="font-black text-base flex items-center gap-1.5" :class="sc.diff > 0 ? 'text-emerald-800' : 'text-amber-800'">
-                                                    <i v-if="sc.diff > 0" class="fa-solid fa-circle-check text-emerald-500"></i>
-                                                    <i v-else class="fa-solid fa-triangle-exclamation text-amber-500"></i>
-                                                    {{ sc.diff > 0 ? 'NÊN THAM GIA HOẠT ĐỘNG NÀY!' : 'KHÔNG TĂNG ĐIỂM (ĐÃ CHẠM TRẦN)' }}
-                                                </h4>
-                                                <div class="text-sm font-medium mt-1 text-slate-700 flex items-center gap-2">
-                                                    Tổng điểm thay đổi: 
-                                                    <span class="bg-slate-200/70 text-slate-800 px-1.5 py-0.5 rounded font-mono">{{ sc.baseScore }}đ</span> 
-                                                    <i class="fa-solid fa-arrow-right text-[10px] text-slate-400"></i> 
-                                                    <span class="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded font-mono font-bold">{{ sc.newScore }}đ</span>
+                                <div class="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+                                    <div class="text-xs uppercase tracking-wide font-bold text-indigo-700 mb-1">Hoạt động mới được phân vào</div>
+                                    <template v-if="adviceResult.notApproved.newCriteriaId">
+                                        <div class="text-sm font-bold text-indigo-900">
+                                            [{{ adviceResult.notApproved.newCriteriaId }}] {{ getCriteriaName(adviceResult.notApproved.newCriteriaId) }}
+                                        </div>
+                                        <div class="text-xs text-indigo-700 mt-1">
+                                            Điểm tối đa của tiêu chí: +{{ adviceResult.notApproved.newCriteriaMax }}đ.
+                                            Mức tăng thực tế được tính ở tổng điểm phía trên.
+                                        </div>
+                                    </template>
+                                    <p v-else class="text-sm text-slate-600">Không tìm được tiêu chí phân bổ cho hoạt động mới trong kịch bản này.</p>
+                                </div>
+
+                                <div>
+                                    <h5 class="text-sm font-bold text-slate-800 mb-2">Các hoạt động cũ bị đổi tiêu chí</h5>
+                                    <div v-if="adviceResult.notApproved.reassignments.length" class="space-y-2">
+                                        <div v-for="(re, idx) in adviceResult.notApproved.reassignments" :key="'na-'+idx"
+                                             class="rounded-lg border border-slate-200 p-3">
+                                            <div class="font-bold text-sm text-slate-900">{{ re.name }}</div>
+                                            <div class="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs">
+                                                <div class="rounded bg-slate-50 p-2 text-slate-600">
+                                                    <div class="line-through">[{{ re.oldTc }}] {{ getCriteriaName(re.oldTc) }}</div>
+                                                    <div>Tiêu chí cũ: tối đa +{{ re.oldPts }}đ</div>
                                                 </div>
-                                            </div>
-                                            <div class="px-3 py-1.5 rounded-lg border-2 font-black text-lg"
-                                                 :class="sc.diff > 0 ? 'bg-white text-emerald-600 border-emerald-200 shadow-sm' : 'bg-white text-amber-500 border-amber-200 shadow-sm'">
-                                                +{{ sc.diff }}đ
+                                                <i class="fa-solid fa-arrow-right text-indigo-500"></i>
+                                                <div class="rounded bg-emerald-50 p-2 text-emerald-800 font-semibold">
+                                                    <div>[{{ re.newTc }}] {{ getCriteriaName(re.newTc) }}</div>
+                                                    <div>Tiêu chí mới: tối đa +{{ re.newPts }}đ</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                    <p v-else class="text-sm text-slate-500">Không cần đổi tiêu chí của các hoạt động đang bật.</p>
+                                </div>
 
-                                    <!-- Thuyết minh Kịch bản 2 -->
-                                    <div v-if="sc.isFutureScenario" class="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] font-medium text-indigo-800 flex gap-2">
-                                        <i class="fa-solid fa-circle-info mt-0.5"></i>
-                                        <p><strong>Lưu ý:</strong> Điểm nền <strong>{{ sc.baseScore }}đ</strong> ở kịch bản này được tính bằng cách giả định tất cả các hoạt động đang tắt đều đã được cộng điểm thành công.</p>
+                                <div v-if="adviceResult.notApproved.duplicateAssignments.length" class="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                    <h5 class="text-sm font-bold text-amber-900 mb-1">Tiêu chí vẫn được nhiều hoạt động cùng chọn</h5>
+                                    <div v-for="(dup, idx) in adviceResult.notApproved.duplicateAssignments" :key="'nadup-'+idx" class="text-xs text-amber-900 mt-1">
+                                        <strong>[{{ dup.criteriaId }}] {{ getCriteriaName(dup.criteriaId) }}</strong>:
+                                        {{ dup.activityNames.join(' · ') }}. Tiêu chí này chỉ được tính điểm một lần.
                                     </div>
-
-                                    <!-- Chi tiết biên lai điểm -->
-                                    <div v-if="sc.diff > 0" class="p-4 bg-white">
-                                        <div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                            
-                                            <!-- Chi tiết cấu thành -->
-                                            <div class="p-4 space-y-4 text-sm">
-                                                
-                                                <!-- 1. Tiêu chí được chọn -->
-                                                <div>
-                                                    <div class="font-bold text-indigo-700 mb-1">1. Tiêu chí tối ưu được áp dụng:</div>
-                                                    <div class="flex items-start gap-2 pl-3">
-                                                        <span class="text-emerald-600 font-black shrink-0">+{{ sc.testedCriteriaMax }}đ</span>
-                                                        <span class="text-slate-700 leading-snug">từ tiêu chí <span class="font-mono font-bold">[{{ sc.testedCriteriaId }}]</span> {{ getCriteriaName(sc.testedCriteriaId) }}</span>
-                                                    </div>
-                                                </div>
-
-                                                <!-- 2. Hụt điểm do hoán đổi (Dây chuyền) -->
-                                                <div v-if="sc.reassignments && sc.reassignments.length > 0" class="border-t border-slate-200 pt-3">
-                                                    <div class="font-bold text-rose-600 mb-1 flex items-center gap-1.5">
-                                                        <span>2. Hụt điểm do hiệu ứng dây chuyền:</span>
-                                                        <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-xs">-{{ sc.lostFromReassignments }}đ</span>
-                                                    </div>
-                                                    <p class="text-xs text-slate-500 mb-2 pl-3">Hệ thống đã tự động đảo tiêu chí của <strong>{{ sc.reassignments.length }}</strong> hoạt động cũ để nhường khoảng trống. Chi tiết:</p>
-                                                    <ul class="space-y-1.5 pl-3">
-                                                        <li v-for="(re, idx) in sc.reassignments" :key="idx" class="bg-white border border-slate-200 rounded p-2 text-xs">
-                                                            <strong class="text-slate-800">{{ re.name }}</strong>
-                                                            <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
-                                                                <span class="text-slate-400 line-through">[{{ re.oldTc }}] (+{{ re.oldPts }})</span>
-                                                                <i class="fa-solid fa-arrow-right text-slate-300"></i>
-                                                                <span v-if="re.newPts > 0" class="text-emerald-700 font-bold">[{{ re.newTc }}] (+{{ re.newPts }})</span>
-                                                                <span v-else class="text-rose-600 font-bold">Bị đẩy ra ngoài (Không còn điểm)</span>
-                                                            </div>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-
-                                                <!-- 3. Hụt điểm do chạm trần -->
-                                                <div v-if="sc.lostFromCap > 0" class="border-t border-slate-200 pt-3">
-                                                    <div class="font-bold text-amber-600 mb-1 flex items-center gap-1.5">
-                                                        <span>3. Hụt điểm do chạm giới hạn trần:</span>
-                                                        <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-xs">-{{ sc.lostFromCap }}đ</span>
-                                                    </div>
-                                                    <div class="text-xs text-slate-600 pl-3 leading-relaxed">
-                                                        Hệ thống không thể cộng đủ điểm vì giới hạn tối đa của Nhóm/Mục chứa tiêu chí này đã gần đầy.
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                            
-                                            <!-- Tổng kết phép tính -->
-                                            <div class="bg-slate-800 text-white p-3 flex justify-between items-center text-sm">
-                                                <span class="font-semibold text-slate-300">THỰC NHẬN CUỐI CÙNG:</span>
-                                                <div class="flex items-center gap-2 font-mono">
-                                                    <span class="text-emerald-400">{{ sc.testedCriteriaMax }}</span>
-                                                    <template v-if="sc.lostFromReassignments > 0"><span class="text-slate-400">-</span><span class="text-rose-400">{{ sc.lostFromReassignments }}</span></template>
-                                                    <template v-if="sc.lostFromCap > 0"><span class="text-slate-400">-</span><span class="text-amber-400">{{ sc.lostFromCap }}</span></template>
-                                                    <span class="text-slate-400">=</span>
-                                                    <span class="text-lg font-black text-white">+{{ sc.diff }}đ</span>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Nếu không tăng điểm -->
-                                    <div v-else class="p-4 bg-white">
-                                         <div class="bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-200 flex gap-2">
-                                             <i class="fa-solid fa-circle-info mt-0.5"></i>
-                                             <p>Hoạt động này không đem lại thêm điểm rèn luyện nào do các Mục/Nhóm chứa các tiêu chí bạn chọn đều đã đạt điểm tối đa.</p>
-                                         </div>
-                                    </div>
-                                    
                                 </div>
                             </div>
 
+                            <!-- Scenario B: disabled activities approved -->
+                            <div class="rounded-xl border-2 border-amber-200 bg-white p-4 sm:p-5 space-y-3">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <h4 class="font-extrabold text-amber-900">
+                                        <i class="fa-solid fa-clock-rotate-left mr-1 text-amber-600"></i>
+                                        KỊCH BẢN 2: Các hoạt động đang tắt ĐƯỢC duyệt
+                                    </h4>
+                                    <span class="text-xs font-bold rounded-full px-3 py-1"
+                                          :class="adviceResult.approved.diff > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'">
+                                        {{ adviceResult.approved.diff > 0 ? 'Có tăng điểm' : 'Không tăng điểm' }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-600">
+                                    Điểm nền của kịch bản này giả định tất cả hoạt động đang tắt đều được duyệt,
+                                    sau đó mới so sánh tác động khi thêm hoạt động mới.
+                                </p>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="rounded-lg bg-slate-50 p-3">
+                                        <div class="text-xs text-slate-500 font-semibold">Điểm nếu duyệt các hoạt động tắt</div>
+                                        <div class="text-2xl font-black text-slate-800">{{ adviceResult.approved.baseScore }}/100</div>
+                                    </div>
+                                    <div class="rounded-lg bg-amber-50 p-3">
+                                        <div class="text-xs text-amber-700 font-semibold">Điểm sau khi thêm hoạt động mới</div>
+                                        <div class="text-2xl font-black text-amber-800">{{ adviceResult.approved.newScore }}/100</div>
+                                    </div>
+                                </div>
+                                <div class="text-sm font-bold" :class="adviceResult.approved.diff > 0 ? 'text-emerald-700' : 'text-amber-700'">
+                                    Mức thay đổi do hoạt động mới: {{ adviceResult.approved.diff > 0 ? '+' : '' }}{{ adviceResult.approved.diff }} điểm
+                                </div>
+
+                                <div class="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+                                    <div class="text-xs uppercase tracking-wide font-bold text-indigo-700 mb-1">Hoạt động mới được phân vào</div>
+                                    <template v-if="adviceResult.approved.newCriteriaId">
+                                        <div class="text-sm font-bold text-indigo-900">
+                                            [{{ adviceResult.approved.newCriteriaId }}] {{ getCriteriaName(adviceResult.approved.newCriteriaId) }}
+                                        </div>
+                                        <div class="text-xs text-indigo-700 mt-1">
+                                            Điểm tối đa của tiêu chí: +{{ adviceResult.approved.newCriteriaMax }}đ.
+                                            Mức tăng thực tế được tính ở tổng điểm phía trên.
+                                        </div>
+                                    </template>
+                                    <p v-else class="text-sm text-slate-600">Không tìm được tiêu chí phân bổ cho hoạt động mới trong kịch bản này.</p>
+                                </div>
+
+                                <div>
+                                    <h5 class="text-sm font-bold text-slate-800 mb-2">Các hoạt động cũ phải đổi tiêu chí khi cùng được duyệt</h5>
+                                    <div v-if="adviceResult.approved.reassignments.length" class="space-y-2">
+                                        <div v-for="(re, idx) in adviceResult.approved.reassignments" :key="'ap-'+idx"
+                                             class="rounded-lg border border-slate-200 p-3">
+                                            <div class="font-bold text-sm text-slate-900">{{ re.name }}</div>
+                                            <div class="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs">
+                                                <div class="rounded bg-slate-50 p-2 text-slate-600">
+                                                    <div class="line-through">[{{ re.oldTc }}] {{ getCriteriaName(re.oldTc) }}</div>
+                                                    <div>Tiêu chí cũ: tối đa +{{ re.oldPts }}đ</div>
+                                                </div>
+                                                <i class="fa-solid fa-arrow-right text-indigo-500"></i>
+                                                <div class="rounded bg-emerald-50 p-2 text-emerald-800 font-semibold">
+                                                    <div>[{{ re.newTc }}] {{ getCriteriaName(re.newTc) }}</div>
+                                                    <div>Tiêu chí mới: tối đa +{{ re.newPts }}đ</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p v-else class="text-sm text-slate-500">Không cần đổi tiêu chí của các hoạt động đã có.</p>
+                                </div>
+
+                                <div v-if="adviceResult.approved.duplicateAssignments.length" class="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                    <h5 class="text-sm font-bold text-amber-900 mb-1">Tiêu chí vẫn được nhiều hoạt động cùng chọn</h5>
+                                    <div v-for="(dup, idx) in adviceResult.approved.duplicateAssignments" :key="'apdup-'+idx" class="text-xs text-amber-900 mt-1">
+                                        <strong>[{{ dup.criteriaId }}] {{ getCriteriaName(dup.criteriaId) }}</strong>:
+                                        {{ dup.activityNames.join(' · ') }}. Tiêu chí này chỉ được tính điểm một lần.
+                                    </div>
+                                </div>
+
+                                <div v-if="adviceResult.approved.disabledAssignments.length">
+                                    <h5 class="text-sm font-bold text-slate-800 mb-2">Phân bổ dự kiến cho các hoạt động hiện đang tắt</h5>
+                                    <div class="space-y-2">
+                                        <div v-for="(item, idx) in adviceResult.approved.disabledAssignments" :key="'off-'+idx"
+                                             class="rounded-lg border border-amber-100 bg-amber-50/50 p-3">
+                                            <div class="font-bold text-sm text-slate-900">{{ item.name }}</div>
+                                            <div v-if="item.criteriaId" class="text-xs text-amber-900 mt-1">
+                                                [{{ item.criteriaId }}] {{ getCriteriaName(item.criteriaId) }}
+                                                · tiêu chí tối đa +{{ item.points }}đ
+                                            </div>
+                                            <div v-else class="text-xs text-slate-500 mt-1">Không có tiêu chí để phân bổ.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="adviceResult.duplicateActivities.length" class="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                <div class="font-bold text-sm text-amber-900 mb-2">Các hoạt động đang tắt có tiêu chí trùng với hoạt động mới</div>
+                                <div v-for="(dup, idx) in adviceResult.duplicateActivities" :key="'dup-'+idx" class="text-sm text-amber-900">
+                                    <strong>Hoạt động {{ dup.name }} đã có tiêu chí này:</strong> {{ dup.criteriaIds.join(', ') }}
+                                </div>
+                                <p class="text-xs text-amber-800 mt-2">Đây là các tiêu chí trùng tiềm năng; kịch bản 2 phía trên đã tối ưu lại tất cả hoạt động cùng lúc.</p>
+                            </div>
                         </div>
                     </transition>
                 </section>
@@ -423,7 +478,7 @@
                             <button @click="activityFilter = 'disabled'"
                                     class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
                                     :class="activityFilter === 'disabled' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'">
-                                <span class="w-2 h-2 rounded-full bg-slate-400"></span> Tắt (Chờ duyệt)
+                                <span class="w-2 h-2 rounded-full bg-slate-400"></span> Tắt
                             </button>
                         </div>
 
@@ -451,7 +506,7 @@
                                     <button @click.stop="toggleActivity(item.index)"
                                          class="w-11 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors shadow-inner"
                                          :class="item.act.enabled !== false ? 'bg-emerald-500' : 'bg-slate-300'"
-                                         :title="item.act.enabled !== false ? 'Đang kích hoạt (Đã duyệt)' : 'Đang tạm tắt (Chờ duyệt/Bỏ qua)'">
+                                         :title="item.act.enabled !== false ? 'Hoạt động đang bật (có tính điểm)' : 'Hoạt động đã tắt (không tính điểm)'">
                                         <div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform"
                                              :class="item.act.enabled !== false ? 'translate-x-5' : 'translate-x-0'"></div>
                                     </button>
@@ -470,7 +525,7 @@
                                 <div class="pr-[140px] sm:pr-[160px]">
                                     <h4 class="font-extrabold text-base flex items-center gap-2" :class="item.act.enabled === false ? 'text-slate-500 line-through' : 'text-slate-800'">
                                         {{ item.act.name }}
-                                        <span v-if="item.act.enabled === false" class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded uppercase font-bold no-underline">Đang Tắt</span>
+                                        <span v-if="item.act.enabled === false" class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded uppercase font-bold no-underline">Đã Tắt</span>
                                     </h4>
                                     
                                     <div class="mt-3">
@@ -483,7 +538,7 @@
                                             <span class="bg-emerald-200/50 px-1.5 py-0.5 rounded ml-1 font-black">+{{ getCriteriaMaxPoints(item.act.options[baseScoreResult.config[item.index]].criteriaId) }}đ</span>
                                         </div>
                                         <div v-else-if="item.act.enabled === false" class="inline-block bg-slate-100 border border-slate-200 text-slate-500 text-xs sm:text-sm font-bold px-3 py-2 rounded-lg">
-                                            <i class="fa-solid fa-ban text-slate-400 mr-1.5"></i> Chưa được hệ thống tính điểm
+                                            <i class="fa-solid fa-ban text-slate-400 mr-1.5"></i> Chưa được tính điểm
                                         </div>
                                     </div>
 
@@ -752,8 +807,10 @@ createApp({
         const activities = ref([]);
         const openCategories = ref({ c1: true, c2: true, c3: false, c4: false, c5: false });
         
+        // Trạng thái bộ lọc
         const activityFilter = ref('all');
 
+        // Authentication and per-user cloud data state.
         const currentUser = ref(null);
         const authReady = ref(!firebaseConfigured);
         const dataLoaded = ref(false);
@@ -778,10 +835,19 @@ createApp({
         const testActivity = ref(getDefaultTestActivity());
         const showAdvice = ref(false);
         
+        // Khởi tạo đầy đủ cấu trúc để tránh bất kỳ lỗi "undefined" nào khi load
         const adviceResult = ref({
-            hasDisabled: false,
-            K1: null,
-            K2: null
+            notApproved: {
+                baseScore: 0, newScore: 0, diff: 0,
+                newCriteriaId: '', newCriteriaMax: 0, reassignments: [],
+                duplicateAssignments: []
+            },
+            approved: {
+                baseScore: 0, newScore: 0, diff: 0,
+                newCriteriaId: '', newCriteriaMax: 0,
+                reassignments: [], disabledAssignments: [], duplicateAssignments: []
+            },
+            duplicateActivities: []
         });
 
         const toast = ref({ show: false, message: '' });
@@ -796,18 +862,18 @@ createApp({
             const code = error && error.code ? error.code : '';
             const messages = {
                 'auth/invalid-email': 'Email không đúng định dạng.',
-                'auth/email-already-in-use': 'Email này đã được đăng ký. Vui lòng chuyển sang đăng nhập.',
-                'auth/weak-password': 'Mật khẩu quá yếu. Yêu cầu tối thiểu 6 ký tự.',
-                'auth/user-not-found': 'Không tìm thấy tài khoản tương ứng với email này.',
-                'auth/wrong-password': 'Email hoặc mật khẩu chưa chính xác.',
-                'auth/invalid-credential': 'Email hoặc mật khẩu chưa chính xác.',
-                'auth/too-many-requests': 'Hệ thống giới hạn số lần thử. Vui lòng chờ một lát rồi thử lại.',
-                'auth/network-request-failed': 'Lỗi kết nối mạng. Vui lòng kiểm tra lại Internet.',
-                'auth/operation-not-allowed': 'Dự án Firebase chưa bật phương thức Đăng nhập bằng Email/Password.',
-                'permission-denied': 'Quyền truy cập bị từ chối. Vui lòng kiểm tra lại quy tắc Firestore.',
-                'unavailable': 'Dịch vụ lưu trữ tạm thời không khả dụng. Vui lòng thử lại sau.'
+                'auth/email-already-in-use': 'Email này đã được đăng ký. Hãy đăng nhập.',
+                'auth/weak-password': 'Mật khẩu quá yếu. Hãy dùng ít nhất 6 ký tự.',
+                'auth/user-not-found': 'Không tìm thấy tài khoản này.',
+                'auth/wrong-password': 'Email hoặc mật khẩu chưa đúng.',
+                'auth/invalid-credential': 'Email hoặc mật khẩu chưa đúng.',
+                'auth/too-many-requests': 'Có quá nhiều lần thử. Hãy chờ một lúc rồi thử lại.',
+                'auth/network-request-failed': 'Lỗi mạng. Hãy kiểm tra kết nối Internet.',
+                'auth/operation-not-allowed': 'Dự án Firebase chưa bật đăng nhập bằng Email/Password.',
+                'permission-denied': 'Firebase từ chối truy cập. Hãy kiểm tra quy tắc Firestore.',
+                'unavailable': 'Dịch vụ dữ liệu tạm thời không khả dụng. Hãy thử lại.'
             };
-            return messages[code] || ('Đã có lỗi xảy ra. ' + (code ? `(Mã lỗi: ${code})` : 'Vui lòng thử lại.'));
+            return messages[code] || ('Có lỗi xảy ra. ' + (code ? '(' + code + ')' : 'Hãy thử lại.'));
         };
 
         const setAuthMode = (mode) => {
@@ -821,13 +887,13 @@ createApp({
             authError.value = '';
             authInfo.value = '';
             if (!firebaseConfigured || !firebaseAuth) {
-                authError.value = 'Hệ thống chưa được kết nối Firebase. Vui lòng hoàn tất thiết lập trước.';
+                authError.value = 'Web chưa được kết nối Firebase. Hãy hoàn tất phần thiết lập Firebase trước.';
                 return;
             }
             const email = authEmail.value.trim();
             const password = authPassword.value;
-            if (!email) { authError.value = 'Vui lòng nhập email.'; return; }
-            if (password.length < 6) { authError.value = 'Mật khẩu yêu cầu tối thiểu 6 ký tự.'; return; }
+            if (!email) { authError.value = 'Hãy nhập email.'; return; }
+            if (password.length < 6) { authError.value = 'Mật khẩu cần có ít nhất 6 ký tự.'; return; }
             authBusy.value = true;
             try {
                 if (authMode.value === 'register') {
@@ -848,13 +914,13 @@ createApp({
             authError.value = '';
             authInfo.value = '';
             if (!authEmail.value.trim()) {
-                authError.value = 'Vui lòng nhập email vào ô "Email" trước khi nhấn Quên mật khẩu.';
+                authError.value = 'Nhập email vào ô Email trước, rồi bấm Quên mật khẩu.';
                 return;
             }
             authBusy.value = true;
             try {
                 await firebaseAuth.sendPasswordResetEmail(authEmail.value.trim());
-                authInfo.value = 'Đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra hộp thư (bao gồm cả thư mục Spam).';
+                authInfo.value = 'Đã gửi email đặt lại mật khẩu. Hãy kiểm tra hộp thư và mục Spam.';
             } catch (error) {
                 authError.value = friendlyFirebaseError(error);
             } finally {
@@ -892,7 +958,7 @@ createApp({
                                 }
                             }
                         } catch (migrationError) {
-                            console.warn('Lỗi đọc dữ liệu cục bộ:', migrationError);
+                            console.warn('Không thể đọc dữ liệu cũ trên trình duyệt:', migrationError);
                         }
                     }
                     activities.value = localActivities;
@@ -906,7 +972,7 @@ createApp({
             } catch (error) {
                 if (token !== authLoadToken) return;
                 dataLoadError.value = friendlyFirebaseError(error);
-                console.error('Lỗi khi tải dữ liệu từ Firestore:', error);
+                console.error('Không tải được dữ liệu từ Firestore:', error);
             }
         };
 
@@ -925,7 +991,7 @@ createApp({
                 if (currentUser.value && currentUser.value.uid === user.uid) saveState.value = 'saved';
             } catch (error) {
                 if (currentUser.value && currentUser.value.uid === user.uid) saveState.value = 'error';
-                console.error('Lỗi khi lưu dữ liệu lên Firestore:', error);
+                console.error('Không lưu được dữ liệu lên Firestore:', error);
                 throw error;
             }
         };
@@ -935,7 +1001,7 @@ createApp({
                 await persistActivitiesNow();
                 if (firebaseAuth) await firebaseAuth.signOut();
             } catch (error) {
-                triggerToast('Lỗi lưu trữ dữ liệu. Vui lòng kiểm tra kết nối mạng trước khi đăng xuất.');
+                triggerToast('Không lưu được dữ liệu. Kiểm tra mạng rồi thử lại trước khi đăng xuất.');
             }
         };
 
@@ -969,8 +1035,8 @@ createApp({
                     if (currentUser.value && currentUser.value.uid === uid) saveState.value = 'saved';
                 } catch (error) {
                     if (currentUser.value && currentUser.value.uid === uid) saveState.value = 'error';
-                    triggerToast('Lỗi lưu trữ trên đám mây. Vui lòng kiểm tra mạng và quy tắc Firestore.');
-                    console.error('Lỗi lưu Firestore:', error);
+                    triggerToast('Không lưu được dữ liệu lên đám mây. Kiểm tra kết nối và quy tắc Firestore.');
+                    console.error('Không lưu được dữ liệu lên Firestore:', error);
                 }
             }, 700);
         }, { deep: true, flush: 'sync' });
@@ -1008,25 +1074,191 @@ createApp({
             return { score: totalScore, breakdown };
         };
 
-        const getOptimalScore = (acts) => {
-            if (acts.length === 0) return { score: 0, config: [], breakdown: { categories: {}, groups: {}, criteria: {} } };
-            let maxTotal = -1, bestConfig = [], bestBreakdown = {};
-            const dfs = (idx, currentConfig) => {
-                if (idx === acts.length) {
-                    let result = evaluateConfig(currentConfig, acts);
-                    if (result.score > maxTotal) { maxTotal = result.score; bestConfig = [...currentConfig]; bestBreakdown = result.breakdown; }
+        // Tính điểm tối đa của một tập tiêu chí. Dùng chung cho đánh giá cấu hình
+        // và cận trên của thuật toán tìm kiếm để tránh duyệt nhánh không thể tốt hơn.
+        const scoreForCriteriaSet = (criteriaSet) => {
+            let totalScore = 0;
+            for (const cat of categories.value) {
+                let catPoints = 0;
+                for (const group of cat.groups) {
+                    let groupPoints = 0;
+                    for (const criterion of group.criteria) {
+                        if (criteriaSet.has(criterion.id)) groupPoints += criterion.maxPoints;
+                    }
+                    catPoints += Math.min(groupPoints, group.maxPoints);
+                }
+                totalScore += Math.min(catPoints, cat.maxPoints);
+            }
+            return totalScore;
+        };
+
+        // includeDisabled=true chỉ dùng trong kịch bản giả định các hoạt động tắt đều được duyệt.
+        // Không thay đổi enabled trong dữ liệu gốc của người dùng.
+        const getOptimalScore = (acts, includeDisabled = false) => {
+            if (acts.length === 0) {
+                return { score: 0, config: [], breakdown: { categories: {}, groups: {}, criteria: {} } };
+            }
+
+            const isEligible = (act) => includeDisabled || act.enabled !== false;
+
+            // Sắp xếp bản mô phỏng để xét hoạt động ít lựa chọn và có tiêu chí hiếm trước.
+            // Kết quả cuối cùng vẫn được ánh xạ về đúng thứ tự acts ban đầu.
+            const optionFrequency = new Map();
+            for (const act of acts) {
+                if (!isEligible(act)) continue;
+                const ids = new Set((act.options || []).map(option => option && option.criteriaId).filter(Boolean));
+                for (const id of ids) optionFrequency.set(id, (optionFrequency.get(id) || 0) + 1);
+            }
+
+            const searchItems = acts.map((act, originalIndex) => ({ act, originalIndex }));
+            const uniqueOptionCount = (act) =>
+                new Set((act.options || []).map(option => option && option.criteriaId).filter(Boolean)).size;
+            const rarityScore = (act) =>
+                [...new Set((act.options || []).map(option => option && option.criteriaId).filter(Boolean))]
+                    .reduce((sum, id) => sum + 1 / (optionFrequency.get(id) || 1), 0);
+            const maxOptionPoints = (act) =>
+                Math.max(0, ...(act.options || []).map(option =>
+                    option && CRITERIA_MAP[option.criteriaId] ? CRITERIA_MAP[option.criteriaId].maxPoints : 0
+                ));
+
+            searchItems.sort((a, b) => {
+                const countDiff = uniqueOptionCount(a.act) - uniqueOptionCount(b.act);
+                if (countDiff !== 0) return countDiff;
+                const rarityDiff = rarityScore(b.act) - rarityScore(a.act);
+                if (rarityDiff !== 0) return rarityDiff;
+                return maxOptionPoints(b.act) - maxOptionPoints(a.act);
+            });
+
+            const searchActs = searchItems.map(item => item.act);
+            const toOriginalConfig = (searchConfig) => {
+                const originalConfig = new Array(acts.length).fill(-1);
+                searchItems.forEach((item, searchIndex) => {
+                    originalConfig[item.originalIndex] = searchConfig[searchIndex] ?? -1;
+                });
+                return originalConfig;
+            };
+
+            let maxTotal = -1;
+            let bestConfig = [];
+            let bestBreakdown = {};
+
+            // Tạo nghiệm tham lam ban đầu để có mốc điểm tốt sớm, giúp cắt bỏ các nhánh kém hơn.
+            const greedyCriteria = new Set();
+            const greedyCounts = new Map();
+            const greedySearchConfig = [];
+
+            for (const act of searchActs) {
+                if (!isEligible(act) || !Array.isArray(act.options) || act.options.length === 0) {
+                    greedySearchConfig.push(-1);
+                    continue;
+                }
+
+                let chosenIndex = 0;
+                let chosenScore = -1;
+                let chosenDuplicatePenalty = Infinity;
+                let chosenPoints = -1;
+
+                for (let optionIndex = 0; optionIndex < act.options.length; optionIndex++) {
+                    const criteriaId = act.options[optionIndex] && act.options[optionIndex].criteriaId;
+                    const possibleCriteria = new Set(greedyCriteria);
+                    if (criteriaId) possibleCriteria.add(criteriaId);
+
+                    const possibleScore = scoreForCriteriaSet(possibleCriteria);
+                    const duplicatePenalty = criteriaId && (greedyCounts.get(criteriaId) || 0) > 0 ? 1 : 0;
+                    const points = CRITERIA_MAP[criteriaId] ? CRITERIA_MAP[criteriaId].maxPoints : 0;
+
+                    if (possibleScore > chosenScore ||
+                        (possibleScore === chosenScore && duplicatePenalty < chosenDuplicatePenalty) ||
+                        (possibleScore === chosenScore && duplicatePenalty === chosenDuplicatePenalty && points > chosenPoints)) {
+                        chosenIndex = optionIndex;
+                        chosenScore = possibleScore;
+                        chosenDuplicatePenalty = duplicatePenalty;
+                        chosenPoints = points;
+                    }
+                }
+
+                const chosenCriteriaId = act.options[chosenIndex] && act.options[chosenIndex].criteriaId;
+                if (chosenCriteriaId) {
+                    greedyCounts.set(chosenCriteriaId, (greedyCounts.get(chosenCriteriaId) || 0) + 1);
+                    greedyCriteria.add(chosenCriteriaId);
+                }
+                greedySearchConfig.push(chosenIndex);
+            }
+
+            bestConfig = toOriginalConfig(greedySearchConfig);
+            const greedyResult = evaluateConfig(bestConfig, acts);
+            maxTotal = greedyResult.score;
+            bestBreakdown = greedyResult.breakdown;
+
+            const selectedCounts = new Map();
+            const selectedCriteria = new Set();
+            const visitedStates = Array.from({ length: searchActs.length + 1 }, () => new Set());
+
+            const getOptimisticUpperBound = (idx) => {
+                const possibleCriteria = new Set(selectedCriteria);
+
+                // Cận trên lạc quan: giả định mọi tiêu chí còn có thể chọn đều đạt được.
+                // Đây là cận không thấp hơn điểm của bất kỳ phương án hoàn chỉnh nào bên dưới nhánh.
+                for (let i = idx; i < searchActs.length; i++) {
+                    if (!isEligible(searchActs[i]) || !Array.isArray(searchActs[i].options)) continue;
+                    for (const option of searchActs[i].options) {
+                        if (option && option.criteriaId) possibleCriteria.add(option.criteriaId);
+                    }
+                }
+                return scoreForCriteriaSet(possibleCriteria);
+            };
+
+            const dfs = (idx, currentSearchConfig) => {
+                // Cùng tập tiêu chí tại cùng vị trí có cùng khả năng đạt điểm ở các hoạt động còn lại.
+                const stateKey = [...selectedCriteria].sort().join('|');
+                if (visitedStates[idx].has(stateKey)) return;
+                visitedStates[idx].add(stateKey);
+
+                if (getOptimisticUpperBound(idx) <= maxTotal) return;
+
+                if (idx === searchActs.length) {
+                    const currentConfig = toOriginalConfig(currentSearchConfig);
+                    const result = evaluateConfig(currentConfig, acts);
+                    if (result.score > maxTotal) {
+                        maxTotal = result.score;
+                        bestConfig = currentConfig;
+                        bestBreakdown = result.breakdown;
+                    }
                     return;
                 }
-                if (acts[idx].enabled === false || !acts[idx].options) {
-                    currentConfig.push(-1);
-                    dfs(idx + 1, currentConfig);
-                    currentConfig.pop();
-                } else {
-                    for (let i = 0; i < acts[idx].options.length; i++) {
-                        currentConfig.push(i); dfs(idx + 1, currentConfig); currentConfig.pop();
+
+                const act = searchActs[idx];
+                if (!isEligible(act) || !Array.isArray(act.options) || act.options.length === 0) {
+                    currentSearchConfig.push(-1);
+                    dfs(idx + 1, currentSearchConfig);
+                    currentSearchConfig.pop();
+                    return;
+                }
+
+                for (let optionIndex = 0; optionIndex < act.options.length; optionIndex++) {
+                    const criteriaId = act.options[optionIndex] && act.options[optionIndex].criteriaId;
+                    if (criteriaId) {
+                        const count = selectedCounts.get(criteriaId) || 0;
+                        selectedCounts.set(criteriaId, count + 1);
+                        selectedCriteria.add(criteriaId);
+                    }
+
+                    currentSearchConfig.push(optionIndex);
+                    dfs(idx + 1, currentSearchConfig);
+                    currentSearchConfig.pop();
+
+                    if (criteriaId) {
+                        const count = (selectedCounts.get(criteriaId) || 1) - 1;
+                        if (count <= 0) {
+                            selectedCounts.delete(criteriaId);
+                            selectedCriteria.delete(criteriaId);
+                        } else {
+                            selectedCounts.set(criteriaId, count);
+                        }
                     }
                 }
             };
+
             dfs(0, []);
             return { score: maxTotal, config: bestConfig, breakdown: bestBreakdown };
         };
@@ -1054,10 +1286,10 @@ createApp({
         const toggleActivity = (idx) => {
             if (activities.value[idx].enabled === false) {
                 activities.value[idx].enabled = true;
-                triggerToast(`✔️ Đã kích hoạt: ${activities.value[idx].name}`);
+                triggerToast(`✔️ Đã bật hoạt động: ${activities.value[idx].name}`);
             } else {
                 activities.value[idx].enabled = false;
-                triggerToast(`⏸️ Đã tạm tắt: ${activities.value[idx].name}`);
+                triggerToast(`⏸️ Đã tạm tắt hoạt động: ${activities.value[idx].name}`);
             }
             showAdvice.value = false;
         };
@@ -1084,120 +1316,179 @@ createApp({
         };
 
         const runAdvice = () => {
-            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Vui lòng nhập tên hoạt động trước!");
-            let cleanOptions = testActivity.value.options.filter(o => o.criteriaId).map(o => ({ criteriaId: o.criteriaId }));
+            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Nhập tên hoạt động trước!");
+
+            const cleanOptions = testActivity.value.options
+                .filter(option => option.criteriaId)
+                .map(option => ({ criteriaId: option.criteriaId }));
             if (cleanOptions.length === 0) return triggerToast("⚠️ Vui lòng chọn ít nhất 1 tiêu chí!");
 
-            let simulatedActivity = { name: testActivity.value.name, options: cleanOptions, enabled: true };
-            
-            let hasDisabled = false;
-            for (let i = 0; i < activities.value.length; i++) {
-                if (i === editingIndex.value) continue;
-                if (activities.value[i].enabled === false) hasDisabled = true;
-            }
-
-            const analyzeScenario = (actsOld, actsNew, targetIndex) => {
-                let oldRes = getOptimalScore(actsOld);
-                let newRes = getOptimalScore(actsNew);
-                let diff = newRes.score - oldRes.score;
-                let testedActivityChoiceIdx = newRes.config[targetIndex];
-                
-                let testedCriteriaId = '';
-                let testedCriteriaMax = 0;
-                if (testedActivityChoiceIdx !== undefined && testedActivityChoiceIdx !== -1) {
-                    testedCriteriaId = actsNew[targetIndex].options[testedActivityChoiceIdx].criteriaId;
-                    testedCriteriaMax = getCriteriaMaxPoints(testedCriteriaId);
-                }
-
-                let reassignments = [];
-                let lostFromReassignments = 0;
-
-                for (let i = 0; i < actsOld.length; i++) {
-                    if (i === editingIndex.value) continue;
-                    if (actsOld[i].enabled === false) continue;
-                    
-                    if (oldRes.config[i] !== newRes.config[i]) {
-                        if(oldRes.config[i] === -1 && newRes.config[i] === -1) continue;
-
-                        let oldTcId = oldRes.config[i] !== -1 ? actsOld[i].options[oldRes.config[i]].criteriaId : null;
-                        let newTcId = newRes.config[i] !== -1 ? actsNew[i].options[newRes.config[i]].criteriaId : null;
-                        
-                        let oldPts = oldTcId ? getCriteriaMaxPoints(oldTcId) : 0;
-                        let newPts = newTcId ? getCriteriaMaxPoints(newTcId) : 0;
-
-                        reassignments.push({
-                            name: actsOld[i].name,
-                            oldTc: oldTcId ? oldTcId : 'Trống',
-                            newTc: newTcId ? newTcId : 'Trống',
-                            oldPts: oldPts,
-                            newPts: newPts
-                        });
-
-                        // Hao hụt do HĐ cũ bị đẩy sang tiêu chí điểm thấp hơn
-                        if (oldPts > newPts) {
-                            lostFromReassignments += (oldPts - newPts);
-                        }
-                    }
-                }
-
-                // Nếu tổng điểm nhận được thấp hơn điểm tối đa tiêu chí, 
-                // sau khi trừ đi hao hụt do hoán đổi, thì phần còn lại chính là do giới hạn trần.
-                let expectedDiff = testedCriteriaMax - lostFromReassignments;
-                let lostFromCap = expectedDiff - diff;
-                if (lostFromCap < 0) lostFromCap = 0; 
-                // Chỉ xảy ra chạm trần khi diff > 0. Nếu diff = 0 thì toàn bộ tiêu chí coi như bị trần chặn.
-                if (diff === 0) lostFromCap = testedCriteriaMax - lostFromReassignments;
-
-                return { 
-                    baseScore: oldRes.score, 
-                    newScore: newRes.score, 
-                    diff, 
-                    testedCriteriaId, 
-                    testedCriteriaMax, 
-                    reassignments,
-                    lostFromReassignments,
-                    lostFromCap
-                };
+            const editIndex = editingIndex.value;
+            const editedActivity = editIndex !== null ? activities.value[editIndex] : null;
+            const analysisActivities = activities.value.map((act, index) => ({
+                ...act,
+                _analysisKey: `existing-${index}`
+            }));
+            const candidateActivity = {
+                id: editedActivity && editedActivity.id ? editedActivity.id : `analysis-${Date.now()}-${Math.random()}`,
+                _analysisKey: 'new-candidate',
+                name: testActivity.value.name.trim(),
+                options: cleanOptions,
+                enabled: true
             };
 
-            // KỊCH BẢN 1: Giữ nguyên hiện trạng (Các hoạt động TẮT bị bỏ qua)
-            let oldActs1 = JSON.parse(JSON.stringify(activities.value));
-            let newActs1 = JSON.parse(JSON.stringify(activities.value));
-            let targetIndex1;
-            if (editingIndex.value !== null) {
-                newActs1[editingIndex.value] = simulatedActivity;
-                targetIndex1 = editingIndex.value;
-            } else {
-                newActs1.push(simulatedActivity);
-                targetIndex1 = newActs1.length - 1;
-            }
-            let K1 = analyzeScenario(oldActs1, newActs1, targetIndex1);
+            // Loại hoạt động đang chỉnh sửa khỏi danh sách mô phỏng sau khi thay bằng bản mới.
+            const existingWithoutEdited = analysisActivities.filter((_, index) => index !== editIndex);
 
-            // KỊCH BẢN 2: Giả định khả quan (Nếu mọi HĐ TẮT đều được phê duyệt)
-            let K2 = null;
-            if (hasDisabled) {
-                let forceOn = (act) => { let a = JSON.parse(JSON.stringify(act)); a.enabled = true; return a; };
-                
-                let oldActs2 = activities.value.map(act => forceOn(act));
-                let newActs2 = activities.value.map(act => forceOn(act));
-                
-                let targetIndex2;
-                if (editingIndex.value !== null) {
-                    newActs2[editingIndex.value] = simulatedActivity;
-                    targetIndex2 = editingIndex.value;
-                } else {
-                    newActs2.push(simulatedActivity);
-                    targetIndex2 = newActs2.length - 1;
-                }
-                K2 = analyzeScenario(oldActs2, newActs2, targetIndex2);
-            }
+            // KỊCH BẢN 1: chỉ các hoạt động hiện đang bật được tính; hoạt động tắt coi như chưa được duyệt.
+            const notApprovedBeforeActs = analysisActivities.filter(act => act.enabled !== false);
+            const notApprovedAfterActs = [
+                ...analysisActivities.filter((act, index) => index !== editIndex && act.enabled !== false),
+                candidateActivity
+            ];
+            const notApprovedBefore = getOptimalScore(notApprovedBeforeActs);
+            const notApprovedAfter = getOptimalScore(notApprovedAfterActs);
+            const notApprovedCandidateIndex = notApprovedAfterActs.length - 1;
+            const notApprovedCandidateOptionIndex = notApprovedAfter.config[notApprovedCandidateIndex];
+            const notApprovedCandidateCriteria =
+                notApprovedCandidateOptionIndex !== undefined && notApprovedCandidateOptionIndex !== -1
+                    ? candidateActivity.options[notApprovedCandidateOptionIndex]?.criteriaId || ''
+                    : '';
 
-            adviceResult.value = { hasDisabled, K1, K2 };
+            // KỊCH BẢN 2: giả định tất cả hoạt động đang tắt được duyệt.
+            // Tạo bản sao với enabled=true, tuyệt đối không sửa trạng thái gốc hoặc lưu nhầm lên Firebase.
+            const approvedBeforeActs = analysisActivities.map(act => ({ ...act, enabled: true }));
+            const approvedAfterActs = [
+                ...existingWithoutEdited.map(act => ({ ...act, enabled: true })),
+                candidateActivity
+            ];
+            const approvedBefore = getOptimalScore(approvedBeforeActs, true);
+            const approvedAfter = getOptimalScore(approvedAfterActs, true);
+            const approvedCandidateOptionIndex = approvedAfter.config[approvedAfterActs.length - 1];
+            const approvedCandidateCriteria =
+                approvedCandidateOptionIndex !== undefined && approvedCandidateOptionIndex !== -1
+                    ? candidateActivity.options[approvedCandidateOptionIndex]?.criteriaId || ''
+                    : '';
+
+            const getAssignedCriteriaId = (act, result, index) => {
+                const optionIndex = result.config[index];
+                if (optionIndex === undefined || optionIndex === -1) return '';
+                return act.options && act.options[optionIndex]
+                    ? act.options[optionIndex].criteriaId || ''
+                    : '';
+            };
+
+            const collectDuplicateAssignments = (acts, result) => {
+                const assigned = new Map();
+                acts.forEach((act, index) => {
+                    const criteriaId = getAssignedCriteriaId(act, result, index);
+                    if (!criteriaId) return;
+                    if (!assigned.has(criteriaId)) assigned.set(criteriaId, []);
+                    assigned.get(criteriaId).push(act.name);
+                });
+                return [...assigned.entries()]
+                    .filter(([, activityNames]) => activityNames.length > 1)
+                    .map(([criteriaId, activityNames]) => ({ criteriaId, activityNames }));
+            };
+
+            const buildReassignments = (beforeActs, beforeResult, afterActs, afterResult) => {
+                const afterIndexByKey = new Map();
+                afterActs.forEach((act, index) => {
+                    if (act._analysisKey) afterIndexByKey.set(act._analysisKey, index);
+                });
+
+                const changes = [];
+                beforeActs.forEach((oldAct, oldIndex) => {
+                    const afterIndex = oldAct._analysisKey
+                        ? afterIndexByKey.get(oldAct._analysisKey)
+                        : oldIndex;
+                    if (afterIndex === undefined) return;
+
+                    const oldTc = getAssignedCriteriaId(oldAct, beforeResult, oldIndex);
+                    const newTc = getAssignedCriteriaId(afterActs[afterIndex], afterResult, afterIndex);
+                    if (oldTc !== newTc) {
+                        changes.push({
+                            name: oldAct.name,
+                            wasDisabled: oldAct.enabled === false,
+                            oldTc,
+                            newTc,
+                            oldPts: getCriteriaMaxPoints(oldTc),
+                            newPts: getCriteriaMaxPoints(newTc)
+                        });
+                    }
+                });
+                return changes;
+            };
+
+            const notApprovedReassignments = buildReassignments(
+                notApprovedBeforeActs, notApprovedBefore,
+                notApprovedAfterActs, notApprovedAfter
+            );
+            const approvedReassignments = buildReassignments(
+                approvedBeforeActs, approvedBefore,
+                approvedAfterActs, approvedAfter
+            );
+
+            // Trong kịch bản 2, ghi rõ tiêu chí mà từng hoạt động hiện đang tắt có thể được phân vào.
+            const disabledAssignments = [];
+            activities.value.forEach((act, originalIndex) => {
+                if (act.enabled !== false || originalIndex === editIndex) return;
+                const projectedIndex = approvedAfterActs.findIndex(projected =>
+                    projected._analysisKey === `existing-${originalIndex}`
+                );
+                if (projectedIndex < 0) return;
+                const criteriaId = getAssignedCriteriaId(approvedAfterActs[projectedIndex], approvedAfter, projectedIndex);
+                disabledAssignments.push({
+                    name: act.name,
+                    criteriaId,
+                    points: getCriteriaMaxPoints(criteriaId)
+                });
+            });
+
+            // Cảnh báo trùng chỉ là thông tin về các lựa chọn có giao nhau, không kết luận trùng
+            // là chắc chắn mất điểm. Kịch bản 2 đã tối ưu đồng thời toàn bộ hoạt động.
+            const duplicateActivities = activities.value
+                .filter((act, index) =>
+                    index !== editIndex &&
+                    act.enabled === false &&
+                    (act.options || []).some(oldOption =>
+                        cleanOptions.some(newOption => newOption.criteriaId === oldOption.criteriaId)
+                    )
+                )
+                .map(act => ({
+                    name: act.name,
+                    criteriaIds: [...new Set((act.options || [])
+                        .filter(oldOption => cleanOptions.some(newOption => newOption.criteriaId === oldOption.criteriaId))
+                        .map(oldOption => oldOption.criteriaId))]
+                }));
+
+            adviceResult.value = {
+                notApproved: {
+                    baseScore: notApprovedBefore.score,
+                    newScore: notApprovedAfter.score,
+                    diff: notApprovedAfter.score - notApprovedBefore.score,
+                    newCriteriaId: notApprovedCandidateCriteria,
+                    newCriteriaMax: getCriteriaMaxPoints(notApprovedCandidateCriteria),
+                    reassignments: notApprovedReassignments,
+                    duplicateAssignments: collectDuplicateAssignments(notApprovedAfterActs, notApprovedAfter)
+                },
+                approved: {
+                    baseScore: approvedBefore.score,
+                    newScore: approvedAfter.score,
+                    diff: approvedAfter.score - approvedBefore.score,
+                    newCriteriaId: approvedCandidateCriteria,
+                    newCriteriaMax: getCriteriaMaxPoints(approvedCandidateCriteria),
+                    reassignments: approvedReassignments,
+                    disabledAssignments,
+                    duplicateAssignments: collectDuplicateAssignments(approvedAfterActs, approvedAfter)
+                },
+                duplicateActivities
+            };
             showAdvice.value = true;
         };
 
         const commitActivity = () => {
-            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Vui lòng nhập tên hoạt động!");
+            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Nhập tên hoạt động!");
             let cleanOptions = testActivity.value.options.filter(o => o.criteriaId).map(o => ({ criteriaId: o.criteriaId }));
             if (cleanOptions.length === 0) return triggerToast("⚠️ Vui lòng chọn ít nhất 1 tiêu chí!");
 
@@ -1205,18 +1496,18 @@ createApp({
                 id: Date.now() + Math.random(),
                 name: testActivity.value.name,
                 options: cleanOptions,
-                enabled: true
+                enabled: false
             };
             
             if (editingIndex.value !== null) {
                 newAct.enabled = activities.value[editingIndex.value].enabled !== false;
                 newAct.id = activities.value[editingIndex.value].id || newAct.id;
                 activities.value[editingIndex.value] = newAct;
-                triggerToast(`✔️ Đã cập nhật thành công: "${testActivity.value.name}"`);
+                triggerToast(`✔️ Đã cập nhật "${testActivity.value.name}"`);
                 editingIndex.value = null;
             } else {
                 activities.value.unshift(newAct);
-                triggerToast(`✔️ Đã lưu hoạt động: "${testActivity.value.name}"`);
+                triggerToast(`✔️ Đã thêm "${testActivity.value.name}"`);
             }
             
             testActivity.value = getDefaultTestActivity();
@@ -1227,7 +1518,7 @@ createApp({
         const getGroupScore = (id) => baseScoreResult.value.breakdown?.groups?.[id] || 0;
         const getCriteriaScore = (id) => baseScoreResult.value.breakdown?.criteria?.[id] || 0;
         
-        const getCriteriaName = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].name : "Dữ liệu không rõ";
+        const getCriteriaName = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].name : "Không rõ";
         const getCriteriaMaxPoints = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].maxPoints : 0;
         
         const getFilteredCriteriaOptions = (query) => {
@@ -1249,22 +1540,20 @@ createApp({
         const removeTestOption = (idx) => { testActivity.value.options.splice(idx, 1); showAdvice.value = false; };
         
         const removeActivity = (idx) => { 
-            if (confirm("Xác nhận xóa hoạt động này khỏi danh sách?")) {
+            if (confirm("Xóa hoạt động này?")) {
                 activities.value.splice(idx, 1); 
                 showAdvice.value = false; 
                 if (editingIndex.value === idx) cancelEdit();
             }
         };
         
-        const confirmReset = () => { if(confirm("Xác nhận làm sạch toàn bộ danh sách hoạt động hiện tại?")) { activities.value = []; showAdvice.value = false; cancelEdit(); triggerToast("Đã khôi phục dữ liệu gốc."); }};
-        
+        const confirmReset = () => { if(confirm("Xóa toàn bộ danh sách hoạt động?")) { activities.value = []; showAdvice.value = false; cancelEdit(); triggerToast("Đã làm sạch dữ liệu!"); }};
         const exportJSON = () => {
             const el = document.createElement('a');
             el.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activities.value)));
             el.setAttribute("download", `drl_hust_${Date.now()}.json`);
             el.click();
         };
-
         const handleFileImport = (e) => {
             const file = e.target.files[0]; if(!file) return;
             const r = new FileReader();
@@ -1275,7 +1564,7 @@ createApp({
                     activities.value = parsed; 
                     triggerToast("Nhập dữ liệu thành công!"); cancelEdit(); 
                 } catch (err) {
-                    triggerToast("Lỗi: Định dạng file không hợp lệ!");
+                    triggerToast("Lỗi định dạng file JSON!");
                 }
             };
             r.readAsText(file); e.target.value = '';
@@ -1295,22 +1584,11 @@ createApp({
             return 'bg-slate-700 text-slate-200 border-slate-600';
         });
 
-        const scenarios = computed(() => {
-            if (!adviceResult.value || !adviceResult.value.K1) return [];
-            if (!adviceResult.value.hasDisabled) {
-                return [ { ...adviceResult.value.K1, title: 'Báo Cáo Kết Quả Phân Tích', isFutureScenario: false } ];
-            }
-            return [
-                { ...adviceResult.value.K1, title: 'KỊCH BẢN 1: TÍNH THEO TRẠNG THÁI HIỆN TẠI (Chỉ HĐ đang bật)', isFutureScenario: false },
-                { ...adviceResult.value.K2, title: 'KỊCH BẢN 2: TÍNH TỐI ĐA (Giả định tất cả HĐ đang tắt ĐƯỢC DUYỆT)', isFutureScenario: true }
-            ];
-        });
-
         return {
             firebaseConfigured, currentUser, authReady, dataLoaded, dataLoadError, authMode,
             authEmail, authPassword, authBusy, authError, authInfo, saveState,
             setAuthMode, submitAuth, sendPasswordReset, retryLoadData, logout,
-            categories, activities, testActivity, showAdvice, adviceResult, scenarios, toast, baseScoreResult, openCategories,
+            categories, activities, testActivity, showAdvice, adviceResult, toast, baseScoreResult, openCategories,
             editingIndex, scoreRank, rankBadgeClass, activityFilter, filteredActivities, toggleActivity,
             getCatScore, getGroupScore, getCriteriaScore, getCriteriaName, getCriteriaMaxPoints,
             getFilteredCriteriaOptions, selectCriteriaForOption, clearSearchOption, addTestOption, removeTestOption,
