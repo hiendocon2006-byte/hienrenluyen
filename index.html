@@ -46,22 +46,22 @@
         <div class="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-200 p-7 sm:p-9">
             <img src="./favicon.png" alt="Logo" class="h-10 w-auto max-w-[160px] object-contain">
             <h1 class="text-2xl font-black text-slate-900">Điểm Rèn Luyện<br>by SiviFal</h1>
-            <p class="text-slate-600 mt-2">Web đã có phần đăng nhập, nhưng chưa được kết nối với dự án Firebase của m.</p>
+            <p class="text-slate-600 mt-2">Hệ thống yêu cầu thiết lập cơ sở dữ liệu Firebase trước khi sử dụng.</p>
             <div class="mt-5 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900 space-y-2">
-                <p class="font-bold">Cần thiết lập một lần:</p>
+                <p class="font-bold">Hướng dẫn thiết lập (1 lần duy nhất):</p>
                 <p>1. Tạo dự án Firebase và thêm ứng dụng Web.</p>
                 <p>2. Bật Authentication bằng Email/Password và tạo Cloud Firestore.</p>
-                <p>3. Trong file <code>index.html</code>, tìm <code>const firebaseConfig</code> và thay các giá trị <code>PASTE_...</code> bằng cấu hình Firebase của m.</p>
-                <p>4. Cài quy tắc Firestore theo file <code>firestore.rules.txt</code> đi kèm bộ tải xuống.</p>
+                <p>3. Trong mã nguồn file <code>index.html</code>, tìm <code>const firebaseConfig</code> và thay thế bằng cấu hình dự án của bạn.</p>
+                <p>4. Cài đặt quy tắc bảo mật Firestore (tham khảo file <code>firestore.rules.txt</code>).</p>
             </div>
-            <p class="text-xs text-slate-500 mt-5">Không đặt mật khẩu, khóa tài khoản dịch vụ (service account) hoặc thông tin bí mật nào vào file HTML.</p>
+            <p class="text-xs text-slate-500 mt-5">Lưu ý: Tuyệt đối không để lộ mật khẩu, khóa service account hoặc các thông tin bí mật cấp máy chủ vào file HTML này.</p>
         </div>
     </section>
 
     <section v-else-if="!authReady" class="min-h-screen flex items-center justify-center p-6">
         <div class="bg-white rounded-2xl border border-slate-200 shadow p-8 text-center max-w-sm w-full">
             <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-600 mb-4"></i>
-            <h2 class="font-bold text-slate-800">Đang kết nối hệ thống tài khoản...</h2>
+            <h2 class="font-bold text-slate-800">Đang kết nối hệ thống...</h2>
             <p class="text-sm text-slate-500 mt-2">Vui lòng chờ trong giây lát.</p>
         </div>
     </section>
@@ -70,12 +70,12 @@
         <div class="bg-white rounded-2xl border border-slate-200 shadow p-8 text-center max-w-md w-full">
             <template v-if="!dataLoadError">
                 <i class="fa-solid fa-cloud-arrow-down fa-bounce text-3xl text-indigo-600 mb-4"></i>
-                <h2 class="font-bold text-slate-800">Đang tải dữ liệu của m...</h2>
-                <p class="text-sm text-slate-500 mt-2">Dữ liệu hoạt động được lưu riêng cho tài khoản <strong>{{ currentUser.email }}</strong>.</p>
+                <h2 class="font-bold text-slate-800">Đang đồng bộ dữ liệu...</h2>
+                <p class="text-sm text-slate-500 mt-2">Tải hồ sơ hoạt động của tài khoản <strong>{{ currentUser.email }}</strong>.</p>
             </template>
             <template v-else>
                 <i class="fa-solid fa-triangle-exclamation text-3xl text-amber-500 mb-4"></i>
-                <h2 class="font-bold text-slate-800">Chưa tải được dữ liệu</h2>
+                <h2 class="font-bold text-slate-800">Lỗi đồng bộ dữ liệu</h2>
                 <p class="text-sm text-red-600 mt-2">{{ dataLoadError }}</p>
                 <button @click="retryLoadData" class="mt-5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Thử lại</button>
                 <button @click="logout" class="mt-3 ml-2 px-5 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 font-bold">Đăng xuất</button>
@@ -88,7 +88,7 @@
             <div class="bg-slate-900 text-white p-7 sm:p-8">
                <img src="./favicon.png" alt="Logo" class="h-16 w-16 sm:h-20 sm:w-20 object-contain shrink-0">
                 <h1 class="text-2xl font-black tracking-tight">Điểm Rèn Luyện HUST<br>by SiviFal</h1>
-                <p class="text-sm text-slate-300 mt-2">{{ authMode === 'login' ? 'Đăng nhập để tiếp tục tính điểm' : 'Tạo tài khoản để lưu dữ liệu riêng' }}</p>
+                <p class="text-sm text-slate-300 mt-2">{{ authMode === 'login' ? 'Đăng nhập để quản lý điểm rèn luyện' : 'Tạo tài khoản để lưu trữ hồ sơ trực tuyến' }}</p>
             </div>
             <form @submit.prevent="submitAuth" class="p-7 sm:p-8 space-y-4">
                 <div v-if="authMode === 'register'">
@@ -101,8 +101,8 @@
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-slate-700 mb-1.5">Mật khẩu</label>
-                    <input v-model="authPassword" type="password" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'" minlength="6" required class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ít nhất 6 ký tự">
-                    <p v-if="authMode === 'register'" class="text-xs text-slate-500 mt-1.5">Dùng mật khẩu riêng, không trùng mật khẩu email/trường học.</p>
+                    <input v-model="authPassword" type="password" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'" minlength="6" required class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tối thiểu 6 ký tự">
+                    <p v-if="authMode === 'register'" class="text-xs text-slate-500 mt-1.5">Khuyến nghị sử dụng mật khẩu riêng, không trùng mật khẩu email cá nhân/trường học.</p>
                 </div>
                 <div v-if="authError" class="rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm p-3" role="alert">{{ authError }}</div>
                 <div v-if="authInfo" class="rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-3" role="status">{{ authInfo }}</div>
@@ -112,10 +112,10 @@
                 </button>
                 <button v-if="authMode === 'login'" type="button" @click="sendPasswordReset" class="w-full text-sm font-semibold text-slate-500 hover:text-indigo-700">Quên mật khẩu?</button>
                 <div class="border-t border-slate-100 pt-4 text-center text-sm text-slate-600">
-                    <template v-if="authMode === 'login'">Chưa có tài khoản? <button type="button" @click="setAuthMode('register')" class="font-extrabold text-indigo-600 hover:text-indigo-800">Đăng ký</button></template>
+                    <template v-if="authMode === 'login'">Chưa có tài khoản? <button type="button" @click="setAuthMode('register')" class="font-extrabold text-indigo-600 hover:text-indigo-800">Đăng ký ngay</button></template>
                     <template v-else>Đã có tài khoản? <button type="button" @click="setAuthMode('login')" class="font-extrabold text-indigo-600 hover:text-indigo-800">Đăng nhập</button></template>
                 </div>
-                <p class="text-xs leading-relaxed text-center text-slate-400">Dữ liệu hoạt động được lưu theo tài khoản. Không chia sẻ mật khẩu với người khác.</p>
+                <p class="text-xs leading-relaxed text-center text-slate-400">Dữ liệu hồ sơ rèn luyện được mã hóa và lưu trữ riêng tư. Vui lòng bảo mật tài khoản cá nhân.</p>
             </form>
         </div>
     </section>
@@ -132,7 +132,7 @@
                         <h1 class="font-extrabold text-lg sm:text-xl text-slate-800 tracking-tight leading-tight">
                             Điểm Rèn Luyện Hust
                         </h1>
-                        <p class="text-xs text-slate-500 font-medium">Rèn luyện không khó, có AI lo</p>
+                        <p class="text-xs text-slate-500 font-medium">Hệ thống tối ưu và quản lý điểm rèn luyện</p>
                     </div>
                 </div>
 
@@ -196,13 +196,13 @@
                             <label class="block text-sm font-bold text-slate-700 mb-1.5">Tên hoạt động:</label>
                             <input v-model="testActivity.name" type="text" 
                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
-                                   placeholder="VD: Tham gia Mùa hè xanh, NCKH cấp trường...">
+                                   placeholder="VD: Tham gia Mùa hè xanh, NCKH cấp trường, Cán bộ lớp...">
                         </div>
 
                         <div class="space-y-3">
                             <div class="flex justify-between items-end">
                                 <label class="block text-sm font-bold text-slate-700">Các tiêu chí hoạt động này đáp ứng:</label>
-                                <span class="text-[11px] text-slate-500 italic">Hệ thống sẽ tự chọn 1 tiêu chí tối ưu nhất</span>
+                                <span class="text-[11px] text-slate-500 italic">Thuật toán sẽ tự động dò tìm và gán vào 1 tiêu chí tối ưu nhất</span>
                             </div>
 
                             <transition-group name="list" tag="div" class="space-y-3">
@@ -217,7 +217,7 @@
                                                @focus="opt.showDropdown = true"
                                                @input="opt.showDropdown = true"
                                                class="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium text-slate-800"
-                                               placeholder="Nhập để tìm tiêu chí (vd: tham gia, NCKH)...">
+                                               placeholder="Nhập để tìm tiêu chí (vd: tham gia, NCKH, ban cán sự)...">
                                         <button v-if="opt.searchQuery" @click="clearSearchOption(opt)" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-2">
                                             <i class="fa-solid fa-circle-xmark"></i>
                                         </button>
@@ -256,16 +256,16 @@
                             </transition-group>
 
                             <button @click="addTestOption" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1.5 mt-2">
-                                <i class="fa-solid fa-plus-circle"></i> Thêm tiêu chí dự phòng cho hoạt động này
+                                <i class="fa-solid fa-plus-circle"></i> Bổ sung thêm tiêu chí cho hoạt động này (Tùy chọn)
                             </button>
                         </div>
 
                         <div class="flex flex-col sm:flex-row gap-3 pt-2">
                             <button @click="runAdvice" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-code-compare"></i> Phân Tích
+                                <i class="fa-solid fa-code-compare"></i> Phân Tích Thuật Toán
                             </button>
                             <button @click="commitActivity" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-floppy-disk"></i> {{ editingIndex !== null ? 'Lưu Thay Đổi' : 'Thêm Vào Danh Sách' }}
+                                <i class="fa-solid fa-floppy-disk"></i> {{ editingIndex !== null ? 'Lưu Thay Đổi' : 'Xác Nhận Thêm' }}
                             </button>
                         </div>
                     </div>
@@ -276,80 +276,124 @@
                             
                             <div v-if="adviceResult.hasDisabled" class="mb-4">
                                 <h4 class="font-black text-lg text-slate-800 flex items-center gap-2">
-                                    <i class="fa-solid fa-code-branch text-indigo-500"></i> Phân tích Đa Kịch Bản
+                                    <i class="fa-solid fa-code-branch text-indigo-500"></i> Báo Cáo Phân Tích Đa Kịch Bản
                                 </h4>
-                                <p class="text-sm text-slate-600 mt-1">Vì m đang có các hoạt động "Tắt" (có thể đang chờ duyệt), thuật toán chạy giả lập 2 trường hợp để dự phòng:</p>
+                                <p class="text-sm text-slate-600 mt-1">Hệ thống phát hiện bạn đang có hoạt động bị "Tắt" (có thể đang chờ phê duyệt). Do đó, thuật toán đưa ra 2 giả định để bạn nắm rõ mức điểm tăng thêm ở mọi trường hợp:</p>
                             </div>
 
                             <div class="space-y-5">
                                 <div v-for="(sc, index) in scenarios" :key="index" 
-                                     class="rounded-xl p-5 border-2 relative"
-                                     :class="sc.diff > 0 ? 'bg-emerald-50 border-emerald-400 shadow-sm' : 'bg-amber-50 border-amber-400 shadow-sm'">
+                                     class="rounded-xl border border-slate-200 overflow-hidden shadow-sm"
+                                     :class="sc.diff > 0 ? 'bg-white' : 'bg-slate-50'">
                                     
-                                    <h5 v-if="adviceResult.hasDisabled" class="text-xs font-black text-slate-600 uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">
-                                        {{ sc.title }}
-                                    </h5>
-                                    <h5 v-else class="text-xs font-black text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">
-                                        <i class="fa-solid fa-microchip text-indigo-500 mr-1"></i> Báo cáo tối ưu từ Thuật Toán
-                                    </h5>
+                                    <!-- Header Kịch bản -->
+                                    <div class="p-4 border-b border-slate-200" :class="sc.diff > 0 ? 'bg-emerald-50/50' : 'bg-amber-50/50'">
+                                        <h5 v-if="adviceResult.hasDisabled" class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                            {{ sc.title }}
+                                        </h5>
+                                        <h5 v-else class="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-2">
+                                            <i class="fa-solid fa-microchip text-indigo-500 mr-1"></i> Báo cáo kết quả phân tích
+                                        </h5>
 
-                                    <div class="flex justify-between items-start gap-4 mb-4">
-                                        <div>
-                                            <h4 class="font-black text-base sm:text-lg flex items-center gap-2" :class="sc.diff > 0 ? 'text-emerald-800' : 'text-amber-800'">
-                                                <i v-if="sc.diff > 0" class="fa-solid fa-circle-check text-emerald-500 text-xl"></i>
-                                                <i v-else class="fa-solid fa-triangle-exclamation text-amber-500 text-xl"></i>
-                                                {{ sc.diff > 0 ? 'NÊN THAM GIA HOẠT ĐỘNG NÀY!' : 'KHÔNG TĂNG ĐIỂM (ĐÃ CHẠM TRẦN)' }}
-                                            </h4>
-                                            <p class="text-sm font-medium mt-1.5 text-slate-700">
-                                                Tổng điểm rèn luyện thay đổi: <strong class="text-slate-900">{{ sc.baseScore }}</strong> 
-                                                <i class="fa-solid fa-arrow-right mx-2 text-xs text-slate-400"></i> 
-                                                <strong class="text-slate-900">{{ sc.newScore }}</strong>
-                                            </p>
-                                        </div>
-                                        <div class="bg-white px-4 py-2 rounded-xl border-2 shadow-sm font-black text-xl"
-                                             :class="sc.diff > 0 ? 'text-emerald-600 border-emerald-200' : 'text-amber-500 border-amber-200'">
-                                            +{{ sc.diff }}đ
-                                        </div>
-                                    </div>
-
-                                    <div class="bg-white/80 rounded-lg border border-slate-200 p-4 space-y-4">
-                                        <!-- 1. Quyết định -->
-                                        <div v-if="sc.testedCriteriaId">
-                                            <div class="text-sm text-slate-800">
-                                                <strong class="text-indigo-700">1. Quyết định:</strong> Chọn tiêu chí 
-                                                <span class="font-mono font-bold">[{{ sc.testedCriteriaId }}]</span> 
-                                                <span class="font-semibold">{{ getCriteriaName(sc.testedCriteriaId) }}</span> 
-                                                <span class="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">+{{ sc.testedCriteriaMax }}đ</span>
-                                            </div>
-                                        </div>
-
-                                        <!-- 2. Hiệu ứng dây chuyền -->
-                                        <div v-if="sc.reassignments && sc.reassignments.length > 0" class="border-t border-slate-100 pt-3">
-                                            <div class="text-sm text-slate-800 mb-2">
-                                                <strong class="text-rose-600">2. Hiệu ứng dây chuyền:</strong> Để tối ưu hóa, thuật toán đã tự động hoán đổi tiêu chí của <strong class="text-rose-700">{{ sc.reassignments.length }}</strong> hoạt động cũ:
-                                            </div>
-                                            <div class="space-y-2 ml-4">
-                                                <div v-for="(re, idx) in sc.reassignments" :key="idx" class="bg-white border border-slate-200 rounded p-2 text-xs shadow-sm">
-                                                    <div class="font-bold text-slate-900 mb-1">HĐ: {{ re.name }}</div>
-                                                    <div class="flex flex-wrap items-center gap-2">
-                                                        <span class="text-slate-500 line-through">[{{ re.oldTc }}] (+{{ re.oldPts }}đ)</span>
-                                                        <i class="fa-solid fa-arrow-right text-rose-400"></i>
-                                                        <span class="text-emerald-700 font-bold">Chuyển sang [{{ re.newTc }}] (+{{ re.newPts }}đ)</span>
-                                                    </div>
+                                        <div class="flex justify-between items-center gap-4">
+                                            <div>
+                                                <h4 class="font-black text-base flex items-center gap-1.5" :class="sc.diff > 0 ? 'text-emerald-800' : 'text-amber-800'">
+                                                    <i v-if="sc.diff > 0" class="fa-solid fa-circle-check text-emerald-500"></i>
+                                                    <i v-else class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                                                    {{ sc.diff > 0 ? 'NÊN THAM GIA HOẠT ĐỘNG NÀY!' : 'KHÔNG TĂNG ĐIỂM (ĐÃ CHẠM TRẦN)' }}
+                                                </h4>
+                                                <div class="text-sm font-medium mt-1 text-slate-700 flex items-center gap-2">
+                                                    Tổng điểm thay đổi: 
+                                                    <span class="bg-slate-200/70 text-slate-800 px-1.5 py-0.5 rounded font-mono">{{ sc.baseScore }}đ</span> 
+                                                    <i class="fa-solid fa-arrow-right text-[10px] text-slate-400"></i> 
+                                                    <span class="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded font-mono font-bold">{{ sc.newScore }}đ</span>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <!-- 3. Cảnh báo chạm trần -->
-                                        <div v-if="sc.diff > 0 && sc.diff < sc.testedCriteriaMax" class="border-t border-slate-100 pt-3">
-                                            <div class="text-sm text-slate-800 flex items-start gap-2">
-                                                <i class="fa-solid fa-circle-exclamation text-amber-500 mt-1"></i>
-                                                <p>
-                                                    <strong class="text-amber-700">3. Chú ý điểm trần:</strong> Nhóm/Mục chứa tiêu chí này sắp đầy. Dù tiêu chí đáng giá <strong>+{{ sc.testedCriteriaMax }}đ</strong>, hệ thống chỉ có thể cộng thêm phần còn thiếu là <strong>+{{ sc.diff }}đ</strong> vào tổng điểm.
-                                                </p>
+                                            <div class="px-3 py-1.5 rounded-lg border-2 font-black text-lg"
+                                                 :class="sc.diff > 0 ? 'bg-white text-emerald-600 border-emerald-200 shadow-sm' : 'bg-white text-amber-500 border-amber-200 shadow-sm'">
+                                                +{{ sc.diff }}đ
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Thuyết minh Kịch bản 2 -->
+                                    <div v-if="sc.isFutureScenario" class="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] font-medium text-indigo-800 flex gap-2">
+                                        <i class="fa-solid fa-circle-info mt-0.5"></i>
+                                        <p><strong>Lưu ý:</strong> Điểm nền <strong>{{ sc.baseScore }}đ</strong> ở kịch bản này được tính bằng cách giả định tất cả các hoạt động đang tắt đều đã được cộng điểm thành công.</p>
+                                    </div>
+
+                                    <!-- Chi tiết biên lai điểm -->
+                                    <div v-if="sc.diff > 0" class="p-4 bg-white">
+                                        <div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                            
+                                            <!-- Chi tiết cấu thành -->
+                                            <div class="p-4 space-y-4 text-sm">
+                                                
+                                                <!-- 1. Tiêu chí được chọn -->
+                                                <div>
+                                                    <div class="font-bold text-indigo-700 mb-1">1. Tiêu chí tối ưu được áp dụng:</div>
+                                                    <div class="flex items-start gap-2 pl-3">
+                                                        <span class="text-emerald-600 font-black shrink-0">+{{ sc.testedCriteriaMax }}đ</span>
+                                                        <span class="text-slate-700 leading-snug">từ tiêu chí <span class="font-mono font-bold">[{{ sc.testedCriteriaId }}]</span> {{ getCriteriaName(sc.testedCriteriaId) }}</span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 2. Hụt điểm do hoán đổi (Dây chuyền) -->
+                                                <div v-if="sc.reassignments && sc.reassignments.length > 0" class="border-t border-slate-200 pt-3">
+                                                    <div class="font-bold text-rose-600 mb-1 flex items-center gap-1.5">
+                                                        <span>2. Hụt điểm do hiệu ứng dây chuyền:</span>
+                                                        <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-xs">-{{ sc.lostFromReassignments }}đ</span>
+                                                    </div>
+                                                    <p class="text-xs text-slate-500 mb-2 pl-3">Hệ thống đã tự động đảo tiêu chí của <strong>{{ sc.reassignments.length }}</strong> hoạt động cũ để nhường khoảng trống. Chi tiết:</p>
+                                                    <ul class="space-y-1.5 pl-3">
+                                                        <li v-for="(re, idx) in sc.reassignments" :key="idx" class="bg-white border border-slate-200 rounded p-2 text-xs">
+                                                            <strong class="text-slate-800">{{ re.name }}</strong>
+                                                            <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                                                <span class="text-slate-400 line-through">[{{ re.oldTc }}] (+{{ re.oldPts }})</span>
+                                                                <i class="fa-solid fa-arrow-right text-slate-300"></i>
+                                                                <span v-if="re.newPts > 0" class="text-emerald-700 font-bold">[{{ re.newTc }}] (+{{ re.newPts }})</span>
+                                                                <span v-else class="text-rose-600 font-bold">Bị đẩy ra ngoài (Không còn điểm)</span>
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+
+                                                <!-- 3. Hụt điểm do chạm trần -->
+                                                <div v-if="sc.lostFromCap > 0" class="border-t border-slate-200 pt-3">
+                                                    <div class="font-bold text-amber-600 mb-1 flex items-center gap-1.5">
+                                                        <span>3. Hụt điểm do chạm giới hạn trần:</span>
+                                                        <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-xs">-{{ sc.lostFromCap }}đ</span>
+                                                    </div>
+                                                    <div class="text-xs text-slate-600 pl-3 leading-relaxed">
+                                                        Hệ thống không thể cộng đủ điểm vì giới hạn tối đa của Nhóm/Mục chứa tiêu chí này đã gần đầy.
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            
+                                            <!-- Tổng kết phép tính -->
+                                            <div class="bg-slate-800 text-white p-3 flex justify-between items-center text-sm">
+                                                <span class="font-semibold text-slate-300">THỰC NHẬN CUỐI CÙNG:</span>
+                                                <div class="flex items-center gap-2 font-mono">
+                                                    <span class="text-emerald-400">{{ sc.testedCriteriaMax }}</span>
+                                                    <template v-if="sc.lostFromReassignments > 0"><span class="text-slate-400">-</span><span class="text-rose-400">{{ sc.lostFromReassignments }}</span></template>
+                                                    <template v-if="sc.lostFromCap > 0"><span class="text-slate-400">-</span><span class="text-amber-400">{{ sc.lostFromCap }}</span></template>
+                                                    <span class="text-slate-400">=</span>
+                                                    <span class="text-lg font-black text-white">+{{ sc.diff }}đ</span>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Nếu không tăng điểm -->
+                                    <div v-else class="p-4 bg-white">
+                                         <div class="bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-200 flex gap-2">
+                                             <i class="fa-solid fa-circle-info mt-0.5"></i>
+                                             <p>Hoạt động này không đem lại thêm điểm rèn luyện nào do các Mục/Nhóm chứa các tiêu chí bạn chọn đều đã đạt điểm tối đa.</p>
+                                         </div>
+                                    </div>
+                                    
                                 </div>
                             </div>
 
@@ -379,7 +423,7 @@
                             <button @click="activityFilter = 'disabled'"
                                     class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
                                     :class="activityFilter === 'disabled' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'">
-                                <span class="w-2 h-2 rounded-full bg-slate-400"></span> Tắt
+                                <span class="w-2 h-2 rounded-full bg-slate-400"></span> Tắt (Chờ duyệt)
                             </button>
                         </div>
 
@@ -407,7 +451,7 @@
                                     <button @click.stop="toggleActivity(item.index)"
                                          class="w-11 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors shadow-inner"
                                          :class="item.act.enabled !== false ? 'bg-emerald-500' : 'bg-slate-300'"
-                                         :title="item.act.enabled !== false ? 'Hoạt động đang bật (có tính điểm)' : 'Hoạt động đã tắt (không tính điểm)'">
+                                         :title="item.act.enabled !== false ? 'Đang kích hoạt (Đã duyệt)' : 'Đang tạm tắt (Chờ duyệt/Bỏ qua)'">
                                         <div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform"
                                              :class="item.act.enabled !== false ? 'translate-x-5' : 'translate-x-0'"></div>
                                     </button>
@@ -426,7 +470,7 @@
                                 <div class="pr-[140px] sm:pr-[160px]">
                                     <h4 class="font-extrabold text-base flex items-center gap-2" :class="item.act.enabled === false ? 'text-slate-500 line-through' : 'text-slate-800'">
                                         {{ item.act.name }}
-                                        <span v-if="item.act.enabled === false" class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded uppercase font-bold no-underline">Đã Tắt</span>
+                                        <span v-if="item.act.enabled === false" class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded uppercase font-bold no-underline">Đang Tắt</span>
                                     </h4>
                                     
                                     <div class="mt-3">
@@ -439,7 +483,7 @@
                                             <span class="bg-emerald-200/50 px-1.5 py-0.5 rounded ml-1 font-black">+{{ getCriteriaMaxPoints(item.act.options[baseScoreResult.config[item.index]].criteriaId) }}đ</span>
                                         </div>
                                         <div v-else-if="item.act.enabled === false" class="inline-block bg-slate-100 border border-slate-200 text-slate-500 text-xs sm:text-sm font-bold px-3 py-2 rounded-lg">
-                                            <i class="fa-solid fa-ban text-slate-400 mr-1.5"></i> Chưa được tính điểm
+                                            <i class="fa-solid fa-ban text-slate-400 mr-1.5"></i> Chưa được hệ thống tính điểm
                                         </div>
                                     </div>
 
@@ -552,7 +596,8 @@
 <script>
 const { createApp, ref, computed, watch, onMounted } = Vue;
 
-// Firebase Web App configuration.
+// Firebase Web App configuration. Replace these placeholders with the config
+// from Firebase Console > Project settings > Your apps > SDK setup.
 const firebaseConfig = {
     apiKey: "AIzaSyD5FtVk80b5ZHuow4jiUVk7RzfdmX0rW98",
     authDomain: "hienrenluyen.firebaseapp.com",
@@ -733,7 +778,6 @@ createApp({
         const testActivity = ref(getDefaultTestActivity());
         const showAdvice = ref(false);
         
-        // Cấu trúc Data Đa Kịch Bản
         const adviceResult = ref({
             hasDisabled: false,
             K1: null,
@@ -752,18 +796,18 @@ createApp({
             const code = error && error.code ? error.code : '';
             const messages = {
                 'auth/invalid-email': 'Email không đúng định dạng.',
-                'auth/email-already-in-use': 'Email này đã được đăng ký. Hãy đăng nhập.',
-                'auth/weak-password': 'Mật khẩu quá yếu. Hãy dùng ít nhất 6 ký tự.',
-                'auth/user-not-found': 'Không tìm thấy tài khoản này.',
-                'auth/wrong-password': 'Email hoặc mật khẩu chưa đúng.',
-                'auth/invalid-credential': 'Email hoặc mật khẩu chưa đúng.',
-                'auth/too-many-requests': 'Có quá nhiều lần thử. Hãy chờ một lúc rồi thử lại.',
-                'auth/network-request-failed': 'Lỗi mạng. Hãy kiểm tra kết nối Internet.',
-                'auth/operation-not-allowed': 'Dự án Firebase chưa bật đăng nhập bằng Email/Password.',
-                'permission-denied': 'Firebase từ chối truy cập. Hãy kiểm tra quy tắc Firestore.',
-                'unavailable': 'Dịch vụ dữ liệu tạm thời không khả dụng. Hãy thử lại.'
+                'auth/email-already-in-use': 'Email này đã được đăng ký. Vui lòng chuyển sang đăng nhập.',
+                'auth/weak-password': 'Mật khẩu quá yếu. Yêu cầu tối thiểu 6 ký tự.',
+                'auth/user-not-found': 'Không tìm thấy tài khoản tương ứng với email này.',
+                'auth/wrong-password': 'Email hoặc mật khẩu chưa chính xác.',
+                'auth/invalid-credential': 'Email hoặc mật khẩu chưa chính xác.',
+                'auth/too-many-requests': 'Hệ thống giới hạn số lần thử. Vui lòng chờ một lát rồi thử lại.',
+                'auth/network-request-failed': 'Lỗi kết nối mạng. Vui lòng kiểm tra lại Internet.',
+                'auth/operation-not-allowed': 'Dự án Firebase chưa bật phương thức Đăng nhập bằng Email/Password.',
+                'permission-denied': 'Quyền truy cập bị từ chối. Vui lòng kiểm tra lại quy tắc Firestore.',
+                'unavailable': 'Dịch vụ lưu trữ tạm thời không khả dụng. Vui lòng thử lại sau.'
             };
-            return messages[code] || ('Có lỗi xảy ra. ' + (code ? '(' + code + ')' : 'Hãy thử lại.'));
+            return messages[code] || ('Đã có lỗi xảy ra. ' + (code ? `(Mã lỗi: ${code})` : 'Vui lòng thử lại.'));
         };
 
         const setAuthMode = (mode) => {
@@ -777,13 +821,13 @@ createApp({
             authError.value = '';
             authInfo.value = '';
             if (!firebaseConfigured || !firebaseAuth) {
-                authError.value = 'Web chưa được kết nối Firebase. Hãy hoàn tất phần thiết lập Firebase trước.';
+                authError.value = 'Hệ thống chưa được kết nối Firebase. Vui lòng hoàn tất thiết lập trước.';
                 return;
             }
             const email = authEmail.value.trim();
             const password = authPassword.value;
-            if (!email) { authError.value = 'Hãy nhập email.'; return; }
-            if (password.length < 6) { authError.value = 'Mật khẩu cần có ít nhất 6 ký tự.'; return; }
+            if (!email) { authError.value = 'Vui lòng nhập email.'; return; }
+            if (password.length < 6) { authError.value = 'Mật khẩu yêu cầu tối thiểu 6 ký tự.'; return; }
             authBusy.value = true;
             try {
                 if (authMode.value === 'register') {
@@ -804,13 +848,13 @@ createApp({
             authError.value = '';
             authInfo.value = '';
             if (!authEmail.value.trim()) {
-                authError.value = 'Nhập email vào ô Email trước, rồi bấm Quên mật khẩu.';
+                authError.value = 'Vui lòng nhập email vào ô "Email" trước khi nhấn Quên mật khẩu.';
                 return;
             }
             authBusy.value = true;
             try {
                 await firebaseAuth.sendPasswordResetEmail(authEmail.value.trim());
-                authInfo.value = 'Đã gửi email đặt lại mật khẩu. Hãy kiểm tra hộp thư và mục Spam.';
+                authInfo.value = 'Đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra hộp thư (bao gồm cả thư mục Spam).';
             } catch (error) {
                 authError.value = friendlyFirebaseError(error);
             } finally {
@@ -848,7 +892,7 @@ createApp({
                                 }
                             }
                         } catch (migrationError) {
-                            console.warn('Không thể đọc dữ liệu cũ trên trình duyệt:', migrationError);
+                            console.warn('Lỗi đọc dữ liệu cục bộ:', migrationError);
                         }
                     }
                     activities.value = localActivities;
@@ -862,7 +906,7 @@ createApp({
             } catch (error) {
                 if (token !== authLoadToken) return;
                 dataLoadError.value = friendlyFirebaseError(error);
-                console.error('Không tải được dữ liệu từ Firestore:', error);
+                console.error('Lỗi khi tải dữ liệu từ Firestore:', error);
             }
         };
 
@@ -881,7 +925,7 @@ createApp({
                 if (currentUser.value && currentUser.value.uid === user.uid) saveState.value = 'saved';
             } catch (error) {
                 if (currentUser.value && currentUser.value.uid === user.uid) saveState.value = 'error';
-                console.error('Không lưu được dữ liệu lên Firestore:', error);
+                console.error('Lỗi khi lưu dữ liệu lên Firestore:', error);
                 throw error;
             }
         };
@@ -891,7 +935,7 @@ createApp({
                 await persistActivitiesNow();
                 if (firebaseAuth) await firebaseAuth.signOut();
             } catch (error) {
-                triggerToast('Không lưu được dữ liệu. Kiểm tra mạng rồi thử lại trước khi đăng xuất.');
+                triggerToast('Lỗi lưu trữ dữ liệu. Vui lòng kiểm tra kết nối mạng trước khi đăng xuất.');
             }
         };
 
@@ -925,8 +969,8 @@ createApp({
                     if (currentUser.value && currentUser.value.uid === uid) saveState.value = 'saved';
                 } catch (error) {
                     if (currentUser.value && currentUser.value.uid === uid) saveState.value = 'error';
-                    triggerToast('Không lưu được dữ liệu lên đám mây. Kiểm tra kết nối và quy tắc Firestore.');
-                    console.error('Không lưu được dữ liệu lên Firestore:', error);
+                    triggerToast('Lỗi lưu trữ trên đám mây. Vui lòng kiểm tra mạng và quy tắc Firestore.');
+                    console.error('Lỗi lưu Firestore:', error);
                 }
             }, 700);
         }, { deep: true, flush: 'sync' });
@@ -1010,10 +1054,10 @@ createApp({
         const toggleActivity = (idx) => {
             if (activities.value[idx].enabled === false) {
                 activities.value[idx].enabled = true;
-                triggerToast(`✔️ Đã bật hoạt động: ${activities.value[idx].name}`);
+                triggerToast(`✔️ Đã kích hoạt: ${activities.value[idx].name}`);
             } else {
                 activities.value[idx].enabled = false;
-                triggerToast(`⏸️ Đã tạm tắt hoạt động: ${activities.value[idx].name}`);
+                triggerToast(`⏸️ Đã tạm tắt: ${activities.value[idx].name}`);
             }
             showAdvice.value = false;
         };
@@ -1039,22 +1083,19 @@ createApp({
             showAdvice.value = false;
         };
 
-        // ENGINE PHÂN TÍCH ĐA KỊCH BẢN
         const runAdvice = () => {
-            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Nhập tên hoạt động trước!");
+            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Vui lòng nhập tên hoạt động trước!");
             let cleanOptions = testActivity.value.options.filter(o => o.criteriaId).map(o => ({ criteriaId: o.criteriaId }));
             if (cleanOptions.length === 0) return triggerToast("⚠️ Vui lòng chọn ít nhất 1 tiêu chí!");
 
             let simulatedActivity = { name: testActivity.value.name, options: cleanOptions, enabled: true };
             
-            // Kiểm tra xem hiện tại có hoạt động nào đang Tắt (chờ duyệt) không
             let hasDisabled = false;
             for (let i = 0; i < activities.value.length; i++) {
-                if (i === editingIndex.value) continue; // Bỏ qua HĐ đang sửa
+                if (i === editingIndex.value) continue;
                 if (activities.value[i].enabled === false) hasDisabled = true;
             }
 
-            // Hàm phân tích lõi
             const analyzeScenario = (actsOld, actsNew, targetIndex) => {
                 let oldRes = getOptimalScore(actsOld);
                 let newRes = getOptimalScore(actsNew);
@@ -1069,27 +1110,57 @@ createApp({
                 }
 
                 let reassignments = [];
+                let lostFromReassignments = 0;
+
                 for (let i = 0; i < actsOld.length; i++) {
                     if (i === editingIndex.value) continue;
-                    if (actsOld[i].enabled === false) continue; // Chỉ quan tâm các HĐ đang được bật trong kịch bản này
+                    if (actsOld[i].enabled === false) continue;
                     
                     if (oldRes.config[i] !== newRes.config[i]) {
-                        if(oldRes.config[i] === -1 || newRes.config[i] === -1) continue;
+                        if(oldRes.config[i] === -1 && newRes.config[i] === -1) continue;
 
-                        let oldTc = actsOld[i].options[oldRes.config[i]].criteriaId;
-                        let newTc = actsNew[i].options[newRes.config[i]].criteriaId;
+                        let oldTcId = oldRes.config[i] !== -1 ? actsOld[i].options[oldRes.config[i]].criteriaId : null;
+                        let newTcId = newRes.config[i] !== -1 ? actsNew[i].options[newRes.config[i]].criteriaId : null;
+                        
+                        let oldPts = oldTcId ? getCriteriaMaxPoints(oldTcId) : 0;
+                        let newPts = newTcId ? getCriteriaMaxPoints(newTcId) : 0;
+
                         reassignments.push({
                             name: actsOld[i].name,
-                            oldTc, newTc,
-                            oldPts: getCriteriaMaxPoints(oldTc),
-                            newPts: getCriteriaMaxPoints(newTc)
+                            oldTc: oldTcId ? oldTcId : 'Trống',
+                            newTc: newTcId ? newTcId : 'Trống',
+                            oldPts: oldPts,
+                            newPts: newPts
                         });
+
+                        // Hao hụt do HĐ cũ bị đẩy sang tiêu chí điểm thấp hơn
+                        if (oldPts > newPts) {
+                            lostFromReassignments += (oldPts - newPts);
+                        }
                     }
                 }
-                return { baseScore: oldRes.score, newScore: newRes.score, diff, testedCriteriaId, testedCriteriaMax, reassignments };
+
+                // Nếu tổng điểm nhận được thấp hơn điểm tối đa tiêu chí, 
+                // sau khi trừ đi hao hụt do hoán đổi, thì phần còn lại chính là do giới hạn trần.
+                let expectedDiff = testedCriteriaMax - lostFromReassignments;
+                let lostFromCap = expectedDiff - diff;
+                if (lostFromCap < 0) lostFromCap = 0; 
+                // Chỉ xảy ra chạm trần khi diff > 0. Nếu diff = 0 thì toàn bộ tiêu chí coi như bị trần chặn.
+                if (diff === 0) lostFromCap = testedCriteriaMax - lostFromReassignments;
+
+                return { 
+                    baseScore: oldRes.score, 
+                    newScore: newRes.score, 
+                    diff, 
+                    testedCriteriaId, 
+                    testedCriteriaMax, 
+                    reassignments,
+                    lostFromReassignments,
+                    lostFromCap
+                };
             };
 
-            // KỊCH BẢN 1: Tôn trọng thực tế (HĐ tắt coi như bị từ chối)
+            // KỊCH BẢN 1: Giữ nguyên hiện trạng (Các hoạt động TẮT bị bỏ qua)
             let oldActs1 = JSON.parse(JSON.stringify(activities.value));
             let newActs1 = JSON.parse(JSON.stringify(activities.value));
             let targetIndex1;
@@ -1102,7 +1173,7 @@ createApp({
             }
             let K1 = analyzeScenario(oldActs1, newActs1, targetIndex1);
 
-            // KỊCH BẢN 2: Khả quan (Nếu mọi HĐ tắt đều được duyệt thành công)
+            // KỊCH BẢN 2: Giả định khả quan (Nếu mọi HĐ TẮT đều được phê duyệt)
             let K2 = null;
             if (hasDisabled) {
                 let forceOn = (act) => { let a = JSON.parse(JSON.stringify(act)); a.enabled = true; return a; };
@@ -1126,7 +1197,7 @@ createApp({
         };
 
         const commitActivity = () => {
-            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Nhập tên hoạt động!");
+            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Vui lòng nhập tên hoạt động!");
             let cleanOptions = testActivity.value.options.filter(o => o.criteriaId).map(o => ({ criteriaId: o.criteriaId }));
             if (cleanOptions.length === 0) return triggerToast("⚠️ Vui lòng chọn ít nhất 1 tiêu chí!");
 
@@ -1141,11 +1212,11 @@ createApp({
                 newAct.enabled = activities.value[editingIndex.value].enabled !== false;
                 newAct.id = activities.value[editingIndex.value].id || newAct.id;
                 activities.value[editingIndex.value] = newAct;
-                triggerToast(`✔️ Đã cập nhật "${testActivity.value.name}"`);
+                triggerToast(`✔️ Đã cập nhật thành công: "${testActivity.value.name}"`);
                 editingIndex.value = null;
             } else {
                 activities.value.unshift(newAct);
-                triggerToast(`✔️ Đã thêm "${testActivity.value.name}"`);
+                triggerToast(`✔️ Đã lưu hoạt động: "${testActivity.value.name}"`);
             }
             
             testActivity.value = getDefaultTestActivity();
@@ -1156,7 +1227,7 @@ createApp({
         const getGroupScore = (id) => baseScoreResult.value.breakdown?.groups?.[id] || 0;
         const getCriteriaScore = (id) => baseScoreResult.value.breakdown?.criteria?.[id] || 0;
         
-        const getCriteriaName = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].name : "Không rõ";
+        const getCriteriaName = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].name : "Dữ liệu không rõ";
         const getCriteriaMaxPoints = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].maxPoints : 0;
         
         const getFilteredCriteriaOptions = (query) => {
@@ -1178,20 +1249,22 @@ createApp({
         const removeTestOption = (idx) => { testActivity.value.options.splice(idx, 1); showAdvice.value = false; };
         
         const removeActivity = (idx) => { 
-            if (confirm("Xóa hoạt động này?")) {
+            if (confirm("Xác nhận xóa hoạt động này khỏi danh sách?")) {
                 activities.value.splice(idx, 1); 
                 showAdvice.value = false; 
                 if (editingIndex.value === idx) cancelEdit();
             }
         };
         
-        const confirmReset = () => { if(confirm("Xóa toàn bộ danh sách hoạt động?")) { activities.value = []; showAdvice.value = false; cancelEdit(); triggerToast("Đã làm sạch dữ liệu!"); }};
+        const confirmReset = () => { if(confirm("Xác nhận làm sạch toàn bộ danh sách hoạt động hiện tại?")) { activities.value = []; showAdvice.value = false; cancelEdit(); triggerToast("Đã khôi phục dữ liệu gốc."); }};
+        
         const exportJSON = () => {
             const el = document.createElement('a');
             el.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activities.value)));
             el.setAttribute("download", `drl_hust_${Date.now()}.json`);
             el.click();
         };
+
         const handleFileImport = (e) => {
             const file = e.target.files[0]; if(!file) return;
             const r = new FileReader();
@@ -1202,7 +1275,7 @@ createApp({
                     activities.value = parsed; 
                     triggerToast("Nhập dữ liệu thành công!"); cancelEdit(); 
                 } catch (err) {
-                    triggerToast("Lỗi định dạng file JSON!");
+                    triggerToast("Lỗi: Định dạng file không hợp lệ!");
                 }
             };
             r.readAsText(file); e.target.value = '';
@@ -1225,11 +1298,11 @@ createApp({
         const scenarios = computed(() => {
             if (!adviceResult.value || !adviceResult.value.K1) return [];
             if (!adviceResult.value.hasDisabled) {
-                return [ { ...adviceResult.value.K1, title: 'Báo cáo tối ưu từ Thuật Toán' } ];
+                return [ { ...adviceResult.value.K1, title: 'Báo Cáo Kết Quả Phân Tích', isFutureScenario: false } ];
             }
             return [
-                { ...adviceResult.value.K1, title: 'KỊCH BẢN 1: NẾU CÁC HĐ ĐANG TẮT BỊ TỪ CHỐI (Như hiện tại)' },
-                { ...adviceResult.value.K2, title: 'KỊCH BẢN 2: NẾU TẤT CẢ HĐ ĐANG TẮT ĐƯỢC DUYỆT (Khả quan)' }
+                { ...adviceResult.value.K1, title: 'KỊCH BẢN 1: TÍNH THEO TRẠNG THÁI HIỆN TẠI (Chỉ HĐ đang bật)', isFutureScenario: false },
+                { ...adviceResult.value.K2, title: 'KỊCH BẢN 2: TÍNH TỐI ĐA (Giả định tất cả HĐ đang tắt ĐƯỢC DUYỆT)', isFutureScenario: true }
             ];
         });
 
