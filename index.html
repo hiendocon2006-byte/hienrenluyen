@@ -270,83 +270,89 @@
                         </div>
                     </div>
 
-                    <!-- ADVICE ENGINE BOX -->
+                    <!-- ADVICE ENGINE BOX: MULTI-SCENARIO -->
                     <transition name="fade">
                         <div v-if="showAdvice" class="mt-6 pt-5 border-t border-slate-200">
-                            <div class="rounded-xl p-5 border-2 relative"
-                                 :class="adviceResult.diff > 0 ? 'bg-emerald-50 border-emerald-400' : 'bg-amber-50 border-amber-400'">
-                                 
-                                <div class="flex justify-between items-start gap-4">
-                                    <div>
-                                        <h4 class="font-black text-lg flex items-center gap-2" :class="adviceResult.diff > 0 ? 'text-emerald-800' : 'text-amber-800'">
-                                            <i v-if="adviceResult.diff > 0" class="fa-solid fa-circle-check text-emerald-500 text-xl"></i>
-                                            <i v-else class="fa-solid fa-triangle-exclamation text-amber-500 text-xl"></i>
-                                            {{ adviceResult.diff > 0 ? 'NÊN THAM GIA HOẠT ĐỘNG NÀY!' : 'KHÔNG TĂNG ĐIỂM (CHẠM TRẦN MỤC/NHÓM)' }}
-                                        </h4>
-                                        <p class="text-sm font-medium mt-1.5 text-slate-700">
-                                            Tổng điểm rèn luyện thay đổi: <strong class="text-slate-900">{{ adviceResult.baseScore }}</strong> 
-                                            <i class="fa-solid fa-arrow-right mx-2 text-xs text-slate-400"></i> 
-                                            <strong class="text-slate-900">{{ adviceResult.newScore }}</strong>
-                                        </p>
-                                    </div>
-                                    <div class="bg-white px-4 py-2 rounded-xl border-2 shadow-sm font-black text-xl"
-                                         :class="adviceResult.diff > 0 ? 'text-emerald-600 border-emerald-200' : 'text-amber-500 border-amber-200'">
-                                        +{{ adviceResult.diff }}đ
-                                    </div>
-                                </div>
-                                
-                                <!-- Cảnh báo tiêu chí đã có trong hoạt động đang tắt -->
-                                <div v-if="adviceResult.diff > 0 && adviceResult.duplicateActivities && adviceResult.duplicateActivities.length > 0" class="mt-4 space-y-2">
-                                    <div v-for="(activityName, idx) in adviceResult.duplicateActivities" :key="idx"
-                                         class="flex items-start gap-2 text-sm font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
-                                        <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-600"></i>
-                                        <p>Hoạt động <strong>{{ activityName }}</strong> (đang tắt) đã có tiêu chí này.</p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Cảnh báo chạm trần: Chỉ hiện khi điểm thực nhận nhỏ hơn điểm của tiêu chí -->
-                                <div v-if="adviceResult.diff < adviceResult.testedCriteriaMax" class="mt-4 p-3 bg-white/70 rounded-lg border border-white space-y-2">
-                                    <div class="flex gap-2 text-sm text-slate-800">
-                                        <i class="fa-solid fa-circle-info text-amber-500 mt-1"></i>
-                                        <p class="leading-relaxed">
-                                            <strong class="text-red-600">Chú ý:</strong> Điểm thực nhận (<strong class="text-amber-600">+{{ adviceResult.diff }}đ</strong>) 
-                                            thấp hơn điểm của tiêu chí (<strong class="text-emerald-600">+{{ adviceResult.testedCriteriaMax }}đ</strong>) 
-                                            vì Nhóm hoặc Mục chứa tiêu chí này đã <strong>đạt giới hạn điểm tối đa</strong>.
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-4 p-3 bg-white border border-slate-200 rounded-lg">
-                                    <div class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Tiêu chí được thuật toán chọn:</div>
-                                    <div class="text-sm font-bold text-indigo-700">
-                                        [{{ adviceResult.testedCriteriaId }}] {{ getCriteriaName(adviceResult.testedCriteriaId) }} 
-                                        <span class="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded ml-1 text-xs border border-emerald-200">+{{ adviceResult.testedCriteriaMax }}đ</span>
-                                    </div>
-                                </div>
+                            
+                            <div v-if="adviceResult.hasDisabled" class="mb-4">
+                                <h4 class="font-black text-lg text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-code-branch text-indigo-500"></i> Phân tích Đa Kịch Bản
+                                </h4>
+                                <p class="text-sm text-slate-600 mt-1">Vì m đang có các hoạt động "Tắt" (có thể đang chờ duyệt), thuật toán chạy giả lập 2 trường hợp để dự phòng:</p>
+                            </div>
 
-                                <!-- Reassignments Log with FULL NAMES -->
-                                <div v-if="adviceResult.reassignments && adviceResult.reassignments.length > 0" class="mt-5 border-t border-slate-200 pt-4">
-                                    <h5 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                        <i class="fa-solid fa-shuffle text-indigo-500"></i> Thuật toán đã tự động đảo các hoạt động cũ để tối ưu:
+                            <div class="space-y-5">
+                                <div v-for="(sc, index) in scenarios" :key="index" 
+                                     class="rounded-xl p-5 border-2 relative"
+                                     :class="sc.diff > 0 ? 'bg-emerald-50 border-emerald-400 shadow-sm' : 'bg-amber-50 border-amber-400 shadow-sm'">
+                                    
+                                    <h5 v-if="adviceResult.hasDisabled" class="text-xs font-black text-slate-600 uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">
+                                        {{ sc.title }}
                                     </h5>
-                                    <div class="space-y-3">
-                                        <div v-for="(re, idx) in adviceResult.reassignments" :key="idx" class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-                                            <div class="text-sm font-bold text-slate-900 mb-2">{{ re.name }}</div>
-                                            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs">
-                                                <div class="flex-1 p-2 bg-slate-50 rounded border border-slate-200 text-slate-500 line-through">
-                                                    <span class="font-mono">[{{ re.oldTc }}]</span> {{ getCriteriaName(re.oldTc) }} (+{{ re.oldPts }}đ)
+                                    <h5 v-else class="text-xs font-black text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">
+                                        <i class="fa-solid fa-microchip text-indigo-500 mr-1"></i> Báo cáo tối ưu từ Thuật Toán
+                                    </h5>
+
+                                    <div class="flex justify-between items-start gap-4 mb-4">
+                                        <div>
+                                            <h4 class="font-black text-base sm:text-lg flex items-center gap-2" :class="sc.diff > 0 ? 'text-emerald-800' : 'text-amber-800'">
+                                                <i v-if="sc.diff > 0" class="fa-solid fa-circle-check text-emerald-500 text-xl"></i>
+                                                <i v-else class="fa-solid fa-triangle-exclamation text-amber-500 text-xl"></i>
+                                                {{ sc.diff > 0 ? 'NÊN THAM GIA HOẠT ĐỘNG NÀY!' : 'KHÔNG TĂNG ĐIỂM (ĐÃ CHẠM TRẦN)' }}
+                                            </h4>
+                                            <p class="text-sm font-medium mt-1.5 text-slate-700">
+                                                Tổng điểm rèn luyện thay đổi: <strong class="text-slate-900">{{ sc.baseScore }}</strong> 
+                                                <i class="fa-solid fa-arrow-right mx-2 text-xs text-slate-400"></i> 
+                                                <strong class="text-slate-900">{{ sc.newScore }}</strong>
+                                            </p>
+                                        </div>
+                                        <div class="bg-white px-4 py-2 rounded-xl border-2 shadow-sm font-black text-xl"
+                                             :class="sc.diff > 0 ? 'text-emerald-600 border-emerald-200' : 'text-amber-500 border-amber-200'">
+                                            +{{ sc.diff }}đ
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-white/80 rounded-lg border border-slate-200 p-4 space-y-4">
+                                        <!-- 1. Quyết định -->
+                                        <div v-if="sc.testedCriteriaId">
+                                            <div class="text-sm text-slate-800">
+                                                <strong class="text-indigo-700">1. Quyết định:</strong> Chọn tiêu chí 
+                                                <span class="font-mono font-bold">[{{ sc.testedCriteriaId }}]</span> 
+                                                <span class="font-semibold">{{ getCriteriaName(sc.testedCriteriaId) }}</span> 
+                                                <span class="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">+{{ sc.testedCriteriaMax }}đ</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- 2. Hiệu ứng dây chuyền -->
+                                        <div v-if="sc.reassignments && sc.reassignments.length > 0" class="border-t border-slate-100 pt-3">
+                                            <div class="text-sm text-slate-800 mb-2">
+                                                <strong class="text-rose-600">2. Hiệu ứng dây chuyền:</strong> Để tối ưu hóa, thuật toán đã tự động hoán đổi tiêu chí của <strong class="text-rose-700">{{ sc.reassignments.length }}</strong> hoạt động cũ:
+                                            </div>
+                                            <div class="space-y-2 ml-4">
+                                                <div v-for="(re, idx) in sc.reassignments" :key="idx" class="bg-white border border-slate-200 rounded p-2 text-xs shadow-sm">
+                                                    <div class="font-bold text-slate-900 mb-1">HĐ: {{ re.name }}</div>
+                                                    <div class="flex flex-wrap items-center gap-2">
+                                                        <span class="text-slate-500 line-through">[{{ re.oldTc }}] (+{{ re.oldPts }}đ)</span>
+                                                        <i class="fa-solid fa-arrow-right text-rose-400"></i>
+                                                        <span class="text-emerald-700 font-bold">Chuyển sang [{{ re.newTc }}] (+{{ re.newPts }}đ)</span>
+                                                    </div>
                                                 </div>
-                                                <i class="fa-solid fa-arrow-right text-indigo-400 hidden sm:block"></i>
-                                                <i class="fa-solid fa-arrow-down text-indigo-400 sm:hidden self-center"></i>
-                                                <div class="flex-1 p-2 bg-emerald-50 rounded border border-emerald-200 text-emerald-800 font-bold">
-                                                    <span class="font-mono">[{{ re.newTc }}]</span> {{ getCriteriaName(re.newTc) }} (+{{ re.newPts }}đ)
-                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 3. Cảnh báo chạm trần -->
+                                        <div v-if="sc.diff > 0 && sc.diff < sc.testedCriteriaMax" class="border-t border-slate-100 pt-3">
+                                            <div class="text-sm text-slate-800 flex items-start gap-2">
+                                                <i class="fa-solid fa-circle-exclamation text-amber-500 mt-1"></i>
+                                                <p>
+                                                    <strong class="text-amber-700">3. Chú ý điểm trần:</strong> Nhóm/Mục chứa tiêu chí này sắp đầy. Dù tiêu chí đáng giá <strong>+{{ sc.testedCriteriaMax }}đ</strong>, hệ thống chỉ có thể cộng thêm phần còn thiếu là <strong>+{{ sc.diff }}đ</strong> vào tổng điểm.
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
+
                         </div>
                     </transition>
                 </section>
@@ -546,8 +552,7 @@
 <script>
 const { createApp, ref, computed, watch, onMounted } = Vue;
 
-// Firebase Web App configuration. Replace these placeholders with the config
-// from Firebase Console > Project settings > Your apps > SDK setup.
+// Firebase Web App configuration.
 const firebaseConfig = {
     apiKey: "AIzaSyD5FtVk80b5ZHuow4jiUVk7RzfdmX0rW98",
     authDomain: "hienrenluyen.firebaseapp.com",
@@ -702,10 +707,8 @@ createApp({
         const activities = ref([]);
         const openCategories = ref({ c1: true, c2: true, c3: false, c4: false, c5: false });
         
-        // Trạng thái bộ lọc
         const activityFilter = ref('all');
 
-        // Authentication and per-user cloud data state.
         const currentUser = ref(null);
         const authReady = ref(!firebaseConfigured);
         const dataLoaded = ref(false);
@@ -730,15 +733,11 @@ createApp({
         const testActivity = ref(getDefaultTestActivity());
         const showAdvice = ref(false);
         
-        // Khởi tạo đầy đủ cấu trúc để tránh bất kỳ lỗi "undefined" nào khi load
+        // Cấu trúc Data Đa Kịch Bản
         const adviceResult = ref({
-            baseScore: 0,
-            newScore: 0,
-            diff: 0,
-            testedCriteriaId: '',
-            testedCriteriaMax: 0,
-            reassignments: [],
-            duplicateActivities: []
+            hasDisabled: false,
+            K1: null,
+            K2: null
         });
 
         const toast = ref({ show: false, message: '' });
@@ -1040,72 +1039,89 @@ createApp({
             showAdvice.value = false;
         };
 
+        // ENGINE PHÂN TÍCH ĐA KỊCH BẢN
         const runAdvice = () => {
             if (!testActivity.value.name.trim()) return triggerToast("⚠️ Nhập tên hoạt động trước!");
-            
-            let oldRes = baseScoreResult.value;
             let cleanOptions = testActivity.value.options.filter(o => o.criteriaId).map(o => ({ criteriaId: o.criteriaId }));
             if (cleanOptions.length === 0) return triggerToast("⚠️ Vui lòng chọn ít nhất 1 tiêu chí!");
 
-            let simulatedActivity = { name: testActivity.value.name, options: cleanOptions };
+            let simulatedActivity = { name: testActivity.value.name, options: cleanOptions, enabled: true };
             
-            let testActs = [...activities.value];
-            let targetIndex;
-            if (editingIndex.value !== null) {
-                testActs[editingIndex.value] = simulatedActivity;
-                targetIndex = editingIndex.value;
-            } else {
-                testActs.push(simulatedActivity);
-                targetIndex = testActs.length - 1;
-            }
-            
-            let newRes = getOptimalScore(testActs);
-            let diff = newRes.score - oldRes.score;
-            let testedActivityChoiceIdx = newRes.config[targetIndex];
-            
-            // Xử lý an toàn nếu thuật toán không chọn được tiêu chí nào (idx = -1)
-            let testedCriteriaId = '';
-            let testedCriteriaMax = 0;
-            if (testedActivityChoiceIdx !== undefined && testedActivityChoiceIdx !== -1) {
-                testedCriteriaId = testActs[targetIndex].options[testedActivityChoiceIdx].criteriaId;
-                testedCriteriaMax = getCriteriaMaxPoints(testedCriteriaId);
-            }
-            
-            let reassignments = [];
+            // Kiểm tra xem hiện tại có hoạt động nào đang Tắt (chờ duyệt) không
+            let hasDisabled = false;
             for (let i = 0; i < activities.value.length; i++) {
-                if (i === editingIndex.value) continue;
-                
-                if (oldRes.config[i] !== newRes.config[i]) {
-                    let oldTc = activities.value[i].options[oldRes.config[i]].criteriaId;
-                    let newTc = activities.value[i].options[newRes.config[i]].criteriaId;
-                    reassignments.push({
-                        name: activities.value[i].name,
-                        oldTc, newTc,
-                        oldPts: getCriteriaMaxPoints(oldTc),
-                        newPts: getCriteriaMaxPoints(newTc)
-                    });
-                }
+                if (i === editingIndex.value) continue; // Bỏ qua HĐ đang sửa
+                if (activities.value[i].enabled === false) hasDisabled = true;
             }
 
-            const duplicateActivities = diff > 0 && testedCriteriaId !== ''
-                ? activities.value
-                    .filter((act, idx) =>
-                        idx !== editingIndex.value &&
-                        act.enabled === false &&
-                        (act.options || []).some(oldOption => oldOption.criteriaId === testedCriteriaId)
-                    )
-                    .map(act => act.name)
-                : [];
+            // Hàm phân tích lõi
+            const analyzeScenario = (actsOld, actsNew, targetIndex) => {
+                let oldRes = getOptimalScore(actsOld);
+                let newRes = getOptimalScore(actsNew);
+                let diff = newRes.score - oldRes.score;
+                let testedActivityChoiceIdx = newRes.config[targetIndex];
+                
+                let testedCriteriaId = '';
+                let testedCriteriaMax = 0;
+                if (testedActivityChoiceIdx !== undefined && testedActivityChoiceIdx !== -1) {
+                    testedCriteriaId = actsNew[targetIndex].options[testedActivityChoiceIdx].criteriaId;
+                    testedCriteriaMax = getCriteriaMaxPoints(testedCriteriaId);
+                }
 
-            adviceResult.value = {
-                baseScore: oldRes.score,
-                newScore: newRes.score,
-                diff,
-                testedCriteriaId,
-                testedCriteriaMax,
-                reassignments,
-                duplicateActivities
+                let reassignments = [];
+                for (let i = 0; i < actsOld.length; i++) {
+                    if (i === editingIndex.value) continue;
+                    if (actsOld[i].enabled === false) continue; // Chỉ quan tâm các HĐ đang được bật trong kịch bản này
+                    
+                    if (oldRes.config[i] !== newRes.config[i]) {
+                        if(oldRes.config[i] === -1 || newRes.config[i] === -1) continue;
+
+                        let oldTc = actsOld[i].options[oldRes.config[i]].criteriaId;
+                        let newTc = actsNew[i].options[newRes.config[i]].criteriaId;
+                        reassignments.push({
+                            name: actsOld[i].name,
+                            oldTc, newTc,
+                            oldPts: getCriteriaMaxPoints(oldTc),
+                            newPts: getCriteriaMaxPoints(newTc)
+                        });
+                    }
+                }
+                return { baseScore: oldRes.score, newScore: newRes.score, diff, testedCriteriaId, testedCriteriaMax, reassignments };
             };
+
+            // KỊCH BẢN 1: Tôn trọng thực tế (HĐ tắt coi như bị từ chối)
+            let oldActs1 = JSON.parse(JSON.stringify(activities.value));
+            let newActs1 = JSON.parse(JSON.stringify(activities.value));
+            let targetIndex1;
+            if (editingIndex.value !== null) {
+                newActs1[editingIndex.value] = simulatedActivity;
+                targetIndex1 = editingIndex.value;
+            } else {
+                newActs1.push(simulatedActivity);
+                targetIndex1 = newActs1.length - 1;
+            }
+            let K1 = analyzeScenario(oldActs1, newActs1, targetIndex1);
+
+            // KỊCH BẢN 2: Khả quan (Nếu mọi HĐ tắt đều được duyệt thành công)
+            let K2 = null;
+            if (hasDisabled) {
+                let forceOn = (act) => { let a = JSON.parse(JSON.stringify(act)); a.enabled = true; return a; };
+                
+                let oldActs2 = activities.value.map(act => forceOn(act));
+                let newActs2 = activities.value.map(act => forceOn(act));
+                
+                let targetIndex2;
+                if (editingIndex.value !== null) {
+                    newActs2[editingIndex.value] = simulatedActivity;
+                    targetIndex2 = editingIndex.value;
+                } else {
+                    newActs2.push(simulatedActivity);
+                    targetIndex2 = newActs2.length - 1;
+                }
+                K2 = analyzeScenario(oldActs2, newActs2, targetIndex2);
+            }
+
+            adviceResult.value = { hasDisabled, K1, K2 };
             showAdvice.value = true;
         };
 
@@ -1206,11 +1222,22 @@ createApp({
             return 'bg-slate-700 text-slate-200 border-slate-600';
         });
 
+        const scenarios = computed(() => {
+            if (!adviceResult.value || !adviceResult.value.K1) return [];
+            if (!adviceResult.value.hasDisabled) {
+                return [ { ...adviceResult.value.K1, title: 'Báo cáo tối ưu từ Thuật Toán' } ];
+            }
+            return [
+                { ...adviceResult.value.K1, title: 'KỊCH BẢN 1: NẾU CÁC HĐ ĐANG TẮT BỊ TỪ CHỐI (Như hiện tại)' },
+                { ...adviceResult.value.K2, title: 'KỊCH BẢN 2: NẾU TẤT CẢ HĐ ĐANG TẮT ĐƯỢC DUYỆT (Khả quan)' }
+            ];
+        });
+
         return {
             firebaseConfigured, currentUser, authReady, dataLoaded, dataLoadError, authMode,
             authEmail, authPassword, authBusy, authError, authInfo, saveState,
             setAuthMode, submitAuth, sendPasswordReset, retryLoadData, logout,
-            categories, activities, testActivity, showAdvice, adviceResult, toast, baseScoreResult, openCategories,
+            categories, activities, testActivity, showAdvice, adviceResult, scenarios, toast, baseScoreResult, openCategories,
             editingIndex, scoreRank, rankBadgeClass, activityFilter, filteredActivities, toggleActivity,
             getCatScore, getGroupScore, getCriteriaScore, getCriteriaName, getCriteriaMaxPoints,
             getFilteredCriteriaOptions, selectCriteriaForOption, clearSearchOption, addTestOption, removeTestOption,
