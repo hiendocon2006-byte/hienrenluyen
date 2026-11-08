@@ -959,7 +959,7 @@ createApp({
         };
 
         // includeDisabled=true chỉ dùng với danh sách mô phỏng đã được caller chọn lọc.
-        // Ở kịch bản 2, caller chỉ đưa vào các hoạt động tắt có tiêu chí trùng với hoạt động mới.
+        // Ở kịch bản 2, Nếu cách hoạt động .
         // Không thay đổi trạng thái enabled trong dữ liệu gốc của người dùng.
         const getOptimalScore = (acts, includeDisabled = false) => {
             if (acts.length === 0) {
@@ -1323,8 +1323,8 @@ createApp({
                         },
                         {
                             key: 'matching-approved',
-                            title: 'Kịch bản 2: Chỉ duyệt các hoạt động đang tắt có tiêu chí trùng',
-                            description: `Giả định được duyệt: ${matchingNames.join(' · ')}. Các hoạt động đang tắt khác không được tính.`,
+                            title: 'Kịch bản 2: Nếu các hoạt động có tiêu chí liên quan được duyệt',
+                            description: `Giả định được duyệt: ${matchingNames.join(' · ')}.`,
                             ...matchedApprovedResult
                         }
                     ]
