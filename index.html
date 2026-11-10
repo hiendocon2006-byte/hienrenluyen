@@ -260,65 +260,6 @@
                             </button>
                         </div>
 
-                        <!-- Tiêu chí giả định đã được duyệt / mục tiêu cuối kỳ -->
-                        <div class="rounded-xl border border-violet-200 bg-violet-50/60 p-3 space-y-3">
-                            <button type="button" @click="showAssumedCriteriaMenu = !showAssumedCriteriaMenu"
-                                    class="w-full flex items-center justify-between gap-3 text-left">
-                                <span class="flex items-center gap-2 text-sm font-bold text-violet-900">
-                                    <i class="fa-solid fa-bullseye text-violet-600"></i>
-                                    Tiêu chí mặc định được duyệt / mục tiêu cuối kỳ
-                                    <span class="rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-800">{{ assumedCriteriaIds.length }}</span>
-                                </span>
-                                <i class="fa-solid fa-chevron-down text-xs text-violet-600 transition-transform"
-                                   :class="showAssumedCriteriaMenu ? 'rotate-180' : ''"></i>
-                            </button>
-                            <div v-if="showAssumedCriteriaMenu" class="space-y-3">
-                                <p class="text-xs leading-relaxed text-violet-900/80">
-                                    Các tiêu chí này chỉ được giả định đã đạt trong phần phân tích để tính giới hạn điểm; không cộng vào tổng điểm rèn luyện hiện tại.
-                                </p>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fa-solid fa-magnifying-glass text-violet-400"></i>
-                                    </div>
-                                    <input v-model="assumedCriteriaSearch" type="text"
-                                           @focus="showAssumedCriteriaDropdown = true"
-                                           @input="showAssumedCriteriaDropdown = true"
-                                           @keydown.esc="showAssumedCriteriaDropdown = false"
-                                           class="w-full rounded-lg border border-violet-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-violet-400"
-                                           placeholder="Tìm mã hoặc tên tiêu chí muốn mặc định đạt...">
-                                    <div v-if="showAssumedCriteriaDropdown" class="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl">
-                                        <div v-if="getFilteredCriteriaOptions(assumedCriteriaSearch).length === 0" class="p-3 text-center text-sm text-slate-500">
-                                            Không tìm thấy tiêu chí phù hợp.
-                                        </div>
-                                        <button v-for="tc in getFilteredCriteriaOptions(assumedCriteriaSearch)" :key="tc.id"
-                                                type="button" @click="addAssumedCriteria(tc)"
-                                                :disabled="assumedCriteriaIds.includes(tc.id)"
-                                                class="w-full rounded-lg p-2.5 text-left flex items-center justify-between gap-3 hover:bg-violet-50 disabled:bg-slate-50 disabled:cursor-default">
-                                            <span class="min-w-0">
-                                                <span class="block text-[10px] font-bold uppercase text-slate-400">{{ tc.catName }}</span>
-                                                <span class="block text-sm font-semibold text-slate-800"><span class="text-violet-700">[{{ tc.id }}]</span> {{ tc.name }}</span>
-                                            </span>
-                                            <span class="shrink-0 rounded px-2 py-1 text-xs font-bold"
-                                                  :class="assumedCriteriaIds.includes(tc.id) ? 'bg-slate-100 text-slate-500' : 'bg-violet-100 text-violet-800'">
-                                                {{ assumedCriteriaIds.includes(tc.id) ? 'Đã chọn' : '+' + tc.maxPoints + 'đ' }}
-                                            </span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div v-if="assumedCriteriaIds.length" class="flex flex-wrap gap-2">
-                                    <div v-for="criteriaId in assumedCriteriaIds" :key="criteriaId"
-                                         class="flex max-w-full items-center gap-2 rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-xs text-violet-900">
-                                        <span class="min-w-0"><strong>[{{ criteriaId }}]</strong> {{ getCriteriaName(criteriaId) }}</span>
-                                        <button type="button" @click="removeAssumedCriteria(criteriaId)"
-                                                class="shrink-0 text-violet-500 hover:text-red-600" :aria-label="'Bỏ tiêu chí ' + criteriaId">
-                                            <i class="fa-solid fa-xmark"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <p v-else class="text-xs text-slate-500">Chưa chọn tiêu chí mặc định nào.</p>
-                            </div>
-                        </div>
-
                         <div class="flex flex-col sm:flex-row gap-3 pt-2">
                             <button @click="runAdvice" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-code-compare"></i> Phân Tích
@@ -586,7 +527,8 @@
                                         <div class="space-y-1.5">
                                             <div v-for="tc in group.criteria" :key="tc.id" 
                                                  class="p-2 rounded-lg text-[11px] flex justify-between items-start gap-3 border transition-colors leading-snug"
-                                                 :class="getCriteriaScore(tc.id) > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-semibold' : 'border-transparent text-slate-500 hover:bg-slate-100'">
+                                                 :title="getApprovedActivityTooltip(tc.id)"
+                                                 :class="[getCriteriaScore(tc.id) > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-semibold' : 'border-transparent text-slate-500 hover:bg-slate-100', getApprovedActivityNamesForCriteria(tc.id).length ? 'cursor-help' : '']">
                                                 <div class="flex-1">
                                                     <span class="font-mono text-slate-400 mr-1">[{{ tc.id }}]</span> 
                                                     {{ tc.name }}
@@ -606,6 +548,114 @@
             </div>
 
         </main>
+
+        <!-- Nút nổi mở cửa sổ tiêu chí mục tiêu -->
+        <button v-if="currentUser && dataLoaded" type="button" @click="openAssumedCriteriaModal"
+                class="fixed bottom-5 right-5 z-[70] inline-flex items-center gap-2 rounded-full bg-violet-700 px-4 py-3 text-sm font-bold text-white shadow-xl shadow-violet-900/20 transition hover:bg-violet-800 focus:outline-none focus:ring-4 focus:ring-violet-200">
+            <i class="fa-solid fa-bullseye"></i>
+            <span>Tiêu chí mục tiêu</span>
+            <span class="rounded-full bg-white/20 px-2 py-0.5 text-xs">{{ assumedCriteriaIds.length }}</span>
+        </button>
+
+        <!-- Cửa sổ gần toàn màn hình: kết quả tìm kiếm và danh sách đã chọn luôn hiển thị song song -->
+        <div v-if="showAssumedCriteriaModal"
+             class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/55 p-2 backdrop-blur-sm sm:p-5"
+             tabindex="-1"
+             @click.self="closeAssumedCriteriaModal"
+             @keydown.esc.stop.prevent="closeAssumedCriteriaModal">
+            <section class="flex h-[92vh] max-h-[920px] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-2xl"
+                     role="dialog" aria-modal="true" aria-labelledby="assumed-criteria-title">
+                <header class="flex items-start justify-between gap-4 border-b border-slate-200 px-4 py-4 sm:px-6">
+                    <div class="min-w-0">
+                        <h2 id="assumed-criteria-title" class="flex flex-wrap items-center gap-2 text-lg font-extrabold text-violet-900 sm:text-xl">
+                            <i class="fa-solid fa-bullseye text-violet-600"></i>
+                            Tiêu chí mặc định được duyệt / mục tiêu cuối kỳ
+                            <span class="rounded-full bg-violet-100 px-2.5 py-0.5 text-sm text-violet-800">{{ assumedCriteriaIds.length }}</span>
+                        </h2>
+                        <p class="mt-1 text-xs leading-relaxed text-slate-500 sm:text-sm">
+                            Các tiêu chí này chỉ được giả định đã đạt khi phân tích giới hạn điểm; không cộng vào tổng điểm rèn luyện hiện tại.
+                        </p>
+                    </div>
+                    <button type="button" @click="closeAssumedCriteriaModal"
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-red-50 hover:text-red-600"
+                            aria-label="Đóng cửa sổ">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </header>
+
+                <div class="border-b border-slate-200 px-4 py-3 sm:px-6">
+                    <label for="assumed-criteria-search" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Tìm tiêu chí</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-violet-400"></i>
+                        <input id="assumed-criteria-search" v-model="assumedCriteriaSearch" type="text"
+                               class="w-full rounded-xl border border-violet-200 bg-violet-50/40 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-200"
+                               placeholder="Nhập mã hoặc tên tiêu chí, ví dụ: 4.2.1, ngoại ngữ, tình nguyện...">
+                    </div>
+                </div>
+
+                <div class="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto p-4 lg:grid-cols-5 lg:overflow-hidden sm:p-5">
+                    <section class="flex min-h-0 flex-col rounded-xl border border-slate-200 lg:col-span-3">
+                        <div class="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5">
+                            <h3 class="text-sm font-bold text-slate-800">Danh sách tiêu chí</h3>
+                            <span class="text-xs text-slate-400">{{ getFilteredCriteriaOptions(assumedCriteriaSearch, 0).length }} kết quả</span>
+                        </div>
+                        <div class="max-h-[38vh] flex-1 space-y-1 overflow-y-auto p-2 lg:max-h-none">
+                            <div v-if="getFilteredCriteriaOptions(assumedCriteriaSearch, 0).length === 0" class="p-6 text-center text-sm text-slate-500">
+                                Không tìm thấy tiêu chí phù hợp.
+                            </div>
+                            <button v-for="tc in getFilteredCriteriaOptions(assumedCriteriaSearch, 0)" :key="tc.id"
+                                    type="button" @click="addAssumedCriteria(tc)"
+                                    :disabled="assumedCriteriaIds.includes(tc.id)"
+                                    class="flex w-full items-center justify-between gap-3 rounded-lg border border-transparent p-3 text-left transition hover:border-violet-100 hover:bg-violet-50 disabled:cursor-default disabled:bg-slate-50 disabled:opacity-70">
+                                <span class="min-w-0">
+                                    <span class="mb-0.5 block text-[10px] font-bold uppercase text-slate-400">{{ tc.catName }} · {{ tc.groupName }}</span>
+                                    <span class="block text-sm font-semibold leading-snug text-slate-800"><span class="text-violet-700">[{{ tc.id }}]</span> {{ tc.name }}</span>
+                                </span>
+                                <span class="shrink-0 rounded-md px-2.5 py-1 text-xs font-bold"
+                                      :class="assumedCriteriaIds.includes(tc.id) ? 'bg-slate-200 text-slate-500' : 'bg-violet-100 text-violet-800'">
+                                    {{ assumedCriteriaIds.includes(tc.id) ? 'Đã chọn' : '+' + tc.maxPoints + 'đ' }}
+                                </span>
+                            </button>
+                        </div>
+                    </section>
+
+                    <aside class="flex min-h-0 flex-col rounded-xl border border-violet-200 bg-violet-50/40 lg:col-span-2">
+                        <div class="flex items-center justify-between gap-2 border-b border-violet-100 px-3 py-2.5">
+                            <h3 class="text-sm font-bold text-violet-900">Tiêu chí đã chọn</h3>
+                            <span class="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-800">{{ assumedCriteriaIds.length }}</span>
+                        </div>
+                        <div class="max-h-[28vh] flex-1 space-y-2 overflow-y-auto p-3 lg:max-h-none">
+                            <p v-if="assumedCriteriaIds.length === 0" class="rounded-lg border border-dashed border-violet-200 bg-white p-4 text-center text-sm text-slate-500">
+                                Chưa có tiêu chí mục tiêu. Chọn tiêu chí ở danh sách bên trái.
+                            </p>
+                            <div v-for="criteriaId in assumedCriteriaIds" :key="criteriaId"
+                                 class="flex items-start justify-between gap-2 rounded-lg border border-violet-100 bg-white p-3">
+                                <div class="min-w-0">
+                                    <div class="text-xs font-extrabold text-violet-800">[{{ criteriaId }}] · +{{ getCriteriaMaxPoints(criteriaId) }}đ</div>
+                                    <div class="mt-0.5 text-sm font-medium leading-snug text-slate-700">{{ getCriteriaName(criteriaId) }}</div>
+                                </div>
+                                <button type="button" @click="removeAssumedCriteria(criteriaId)"
+                                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                        :aria-label="'Bỏ tiêu chí ' + criteriaId" title="Bỏ tiêu chí này">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="border-t border-violet-100 px-3 py-2 text-xs text-violet-900/70">
+                            Danh sách này được lưu riêng theo tài khoản và đi kèm file JSON sao lưu.
+                        </div>
+                    </aside>
+                </div>
+
+                <footer class="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 sm:px-6">
+                    <span class="text-xs text-slate-500">Đã chọn {{ assumedCriteriaIds.length }} tiêu chí mục tiêu</span>
+                    <button type="button" @click="closeAssumedCriteriaModal"
+                            class="rounded-lg bg-violet-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-violet-800">
+                        Hoàn tất
+                    </button>
+                </footer>
+            </section>
+        </div>
 
         <!-- Toast Notification -->
         <transition name="fade">
@@ -778,8 +828,7 @@ createApp({
         // Các tiêu chí giả định đã đạt/mục tiêu cuối kỳ: chỉ dùng trong phân tích, không cộng vào điểm thật.
         const assumedCriteriaIds = ref([]);
         const assumedCriteriaSearch = ref('');
-        const showAssumedCriteriaMenu = ref(false);
-        const showAssumedCriteriaDropdown = ref(false);
+        const showAssumedCriteriaModal = ref(false);
         const openCategories = ref({ c1: true, c2: true, c3: false, c4: false, c5: false });
         
         // Trạng thái bộ lọc
@@ -997,7 +1046,7 @@ createApp({
                     activities.value = [];
                     assumedCriteriaIds.value = [];
                     assumedCriteriaSearch.value = '';
-                    showAssumedCriteriaDropdown.value = false;
+                    showAssumedCriteriaModal.value = false;
                     authReady.value = true;
                 }
             });
@@ -1552,6 +1601,33 @@ createApp({
         const getCriteriaName = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].name : "Không rõ";
         const getCriteriaMaxPoints = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].maxPoints : 0;
 
+        // Tra cứu các hoạt động đang bật được thuật toán phân bổ vào tiêu chí này.
+        // Chỉ dùng cấu hình tính điểm hiện tại; tiêu chí mục tiêu không tạo ra tên hoạt động giả.
+        const getApprovedActivityNamesForCriteria = (criteriaId) => {
+            const config = baseScoreResult.value?.config || [];
+            const names = [];
+            activities.value.forEach((act, index) => {
+                if (act.enabled === false) return;
+                const optionIndex = config[index];
+                if (optionIndex === undefined || optionIndex === -1) return;
+                const assignedOption = act.options && act.options[optionIndex];
+                if (assignedOption && assignedOption.criteriaId === criteriaId) names.push(act.name);
+            });
+            return names;
+        };
+        const getApprovedActivityTooltip = (criteriaId) => {
+            const names = getApprovedActivityNamesForCriteria(criteriaId);
+            return names.length ? `Hoạt động đã được duyệt theo tiêu chí này: ${names.join(' · ')}` : '';
+        };
+
+        const openAssumedCriteriaModal = () => {
+            assumedCriteriaSearch.value = '';
+            showAssumedCriteriaModal.value = true;
+        };
+        const closeAssumedCriteriaModal = () => {
+            showAssumedCriteriaModal.value = false;
+        };
+
         const addAssumedCriteria = (criterion) => {
             if (!criterion || !CRITERIA_MAP[criterion.id] || assumedCriteriaIds.value.includes(criterion.id)) return;
             assumedCriteriaIds.value.push(criterion.id);
@@ -1562,9 +1638,12 @@ createApp({
             showAdvice.value = false;
         };
         
-        const getFilteredCriteriaOptions = (query) => {
-            let q = removeAccents(query);
-            return FLAT_CRITERIA.filter(i => i.searchKey.includes(q)).slice(0, 15);
+        // limit=0 trả về toàn bộ kết quả; dùng cho cửa sổ chọn mục tiêu.
+        // Mặc định vẫn giới hạn 15 kết quả cho ô tìm tiêu chí khi thêm hoạt động.
+        const getFilteredCriteriaOptions = (query, limit = 15) => {
+            const q = removeAccents(query);
+            const matches = FLAT_CRITERIA.filter(i => i.searchKey.includes(q));
+            return limit > 0 ? matches.slice(0, limit) : matches;
         };
         
         const selectCriteriaForOption = (opt, tc) => { 
@@ -1642,10 +1721,11 @@ createApp({
             authEmail, authPassword, authBusy, authError, authInfo, saveState,
             setAuthMode, submitAuth, sendPasswordReset, retryLoadData, logout,
             categories, activities, testActivity, showAdvice, adviceResult, toast, baseScoreResult, openCategories,
-            assumedCriteriaIds, assumedCriteriaSearch, showAssumedCriteriaMenu, showAssumedCriteriaDropdown,
-            addAssumedCriteria, removeAssumedCriteria,
+            assumedCriteriaIds, assumedCriteriaSearch, showAssumedCriteriaModal,
+            openAssumedCriteriaModal, closeAssumedCriteriaModal, addAssumedCriteria, removeAssumedCriteria,
             editingIndex, scoreRank, rankBadgeClass, activityFilter, filteredActivities, toggleActivity,
             getCatScore, getGroupScore, getCriteriaScore, getCriteriaName, getCriteriaMaxPoints,
+            getApprovedActivityNamesForCriteria, getApprovedActivityTooltip,
             getFilteredCriteriaOptions, selectCriteriaForOption, clearSearchOption, addTestOption, removeTestOption,
             runAdvice, commitActivity, editActivity, cancelEdit, removeActivity, confirmReset, exportJSON, handleFileImport
         };
