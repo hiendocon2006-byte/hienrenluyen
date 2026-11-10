@@ -260,6 +260,65 @@
                             </button>
                         </div>
 
+                        <!-- Tiêu chí giả định đã được duyệt / mục tiêu cuối kỳ -->
+                        <div class="rounded-xl border border-violet-200 bg-violet-50/60 p-3 space-y-3">
+                            <button type="button" @click="showAssumedCriteriaMenu = !showAssumedCriteriaMenu"
+                                    class="w-full flex items-center justify-between gap-3 text-left">
+                                <span class="flex items-center gap-2 text-sm font-bold text-violet-900">
+                                    <i class="fa-solid fa-bullseye text-violet-600"></i>
+                                    Tiêu chí mặc định được duyệt / mục tiêu cuối kỳ
+                                    <span class="rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-800">{{ assumedCriteriaIds.length }}</span>
+                                </span>
+                                <i class="fa-solid fa-chevron-down text-xs text-violet-600 transition-transform"
+                                   :class="showAssumedCriteriaMenu ? 'rotate-180' : ''"></i>
+                            </button>
+                            <div v-if="showAssumedCriteriaMenu" class="space-y-3">
+                                <p class="text-xs leading-relaxed text-violet-900/80">
+                                    Các tiêu chí này chỉ được giả định đã đạt trong phần phân tích để tính giới hạn điểm; không cộng vào tổng điểm rèn luyện hiện tại.
+                                </p>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa-solid fa-magnifying-glass text-violet-400"></i>
+                                    </div>
+                                    <input v-model="assumedCriteriaSearch" type="text"
+                                           @focus="showAssumedCriteriaDropdown = true"
+                                           @input="showAssumedCriteriaDropdown = true"
+                                           @keydown.esc="showAssumedCriteriaDropdown = false"
+                                           class="w-full rounded-lg border border-violet-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-violet-400"
+                                           placeholder="Tìm mã hoặc tên tiêu chí muốn mặc định đạt...">
+                                    <div v-if="showAssumedCriteriaDropdown" class="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl">
+                                        <div v-if="getFilteredCriteriaOptions(assumedCriteriaSearch).length === 0" class="p-3 text-center text-sm text-slate-500">
+                                            Không tìm thấy tiêu chí phù hợp.
+                                        </div>
+                                        <button v-for="tc in getFilteredCriteriaOptions(assumedCriteriaSearch)" :key="tc.id"
+                                                type="button" @click="addAssumedCriteria(tc)"
+                                                :disabled="assumedCriteriaIds.includes(tc.id)"
+                                                class="w-full rounded-lg p-2.5 text-left flex items-center justify-between gap-3 hover:bg-violet-50 disabled:bg-slate-50 disabled:cursor-default">
+                                            <span class="min-w-0">
+                                                <span class="block text-[10px] font-bold uppercase text-slate-400">{{ tc.catName }}</span>
+                                                <span class="block text-sm font-semibold text-slate-800"><span class="text-violet-700">[{{ tc.id }}]</span> {{ tc.name }}</span>
+                                            </span>
+                                            <span class="shrink-0 rounded px-2 py-1 text-xs font-bold"
+                                                  :class="assumedCriteriaIds.includes(tc.id) ? 'bg-slate-100 text-slate-500' : 'bg-violet-100 text-violet-800'">
+                                                {{ assumedCriteriaIds.includes(tc.id) ? 'Đã chọn' : '+' + tc.maxPoints + 'đ' }}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div v-if="assumedCriteriaIds.length" class="flex flex-wrap gap-2">
+                                    <div v-for="criteriaId in assumedCriteriaIds" :key="criteriaId"
+                                         class="flex max-w-full items-center gap-2 rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-xs text-violet-900">
+                                        <span class="min-w-0"><strong>[{{ criteriaId }}]</strong> {{ getCriteriaName(criteriaId) }}</span>
+                                        <button type="button" @click="removeAssumedCriteria(criteriaId)"
+                                                class="shrink-0 text-violet-500 hover:text-red-600" :aria-label="'Bỏ tiêu chí ' + criteriaId">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <p v-else class="text-xs text-slate-500">Chưa chọn tiêu chí mặc định nào.</p>
+                            </div>
+                        </div>
+
                         <div class="flex flex-col sm:flex-row gap-3 pt-2">
                             <button @click="runAdvice" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-code-compare"></i> Phân Tích
@@ -303,7 +362,7 @@
                                 <!-- Không tăng điểm: chỉ nêu kết luận và hoạt động đang chiếm tiêu chí -->
                                 <div v-if="scenario.diff <= 0" class="rounded-lg border border-amber-100 bg-amber-50/50 p-3 space-y-2">
                                     <div v-if="scenario.duplicateAssignments && scenario.duplicateAssignments.length > 0">
-                                        <div class="text-xs font-bold uppercase tracking-wide text-amber-800 mb-2">Các tiêu chí đã được hoạt động khác sử dụng</div>
+                                        <div class="text-xs font-bold uppercase tracking-wide text-amber-800 mb-2">Hoạt động đang sử dụng tiêu chí liên quan</div>
                                         <div v-for="(duplicate, idx) in scenario.duplicateAssignments"
                                              :key="scenario.key + '-duplicate-' + idx"
                                              class="flex items-start gap-2 text-sm text-slate-800 py-1">
@@ -317,24 +376,20 @@
                                             </p>
                                         </div>
                                     </div>
-                                    <p v-else class="text-sm text-slate-700">
-                                        Không có hoạt động nào đang được phân bổ các tiêu chí đã chọn. Các tiêu chí này không làm tăng tổng điểm do giới hạn điểm của nhóm hoặc mục tương ứng.
+                                    <div v-if="scenario.assumedConflicts && scenario.assumedConflicts.length > 0" class="space-y-1">
+                                        <div v-for="criteriaId in scenario.assumedConflicts" :key="scenario.key + '-assumed-' + criteriaId"
+                                             class="flex items-start gap-2 text-sm text-slate-800 py-1">
+                                            <i class="fa-solid fa-bullseye text-violet-600 mt-1"></i>
+                                            <p>Tiêu chí <strong class="text-violet-700">[{{ criteriaId }}]</strong> {{ getCriteriaName(criteriaId) }} đã được m chọn mặc định ở mục tiêu cuối kỳ.</p>
+                                        </div>
+                                    </div>
+                                    <p v-if="(!scenario.duplicateAssignments || scenario.duplicateAssignments.length === 0) && (!scenario.assumedConflicts || scenario.assumedConflicts.length === 0)" class="text-sm text-slate-700">
+                                        Không có hoạt động nào đang sử dụng trực tiếp các tiêu chí đã chọn. Điểm không tăng do giới hạn điểm của nhóm hoặc mục tương ứng.
                                     </p>
                                 </div>
 
                                 <!-- Có tăng điểm: chỉ hiển thị thông tin cần để ra quyết định -->
                                 <template v-else>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div class="rounded-lg bg-slate-50 p-3">
-                                            <div class="text-xs text-slate-500 font-semibold">Điểm trước khi thêm</div>
-                                            <div class="text-2xl font-black text-slate-800">{{ scenario.baseScore }}/100</div>
-                                        </div>
-                                        <div class="rounded-lg bg-emerald-50 p-3">
-                                            <div class="text-xs text-emerald-700 font-semibold">Điểm sau khi thêm</div>
-                                            <div class="text-2xl font-black text-emerald-700">{{ scenario.newScore }}/100</div>
-                                        </div>
-                                    </div>
-
                                     <div class="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
                                         <div class="text-xs uppercase tracking-wide font-bold text-indigo-700 mb-1">Hoạt động mới được phân vào</div>
                                         <div v-if="scenario.newCriteriaId" class="text-sm font-bold text-indigo-900">
@@ -720,6 +775,11 @@ createApp({
     setup() {
         const categories = ref(ALL_CATEGORIES);
         const activities = ref([]);
+        // Các tiêu chí giả định đã đạt/mục tiêu cuối kỳ: chỉ dùng trong phân tích, không cộng vào điểm thật.
+        const assumedCriteriaIds = ref([]);
+        const assumedCriteriaSearch = ref('');
+        const showAssumedCriteriaMenu = ref(false);
+        const showAssumedCriteriaDropdown = ref(false);
         const openCategories = ref({ c1: true, c2: true, c3: false, c4: false, c5: false });
         
         // Trạng thái bộ lọc
@@ -738,6 +798,7 @@ createApp({
         const authInfo = ref('');
         const saveState = ref('saved');
         let saveTimer = null;
+        let assumedCriteriaSaveTimer = null;
         let authLoadToken = 0;
         
         const editingIndex = ref(null);
@@ -845,8 +906,12 @@ createApp({
                 const legacyMigrationKey = 'drl_firebase_legacy_migrated';
                 const legacyMigrationDone = localStorage.getItem(legacyMigrationKey);
                 if (snapshot.exists) {
-                    const stored = snapshot.data().activities;
+                    const userData = snapshot.data() || {};
+                    const stored = userData.activities;
                     activities.value = Array.isArray(stored) ? stored : [];
+                    assumedCriteriaIds.value = Array.isArray(userData.assumedCriteriaIds)
+                        ? [...new Set(userData.assumedCriteriaIds.filter(id => CRITERIA_MAP[id]))]
+                        : [];
                     if (!legacyMigrationDone) localStorage.setItem(legacyMigrationKey, user.uid);
                 } else {
                     let localActivities = [];
@@ -865,9 +930,12 @@ createApp({
                         }
                     }
                     activities.value = localActivities;
-                    if (localActivities.length) {
-                        await docRef.set({ activities: localActivities, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    }
+                    assumedCriteriaIds.value = [];
+                    await docRef.set({
+                        activities: localActivities,
+                        assumedCriteriaIds: [],
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
                     if (!legacyMigrationDone) localStorage.setItem(legacyMigrationKey, user.uid);
                 }
                 if (token !== authLoadToken || !currentUser.value || currentUser.value.uid !== user.uid) return;
@@ -888,9 +956,15 @@ createApp({
             const user = currentUser.value;
             if (!user || !dataLoaded.value || !firestoreDb) return;
             saveState.value = 'saving';
+            if (assumedCriteriaSaveTimer) { clearTimeout(assumedCriteriaSaveTimer); assumedCriteriaSaveTimer = null; }
             const payload = JSON.parse(JSON.stringify(activities.value));
+            const assumedPayload = [...assumedCriteriaIds.value];
             try {
-                await saveDocRef(user.uid).set({ activities: payload, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+                await saveDocRef(user.uid).set({
+                    activities: payload,
+                    assumedCriteriaIds: assumedPayload,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
                 if (currentUser.value && currentUser.value.uid === user.uid) saveState.value = 'saved';
             } catch (error) {
                 if (currentUser.value && currentUser.value.uid === user.uid) saveState.value = 'error';
@@ -915,11 +989,15 @@ createApp({
                 dataLoaded.value = false;
                 dataLoadError.value = '';
                 if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+                if (assumedCriteriaSaveTimer) { clearTimeout(assumedCriteriaSaveTimer); assumedCriteriaSaveTimer = null; }
                 if (user) {
                     loadUserData(user);
                 } else {
                     authLoadToken++;
                     activities.value = [];
+                    assumedCriteriaIds.value = [];
+                    assumedCriteriaSearch.value = '';
+                    showAssumedCriteriaDropdown.value = false;
                     authReady.value = true;
                 }
             });
@@ -944,10 +1022,33 @@ createApp({
             }, 700);
         }, { deep: true, flush: 'sync' });
 
+        watch(assumedCriteriaIds, (newVal) => {
+            if (!currentUser.value || !dataLoaded.value || !firestoreDb) return;
+            const uid = currentUser.value.uid;
+            const payload = [...newVal];
+            saveState.value = 'saving';
+            if (assumedCriteriaSaveTimer) clearTimeout(assumedCriteriaSaveTimer);
+            assumedCriteriaSaveTimer = setTimeout(async () => {
+                if (!currentUser.value || currentUser.value.uid !== uid || !dataLoaded.value) return;
+                try {
+                    await saveDocRef(uid).set({
+                        assumedCriteriaIds: payload,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                    if (currentUser.value && currentUser.value.uid === uid) saveState.value = 'saved';
+                } catch (error) {
+                    if (currentUser.value && currentUser.value.uid === uid) saveState.value = 'error';
+                    triggerToast('Không lưu được danh sách tiêu chí mục tiêu lên đám mây.');
+                    console.error('Không lưu được tiêu chí mặc định:', error);
+                }
+            }, 700);
+        }, { deep: true, flush: 'sync' });
+
         onMounted(() => {});
 
-        const evaluateConfig = (config, acts) => {
+        const evaluateConfig = (config, acts, assumedIds = []) => {
             let criteriaAssigned = {};
+            for (const criteriaId of assumedIds) criteriaAssigned[criteriaId] = true;
             for (let i = 0; i < acts.length; i++) {
                 let optIdx = config[i];
                 if (optIdx !== undefined && optIdx !== -1 && acts[i].options && acts[i].options[optIdx]) {
@@ -998,9 +1099,11 @@ createApp({
         // includeDisabled=true chỉ dùng với danh sách mô phỏng đã được caller chọn lọc.
         // Ở kịch bản 2, caller chỉ đưa vào các hoạt động tắt có tiêu chí trùng với hoạt động mới.
         // Không thay đổi trạng thái enabled trong dữ liệu gốc của người dùng.
-        const getOptimalScore = (acts, includeDisabled = false) => {
+        const getOptimalScore = (acts, includeDisabled = false, assumedIds = []) => {
+            const validAssumedIds = [...new Set((assumedIds || []).filter(id => CRITERIA_MAP[id]))];
             if (acts.length === 0) {
-                return { score: 0, config: [], breakdown: { categories: {}, groups: {}, criteria: {} } };
+                const emptyResult = evaluateConfig([], [], validAssumedIds);
+                return { score: emptyResult.score, config: [], breakdown: emptyResult.breakdown };
             }
 
             const isEligible = (act) => includeDisabled || act.enabled !== false;
@@ -1047,8 +1150,8 @@ createApp({
             let bestBreakdown = {};
 
             // Tạo nghiệm tham lam ban đầu để có mốc điểm tốt sớm, giúp cắt bỏ các nhánh kém hơn.
-            const greedyCriteria = new Set();
-            const greedyCounts = new Map();
+            const greedyCriteria = new Set(validAssumedIds);
+            const greedyCounts = new Map(validAssumedIds.map(id => [id, 1]));
             const greedySearchConfig = [];
 
             for (const act of searchActs) {
@@ -1090,12 +1193,12 @@ createApp({
             }
 
             bestConfig = toOriginalConfig(greedySearchConfig);
-            const greedyResult = evaluateConfig(bestConfig, acts);
+            const greedyResult = evaluateConfig(bestConfig, acts, validAssumedIds);
             maxTotal = greedyResult.score;
             bestBreakdown = greedyResult.breakdown;
 
-            const selectedCounts = new Map();
-            const selectedCriteria = new Set();
+            const selectedCounts = new Map(validAssumedIds.map(id => [id, 1]));
+            const selectedCriteria = new Set(validAssumedIds);
             const visitedStates = Array.from({ length: searchActs.length + 1 }, () => new Set());
 
             const getOptimisticUpperBound = (idx) => {
@@ -1122,7 +1225,7 @@ createApp({
 
                 if (idx === searchActs.length) {
                     const currentConfig = toOriginalConfig(currentSearchConfig);
-                    const result = evaluateConfig(currentConfig, acts);
+                    const result = evaluateConfig(currentConfig, acts, validAssumedIds);
                     if (result.score > maxTotal) {
                         maxTotal = result.score;
                         bestConfig = currentConfig;
@@ -1228,6 +1331,7 @@ createApp({
             if (cleanOptions.length === 0) return triggerToast("⚠️ Vui lòng chọn ít nhất 1 tiêu chí!");
 
             const editIndex = editingIndex.value;
+            const assumedIdsForAnalysis = [...assumedCriteriaIds.value];
             const analysisActivities = activities.value.map((act, index) => ({
                 ...act,
                 _analysisKey: `existing-${index}`
@@ -1249,13 +1353,17 @@ createApp({
                 ...analysisActivities.filter((act, index) => index !== editIndex && act.enabled !== false),
                 candidateActivity
             ];
-            const notApprovedBefore = getOptimalScore(activeBeforeActs);
-            const notApprovedAfter = getOptimalScore(activeAfterActs);
+            const notApprovedBefore = getOptimalScore(activeBeforeActs, false, assumedIdsForAnalysis);
+            const notApprovedAfter = getOptimalScore(activeAfterActs, false, assumedIdsForAnalysis);
 
             // Kịch bản 2: chỉ giả định được duyệt những hoạt động đang tắt có ít nhất
             // một tiêu chí trùng với các tiêu chí mà người dùng chọn cho hoạt động mới.
             // Những hoạt động tắt không trùng vẫn bị loại khỏi phép tính.
             const candidateCriteriaIds = new Set(cleanOptions.map(option => option.criteriaId));
+            const candidateGroupIds = new Set([...candidateCriteriaIds]
+                .map(id => CRITERIA_MAP[id]?.groupId).filter(Boolean));
+            const candidateCategoryIds = new Set([...candidateCriteriaIds]
+                .map(id => CRITERIA_MAP[id]?.catId).filter(Boolean));
             const matchingDisabledActs = analysisActivities.filter((act, index) =>
                 index !== editIndex &&
                 act.enabled === false &&
@@ -1271,8 +1379,8 @@ createApp({
                 ...matchingDisabledActs,
                 candidateActivity
             ];
-            const matchedBefore = getOptimalScore(matchedBeforeActs, true);
-            const matchedAfter = getOptimalScore(matchedAfterActs, true);
+            const matchedBefore = getOptimalScore(matchedBeforeActs, true, assumedIdsForAnalysis);
+            const matchedAfter = getOptimalScore(matchedAfterActs, true, assumedIdsForAnalysis);
 
             const getAssignedCriteriaId = (act, result, index) => {
                 const optionIndex = result.config[index];
@@ -1345,6 +1453,12 @@ createApp({
                     newCriteriaId,
                     newCriteriaMax: getCriteriaMaxPoints(newCriteriaId),
                     duplicateAssignments: collectDuplicateAssignments(beforeActs, beforeResult),
+                    assumedConflicts: assumedIdsForAnalysis.filter(id => {
+                        const assumedCriterion = CRITERIA_MAP[id];
+                        return candidateCriteriaIds.has(id) ||
+                            (assumedCriterion && candidateGroupIds.has(assumedCriterion.groupId)) ||
+                            (assumedCriterion && candidateCategoryIds.has(assumedCriterion.catId));
+                    }),
                     reassignments: buildReassignments(beforeActs, beforeResult, afterActs, afterResult)
                 };
             };
@@ -1437,6 +1551,16 @@ createApp({
         
         const getCriteriaName = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].name : "Không rõ";
         const getCriteriaMaxPoints = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].maxPoints : 0;
+
+        const addAssumedCriteria = (criterion) => {
+            if (!criterion || !CRITERIA_MAP[criterion.id] || assumedCriteriaIds.value.includes(criterion.id)) return;
+            assumedCriteriaIds.value.push(criterion.id);
+            showAdvice.value = false;
+        };
+        const removeAssumedCriteria = (criteriaId) => {
+            assumedCriteriaIds.value = assumedCriteriaIds.value.filter(id => id !== criteriaId);
+            showAdvice.value = false;
+        };
         
         const getFilteredCriteriaOptions = (query) => {
             let q = removeAccents(query);
@@ -1466,20 +1590,32 @@ createApp({
         
         const confirmReset = () => { if(confirm("Xóa toàn bộ danh sách hoạt động?")) { activities.value = []; showAdvice.value = false; cancelEdit(); triggerToast("Đã làm sạch dữ liệu!"); }};
         const exportJSON = () => {
+            const backup = {
+                version: 2,
+                activities: activities.value,
+                assumedCriteriaIds: assumedCriteriaIds.value
+            };
             const el = document.createElement('a');
-            el.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activities.value)));
+            el.setAttribute("href", "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup)));
             el.setAttribute("download", `drl_hust_${Date.now()}.json`);
             el.click();
         };
         const handleFileImport = (e) => {
             const file = e.target.files[0]; if(!file) return;
             const r = new FileReader();
-            r.onload = ev => { 
+            r.onload = ev => {
                 try {
-                    let parsed = JSON.parse(ev.target.result);
-                    parsed.forEach((a, i) => { if(!a.id) a.id = Date.now() + Math.random() + i; });
-                    activities.value = parsed; 
-                    triggerToast("Nhập dữ liệu thành công!"); cancelEdit(); 
+                    const parsed = JSON.parse(ev.target.result);
+                    const importedActivities = Array.isArray(parsed)
+                        ? parsed
+                        : (parsed && Array.isArray(parsed.activities) ? parsed.activities : null);
+                    if (!importedActivities) throw new Error('Invalid backup format');
+                    importedActivities.forEach((a, i) => { if(!a.id) a.id = Date.now() + Math.random() + i; });
+                    activities.value = importedActivities;
+                    assumedCriteriaIds.value = Array.isArray(parsed.assumedCriteriaIds)
+                        ? [...new Set(parsed.assumedCriteriaIds.filter(id => CRITERIA_MAP[id]))]
+                        : [];
+                    triggerToast("Nhập dữ liệu thành công!"); cancelEdit();
                 } catch (err) {
                     triggerToast("Lỗi định dạng file JSON!");
                 }
@@ -1506,6 +1642,8 @@ createApp({
             authEmail, authPassword, authBusy, authError, authInfo, saveState,
             setAuthMode, submitAuth, sendPasswordReset, retryLoadData, logout,
             categories, activities, testActivity, showAdvice, adviceResult, toast, baseScoreResult, openCategories,
+            assumedCriteriaIds, assumedCriteriaSearch, showAssumedCriteriaMenu, showAssumedCriteriaDropdown,
+            addAssumedCriteria, removeAssumedCriteria,
             editingIndex, scoreRank, rankBadgeClass, activityFilter, filteredActivities, toggleActivity,
             getCatScore, getGroupScore, getCriteriaScore, getCriteriaName, getCriteriaMaxPoints,
             getFilteredCriteriaOptions, selectCriteriaForOption, clearSearchOption, addTestOption, removeTestOption,
