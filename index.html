@@ -468,13 +468,13 @@
                 </section>
             </div>
 
-            <!-- CỘT PHẢI: Bảng Giới Hạn Điểm (col-span-1) -->
+            <!-- CỘT PHẢI: BẢNG TIÊU CHÍ (col-span-1) -->
             <div class="lg:col-span-1 space-y-4 flex flex-col h-full">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 max-h-[85vh] sticky top-[80px]">
                     
                     <div class="p-4 bg-slate-800 text-white flex justify-between items-center shrink-0">
                         <h3 class="font-bold text-base flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-sky-400"></i> Bảng Giới Hạn Điểm
+                            <i class="fa-solid fa-chart-pie text-sky-400"></i> BẢNG TIÊU CHÍ
                         </h3>
                     </div>
 
@@ -1617,7 +1617,7 @@ createApp({
         };
         const getApprovedActivityTooltip = (criteriaId) => {
             const names = getApprovedActivityNamesForCriteria(criteriaId);
-            return names.length ? `Hoạt động đã được duyệt theo tiêu chí này: ${names.join(' · ')}` : '';
+            return names.length ? `Hoạt động đã được duyệt: ${names.join(' · ')}` : '';
         };
 
         const openAssumedCriteriaModal = () => {
