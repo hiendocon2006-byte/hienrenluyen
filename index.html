@@ -358,7 +358,7 @@ html, body {
 
                     <div class="space-y-5">
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Tên hoạt động:</label>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Tên hoạt động <span class="font-normal text-slate-500">(chỉ bắt buộc khi thêm vào danh sách)</span>:</label>
                             <input v-model="testActivity.name" type="text" 
                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
                                    placeholder="VD: Tham gia Mùa hè xanh, NCKH cấp trường...">
@@ -647,7 +647,7 @@ html, body {
 
             <!-- CỘT PHẢI: BẢNG TIÊU CHÍ (col-span-1) -->
             <div class="dashboard-sidebar min-w-0">
-                <div class="glass-panel rounded-[28px] overflow-hidden flex flex-col min-h-0 lg:h-[calc(100vh-7rem)] lg:min-h-[520px] lg:max-h-none lg:flex-none lg:sticky lg:top-24">
+                <div class="glass-panel rounded-[28px] overflow-hidden flex flex-col min-h-0 lg:h-auto lg:max-h-[calc(100vh-7rem)] lg:min-h-0 lg:flex-none lg:sticky lg:top-24">
                     
                     <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex justify-between items-center shrink-0">
                         <h3 class="font-bold text-base flex items-center gap-2">
@@ -655,7 +655,7 @@ html, body {
                         </h3>
                     </div>
 
-                    <div class="criteria-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-4 bg-slate-50/65">
+                    <div class="criteria-scroll min-h-0 flex-none max-h-[70vh] overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-4 bg-slate-50/65 lg:max-h-[calc(100vh-11rem)]">
                         <div v-for="cat in categories" :key="cat.id" 
                              class="bg-white/95 border border-white rounded-2xl overflow-hidden shadow-sm ring-1 ring-slate-200/70">
                             
@@ -1568,8 +1568,7 @@ createApp({
         };
 
         const runAdvice = () => {
-            if (!testActivity.value.name.trim()) return triggerToast("⚠️ Nhập tên hoạt động trước!");
-
+            // Phân tích chỉ cần tiêu chí; tên chỉ bắt buộc khi lưu hoạt động vào danh sách.
             const cleanOptions = testActivity.value.options
                 .filter(option => option.criteriaId)
                 .map(option => ({ criteriaId: option.criteriaId }));
@@ -1586,7 +1585,9 @@ createApp({
                     ? activities.value[editIndex].id
                     : `analysis-${Date.now()}-${Math.random()}`,
                 _analysisKey: 'new-candidate',
-                name: testActivity.value.name.trim(),
+                name: testActivity.value.name.trim() || (editIndex !== null
+                    ? (activities.value[editIndex]?.name || 'Hoạt động đang phân tích')
+                    : 'Hoạt động đang phân tích'),
                 options: cleanOptions,
                 enabled: true
             };
