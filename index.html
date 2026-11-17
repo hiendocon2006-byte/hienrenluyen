@@ -138,19 +138,58 @@ html, body {
         body::before { top: 28%; left: -13rem; background: rgba(99, 102, 241, .22); }
         body::after { right: -13rem; bottom: 8%; background: rgba(45, 212, 191, .20); }
         .glass-panel {
-            background: rgba(255, 255, 255, .82);
-            border: 1px solid rgba(255, 255, 255, .86);
-            box-shadow: 0 16px 44px rgba(15, 23, 42, .06), 0 2px 8px rgba(15, 23, 42, .035);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+            position: relative;
+            background: linear-gradient(135deg, rgba(255,255,255,.88), rgba(255,255,255,.68));
+            border: 1px solid rgba(255,255,255,.94);
+            box-shadow: 0 22px 60px rgba(30,41,59,.10), inset 0 1px 0 rgba(255,255,255,.95);
+            backdrop-filter: blur(24px) saturate(145%);
+            -webkit-backdrop-filter: blur(24px) saturate(145%);
         }
         .app-card {
-            border: 1px solid rgba(226, 232, 240, .9);
-            box-shadow: 0 10px 30px rgba(15, 23, 42, .045);
-            transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+            position: relative;
+            background: linear-gradient(145deg, rgba(255,255,255,.94), rgba(248,250,255,.82));
+            border: 1px solid rgba(255,255,255,.98);
+            box-shadow: 0 18px 48px rgba(30,41,59,.075), 0 2px 8px rgba(30,41,59,.035), inset 0 1px 0 rgba(255,255,255,.95);
+            backdrop-filter: blur(20px) saturate(135%);
+            -webkit-backdrop-filter: blur(20px) saturate(135%);
+            transition: box-shadow .22s ease, transform .22s ease, border-color .22s ease;
         }
-        .app-card:hover { box-shadow: 0 16px 34px rgba(15, 23, 42, .075); }
+        .app-card:hover { box-shadow: 0 22px 54px rgba(30,41,59,.10), 0 4px 12px rgba(30,41,59,.04); }
+        .dashboard-grid { display:grid; grid-template-columns:minmax(0,1fr); align-items:start; gap:1.35rem; }
+        .dashboard-primary, .dashboard-sidebar { min-width:0; width:100%; }
+        .dashboard-primary { display:flex; flex-direction:column; gap:1.35rem; }
+        .dashboard-sidebar { position:relative; z-index:0; }
+        .search-dropdown {
+            position:absolute; left:0; right:0; top:calc(100% + 8px); width:100%; max-width:100%;
+            max-height:min(56vh, 26rem); overflow-y:auto; overscroll-behavior:contain;
+            border:1px solid rgba(199,210,254,.9); border-radius:1.15rem;
+            background:rgba(255,255,255,.97); backdrop-filter:blur(22px) saturate(150%);
+            -webkit-backdrop-filter:blur(22px) saturate(150%);
+            box-shadow:0 24px 64px rgba(15,23,42,.22), 0 3px 12px rgba(15,23,42,.08);
+        }
+        .score-capsule { box-shadow:0 14px 34px rgba(15,23,42,.22), inset 0 1px 0 rgba(255,255,255,.12); }
+        .score-step { border:1px solid rgba(203,213,225,.78); border-radius:1rem; background:rgba(255,255,255,.72); padding:.75rem .85rem; min-width:0; }
+        .score-step-current { background:linear-gradient(135deg,rgba(224,231,255,.8),rgba(255,255,255,.88)); border-color:rgba(165,180,252,.8); }
+        .score-step-result { background:linear-gradient(135deg,rgba(209,250,229,.82),rgba(255,255,255,.9)); border-color:rgba(110,231,183,.8); }
+        .glass-action { box-shadow:0 8px 22px rgba(15,23,42,.10); transition:transform .18s ease, box-shadow .18s ease, filter .18s ease; }
+        .glass-action:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(15,23,42,.14); filter:saturate(1.08); }
         .criteria-scroll { scrollbar-gutter: stable; }
+        @media (min-width: 1100px) {
+            .dashboard-grid { grid-template-columns:minmax(0,1.82fr) minmax(320px,.92fr); gap:1.5rem; }
+        }
+        @media (max-width: 1099px) {
+            .dashboard-grid { grid-template-columns:minmax(0,1fr); }
+            .dashboard-sidebar > .glass-panel { position:static !important; height:auto !important; min-height:0 !important; max-height:none !important; }
+            .criteria-scroll { max-height: min(70vh, 720px); }
+        }
+        @media (min-width: 1100px) and (max-width: 1350px) {
+            .dashboard-grid { grid-template-columns:minmax(0,1.6fr) minmax(300px,.9fr); gap:1.1rem; }
+        }
+        @media (max-width: 640px) {
+            .glass-panel, .app-card { border-radius:1.25rem; }
+            .search-dropdown { max-height: min(52vh, 22rem); }
+            .score-step { padding:.65rem .7rem; }
+        }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
         }
@@ -172,12 +211,12 @@ html, body {
         <div class="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-200 p-7 sm:p-9">
             <img src="./favicon.png" alt="Logo" class="h-10 w-auto max-w-[160px] object-contain">
             <h1 class="text-2xl font-black text-slate-900">Điểm Rèn Luyện<br>by SiviFal</h1>
-            <p class="text-slate-600 mt-2">Web đã có phần đăng nhập, nhưng chưa được kết nối với dự án Firebase của m.</p>
+            <p class="text-slate-600 mt-2">Web đã có phần đăng nhập, nhưng chưa được kết nối với dự án Firebase.</p>
             <div class="mt-5 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900 space-y-2">
                 <p class="font-bold">Cần thiết lập một lần:</p>
                 <p>1. Tạo dự án Firebase và thêm ứng dụng Web.</p>
                 <p>2. Bật Authentication bằng Email/Password và tạo Cloud Firestore.</p>
-                <p>3. Trong file <code>index.html</code>, tìm <code>const firebaseConfig</code> và thay các giá trị <code>PASTE_...</code> bằng cấu hình Firebase của m.</p>
+                <p>3. Trong file <code>index.html</code>, tìm <code>const firebaseConfig</code> và thay các giá trị <code>PASTE_...</code> bằng cấu hình Firebase của dự án.</p>
                 <p>4. Cài quy tắc Firestore theo file <code>firestore.rules.txt</code> đi kèm bộ tải xuống.</p>
             </div>
             <p class="text-xs text-slate-500 mt-5">Không đặt mật khẩu, khóa tài khoản dịch vụ (service account) hoặc thông tin bí mật nào vào file HTML.</p>
@@ -196,7 +235,7 @@ html, body {
         <div class="bg-white rounded-2xl border border-slate-200 shadow p-8 text-center max-w-md w-full">
             <template v-if="!dataLoadError">
                 <i class="fa-solid fa-cloud-arrow-down fa-bounce text-3xl text-indigo-600 mb-4"></i>
-                <h2 class="font-bold text-slate-800">Đang tải dữ liệu của m...</h2>
+                <h2 class="font-bold text-slate-800">Đang tải dữ liệu tài khoản...</h2>
                 <p class="text-sm text-slate-500 mt-2">Dữ liệu hoạt động được lưu riêng cho tài khoản <strong>{{ currentUser.email }}</strong>.</p>
             </template>
             <template v-else>
@@ -250,9 +289,9 @@ html, body {
     <div v-else>
 
         <!-- Header -->
-        <header class="glass-panel mx-3 mt-3 rounded-[24px] sticky top-3 z-50 overflow-hidden sm:mx-5 lg:mx-6">
+        <header class="glass-panel mx-3 mt-3 rounded-[28px] sticky top-3 z-50 overflow-hidden sm:mx-5 lg:mx-6">
             <div class="w-full px-4 sm:px-6 py-3 sm:py-3.5 flex flex-wrap justify-between items-center gap-4">
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center gap-3 min-w-0">
                  <img src="./favicon.png" alt="Logo" class="h-16 w-16 sm:h-20 sm:w-20 object-contain shrink-0">
                     <div>
                         <h1 class="font-extrabold text-lg sm:text-xl text-slate-800 tracking-tight leading-tight">
@@ -264,16 +303,16 @@ html, body {
 
                 <div class="flex items-center gap-3">
                     <div class="flex gap-2">
-                        <button @click="exportJSON" class="px-3 py-1.5 flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors border border-slate-300 text-sm font-semibold">
+                        <button @click="exportJSON" class="glass-action px-3.5 py-2 flex items-center gap-1.5 bg-white/75 hover:bg-white text-slate-700 rounded-xl transition-colors border border-white/90 text-sm font-semibold">
                             <i class="fa-solid fa-download"></i> Lưu JSON
                         </button>
-                        <button @click="$refs.fileInput.click()" class="px-3 py-1.5 flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors border border-slate-300 text-sm font-semibold">
+                        <button @click="$refs.fileInput.click()" class="glass-action px-3.5 py-2 flex items-center gap-1.5 bg-white/75 hover:bg-white text-slate-700 rounded-xl transition-colors border border-white/90 text-sm font-semibold">
                             <i class="fa-solid fa-upload"></i> Tải JSON
                         </button>
                         <input type="file" ref="fileInput" @change="handleFileImport" accept=".json" class="hidden">
                     </div>
 
-                    <div class="bg-slate-900 px-4 py-2 rounded-xl flex items-center gap-3 shadow-md">
+                    <div class="score-capsule bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-4 py-2.5 rounded-2xl flex items-center gap-3 shadow-xl border border-white/10">
                         <div class="text-right">
                             <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tổng điểm</div>
                             <div class="text-2xl font-black text-white leading-none">
@@ -300,13 +339,13 @@ html, body {
         </header>
 
         <!-- Main Layout 2 Cột -->
-        <main class="flex-1 w-full px-3 sm:px-5 lg:px-6 py-5 sm:py-6 grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
+        <main class="dashboard-grid flex-1 w-full min-w-0 px-3 sm:px-5 lg:px-6 py-5 sm:py-6">
 
             <!-- CỘT TRÁI: Ô Nhập liệu & Danh Sách Hoạt Động (col-span-2) -->
-            <div class="lg:col-span-2 space-y-6">
+            <div class="dashboard-primary min-w-0">
 
                 <!-- 1. Ô Nhập liệu -->
-                <section class="app-card bg-white/90 backdrop-blur-sm rounded-3xl p-5 sm:p-6">
+                <section class="app-card relative rounded-[28px] p-5 sm:p-6" :style="{ zIndex: testActivity.options.some(opt => opt.showDropdown) ? 90 : 1 }">
                     <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i>
@@ -332,7 +371,7 @@ html, body {
                             </div>
 
                             <transition-group name="list" tag="div" class="space-y-3">
-<div v-for="(opt, idx) in testActivity.options" :key="idx" class="relative group flex flex-wrap sm:flex-nowrap items-start gap-2">                                    
+<div v-for="(opt, idx) in testActivity.options" :key="idx" class="relative group flex min-w-0 flex-wrap sm:flex-nowrap items-start gap-2">                                    
 <div class="relative flex-1 min-w-0 basis-full sm:basis-auto">                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
                                         </div>
@@ -347,7 +386,7 @@ html, body {
                                         </button>
 
                                         <!-- Dropdown -->
-<div v-if="opt.showDropdown" class="absolute left-0 right-0 top-full mt-1 w-full max-w-full bg-white border border-slate-200 rounded-2xl shadow-2xl z-[60] max-h-72 overflow-y-auto p-2 flex flex-col gap-1">
+<div v-if="opt.showDropdown" class="search-dropdown z-[110] p-2 flex flex-col gap-1">
     <div v-if="getFilteredCriteriaOptions(opt.searchQuery).length === 0" class="p-4 text-center text-sm text-slate-500">
                                                 Không tìm thấy tiêu chí phù hợp.
                                             </div>
@@ -385,10 +424,10 @@ html, body {
                         </div>
 
                         <div class="flex flex-col sm:flex-row gap-3 pt-2">
-                            <button @click="runAdvice" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2">
+                            <button @click="runAdvice" class="glass-action flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-colors flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-code-compare"></i> Phân Tích
                             </button>
-                            <button @click="commitActivity" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2">
+                            <button @click="commitActivity" class="glass-action flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-colors flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-floppy-disk"></i> {{ editingIndex !== null ? 'Lưu Thay Đổi' : 'Thêm Vào Danh Sách' }}
                             </button>
                         </div>
@@ -413,14 +452,28 @@ html, body {
                                         </div>
                                         <span class="rounded-full px-3 py-1 text-sm font-black"
                                               :class="scenario.diff > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'">
-                                            {{ scenario.diff > 0 ? '+' : '' }}{{ scenario.diff }} điểm
+                                            {{ scenario.diff > 0 ? '+' : '' }}{{ scenario.diff }} điểm trần
                                         </span>
                                     </div>
-                                    <p v-if="scenario.diff > 0" class="text-sm font-medium text-slate-600">
-                                        Tổng điểm dự kiến:
-                                        <strong class="text-slate-900">{{ scenario.baseScore }}</strong>
-                                        <i class="fa-solid fa-arrow-right mx-1 text-xs text-slate-400"></i>
-                                        <strong class="text-emerald-700">{{ scenario.newScore }}/100</strong>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                                        <div class="score-step score-step-current">
+                                            <div class="text-[10px] font-extrabold uppercase tracking-wide text-indigo-700">Điểm hiện tại</div>
+                                            <div class="mt-1 text-xl font-black tabular-nums text-slate-900">{{ baseScoreResult.score }}<span class="text-xs font-bold text-slate-500">/100</span></div>
+                                            <div class="text-[11px] text-slate-500">Chỉ tính hoạt động đang bật</div>
+                                        </div>
+                                        <div class="score-step">
+                                            <div class="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">Điểm trần trước hoạt động mới</div>
+                                            <div class="mt-1 text-xl font-black tabular-nums text-slate-900">{{ scenario.ceilingBefore }}<span class="text-xs font-bold text-slate-500">/100</span></div>
+                                            <div class="text-[11px] text-slate-500">Theo mục tiêu cuối kỳ và {{ scenario.key === 'matching-approved' ? 'các hoạt động giả định được duyệt' : 'hoạt động đang bật' }}</div>
+                                        </div>
+                                        <div class="score-step score-step-result">
+                                            <div class="text-[10px] font-extrabold uppercase tracking-wide text-emerald-700">Điểm trần sau hoạt động mới</div>
+                                            <div class="mt-1 text-xl font-black tabular-nums text-emerald-800">{{ scenario.ceilingAfter }}<span class="text-xs font-bold text-slate-500">/100</span></div>
+                                            <div class="text-[11px] text-emerald-700">{{ scenario.diff > 0 ? 'Tăng +' + scenario.diff + ' điểm trần' : 'Không làm tăng điểm trần' }}</div>
+                                        </div>
+                                    </div>
+                                    <p class="rounded-xl border border-violet-100 bg-violet-50/70 px-3 py-2 text-xs leading-relaxed text-violet-900">
+                                        Điểm hiện tại chỉ tính các hoạt động đang bật.{{ assumedCriteriaIds.length ? ' ' + assumedCriteriaIds.length + ' tiêu chí mục tiêu cuối kỳ chỉ được dùng làm giả định khi tính điểm trần và xét trùng/giới hạn tiêu chí; không cộng điểm của chúng vào điểm hiện tại.' : ' Tiêu chí mục tiêu cuối kỳ không được cộng vào điểm hiện tại.' }} Kết quả phân tích cho biết hoạt động mới có làm tăng điểm trần hay không.
                                     </p>
                                 </div>
 
@@ -441,15 +494,19 @@ html, body {
                                             </p>
                                         </div>
                                     </div>
-                                    <div v-if="scenario.assumedConflicts && scenario.assumedConflicts.length > 0" class="space-y-1">
-                                        <div v-for="criteriaId in scenario.assumedConflicts" :key="scenario.key + '-assumed-' + criteriaId"
-                                             class="flex items-start gap-2 text-sm text-slate-800 py-1">
+                                    <div v-if="scenario.assumedConflicts && scenario.assumedConflicts.length > 0" class="space-y-2">
+                                        <div class="text-xs font-extrabold uppercase tracking-wide text-violet-800">Tiêu chí mục tiêu cuối kỳ có liên quan</div>
+                                        <div v-for="target in scenario.assumedConflicts" :key="scenario.key + '-assumed-' + target.criteriaId"
+                                             class="flex items-start gap-2 rounded-lg bg-violet-50/70 px-3 py-2 text-sm text-slate-800">
                                             <i class="fa-solid fa-bullseye text-violet-600 mt-1"></i>
-                                            <p>Tiêu chí <strong class="text-violet-700">[{{ criteriaId }}]</strong> {{ getCriteriaName(criteriaId) }} đã được m chọn mặc định ở mục tiêu cuối kỳ.</p>
+                                            <p class="min-w-0">
+                                                <strong class="text-violet-700">[{{ target.criteriaId }}]</strong> {{ getCriteriaName(target.criteriaId) }}
+                                                <span class="block text-xs text-slate-600">Đã nằm trong danh sách mục tiêu cuối kỳ ({{ target.relation }}). Tiêu chí này chỉ ảnh hưởng đến cách phân bổ và điểm trần, không được cộng vào điểm hiện tại.</span>
+                                            </p>
                                         </div>
                                     </div>
                                     <p v-if="(!scenario.duplicateAssignments || scenario.duplicateAssignments.length === 0) && (!scenario.assumedConflicts || scenario.assumedConflicts.length === 0)" class="text-sm text-slate-700">
-                                        Không có hoạt động nào đang sử dụng trực tiếp các tiêu chí đã chọn. Điểm không tăng do giới hạn điểm của nhóm hoặc mục tương ứng.
+                                        Không có hoạt động nào đang sử dụng trực tiếp các tiêu chí đã chọn. Điểm trần không tăng do giới hạn điểm của nhóm hoặc mục tương ứng.
                                     </p>
                                 </div>
 
@@ -492,7 +549,7 @@ html, body {
                 </section>
 
                 <!-- 2. Danh Sách Hoạt Động -->
-                <section class="app-card bg-white/90 backdrop-blur-sm rounded-3xl overflow-hidden">
+                <section class="app-card relative z-0 rounded-[28px] overflow-hidden">
                     <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-list-check text-indigo-600"></i> Danh Sách Hoạt Động ({{ activities.length }})
@@ -597,8 +654,8 @@ html, body {
             </div>
 
             <!-- CỘT PHẢI: BẢNG TIÊU CHÍ (col-span-1) -->
-            <div class="lg:col-span-1 space-y-4 flex flex-col h-full">
-                <div class="glass-panel rounded-3xl overflow-hidden flex flex-col min-h-0 lg:h-[calc(100vh-7rem)] lg:min-h-[520px] lg:max-h-none lg:flex-none lg:sticky lg:top-24">
+            <div class="dashboard-sidebar min-w-0">
+                <div class="glass-panel rounded-[28px] overflow-hidden flex flex-col min-h-0 lg:h-[calc(100vh-7rem)] lg:min-h-[520px] lg:max-h-none lg:flex-none lg:sticky lg:top-24">
                     
                     <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex justify-between items-center shrink-0">
                         <h3 class="font-bold text-base flex items-center gap-2">
@@ -679,7 +736,7 @@ html, body {
 
         <!-- Nút nổi mở cửa sổ tiêu chí mục tiêu -->
         <button v-if="currentUser && dataLoaded" type="button" @click="openAssumedCriteriaModal"
-                class="fixed bottom-5 right-5 z-[70] inline-flex items-center gap-2 rounded-full border border-white/30 bg-violet-700/90 px-4 py-3 text-sm font-bold text-white shadow-2xl shadow-violet-900/25 backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-violet-800 focus:outline-none focus:ring-4 focus:ring-violet-200">
+                class="glass-action fixed bottom-5 right-5 z-[70] inline-flex items-center gap-2 rounded-full border border-white/35 bg-gradient-to-r from-violet-700/95 to-indigo-700/95 px-4 py-3 text-sm font-bold text-white shadow-2xl shadow-violet-900/25 backdrop-blur-2xl transition hover:bg-violet-800 focus:outline-none focus:ring-4 focus:ring-violet-200">
             <i class="fa-solid fa-bullseye"></i>
             <span>Tiêu chí mục tiêu</span>
             <span class="rounded-full bg-white/20 px-2 py-0.5 text-xs">{{ assumedCriteriaIds.length }}</span>
@@ -823,12 +880,21 @@ const firestoreDb = firebaseConfigured ? firebase.firestore() : null;
 
 function removeAccents(str) {
     if (!str) return '';
-    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+    return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+}
+
+// Chuẩn hóa từ khóa tìm kiếm: không phân biệt hoa/thường, dấu tiếng Việt,
+// dấu chấm, dấu phẩy hay các ký tự phân cách khác.
+function normalizeCriteriaSearch(str) {
+    return removeAccents(str)
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .replace(/\s+/g, ' ');
 }
 
 const ALL_CATEGORIES = [
     {
-        id: "c1", name: "Mục 1: Chấp hành pháp luật và quy chế (Tối đa 25đ)", maxPoints: 25,
+        id: "c1", name: "Mục 1: Chấp hành pháp luật và nội quy, quy chế của nhà trường (Tối đa 25đ)", maxPoints: 25,
         groups: [
             { id: "g1.1", name: "Nhóm Chấp hành các quy định của pháp luật", maxPoints: 15, criteria: [
                 { id: "tc1.1.1", name: "Hiểu biết và chấp hành pháp luật của Nhà nước, quy định của nhà trường và nơi cư trú", maxPoints: 6 },
@@ -867,7 +933,7 @@ const ALL_CATEGORIES = [
         ]
     },
     {
-        id: "c3", name: "Mục 3: Trách nhiệm tham gia hoạt động chính trị - xã hội... (Tối đa 20đ)", maxPoints: 20,
+        id: "c3", name: "Mục 3: Trách nhiệm tham gia hoạt động chính trị - xã hội, văn hoá, văn nghệ, thể thao, phòng chống tội phạm, tệ nạn xã hội (Tối đa 20đ)", maxPoints: 20,
         groups: [
             { id: "g3.1", name: "Nhóm Trách nhiệm và hiệu quả tham gia các hoạt động rèn luyện", maxPoints: 15, criteria: [
                 { id: "tc3.1.1", name: "Tham gia sự kiện chính trị - xã hội (các Đại hội, Hội nghị, cuộc họp của tổ chức Đảng, Đoàn - Hội từ cấp Chi bộ, Chi đoàn, Chi hội trở lên... và các chương trình mang tính chính trị - xã hội khác).", maxPoints: 3 },
@@ -896,14 +962,14 @@ const ALL_CATEGORIES = [
     {
         id: "c4", name: "Mục 4: Điểm ý thức công dân trong quan hệ cộng đồng (Tối đa 15đ)", maxPoints: 15,
         groups: [
-            { id: "g4.1", name: "Nhóm Tham gia tuyên truyền các chủ trương của Đảng, pháp luật...", maxPoints: 12, criteria: [
+            { id: "g4.1", name: "Nhóm Tham gia tuyên truyền các chủ trương của Đảng, chính sách, pháp luật của Nhà nước trong cộng đồng", maxPoints: 12, criteria: [
                 { id: "tc4.1.1", name: "Có hành động tích cực trên không gian mạng, phù hợp với chủ trương của Đại học và đường lối, chính sách của Nhà nước.", maxPoints: 3 },
                 { id: "tc4.1.2", name: "Tham gia tuyên truyền đường lối của Đảng, pháp luật của Nhà nước, quy định của nơi cư trú hoặc quy chế của Đại học được các cấp có thẩm quyền xác nhận.", maxPoints: 3 },
                 { id: "tc4.1.3", name: "Tham gia các hoạt động phổ biến chủ trương của Đảng, chính sách, pháp luật của Nhà nước", maxPoints: 4 },
                 { id: "tc4.1.4", name: "Tham gia các cuộc thi tìm hiểu lịch sử, văn hóa, truyền thống dân tộc", maxPoints: 4 },
                 { id: "tc4.1.5", name: "Góp phần xây dựng tốt hình ảnh sinh viên Bách khoa với các cơ quan, tổ chức hay doanh nghiệp được Đại học ghi nhận", maxPoints: 4 }
             ]},
-            { id: "g4.2", name: "Nhóm Trách nhiệm tham gia các hoạt động theo định hướng", maxPoints: 12, criteria: [
+            { id: "g4.2", name: "Nhóm Trách nhiệm tham gia các hoạt động xã hội được ghi nhận, biểu dương, khen thưởng", maxPoints: 12, criteria: [
                 { id: "tc4.2.1", name: "Đạt loại Khá trở lên khi tham gia học \"Lớp bồi dưỡng nhận thức về Đảng\"", maxPoints: 6 },
                 { id: "tc4.2.2", name: "Được kết nạp Đảng hoặc được chuyển Đảng chính thức", maxPoints: 6 },
                 { id: "tc4.2.3", name: "Được cơ quan, công ty hoặc tổ chức hợp pháp nơi thực tập đánh giá hoàn thành tốt nhiệm vụ trở lên", maxPoints: 6 }
@@ -911,9 +977,9 @@ const ALL_CATEGORIES = [
         ]
     },
     {
-        id: "c5", name: "Mục 5: Trách nhiệm và kết quả tham gia công tác cán bộ lớp... (Tối đa 20đ)", maxPoints: 20,
+        id: "c5", name: "Mục 5: Trách nhiệm và kết quả tham gia công tác cán bộ lớp, công tác đoàn thể, các tổ chức khác của nhà trường hoặc có thành tích xuất sắc trong học tập, rèn luyện được cơ quan có thẩm quyền khen thưởng (Tối đa 20đ)", maxPoints: 20,
         groups: [
-            { id: "g5.1", name: "Nhóm Tham gia công tác cán bộ tại Lớp, tổ chức Đoàn - Hội...", maxPoints: 6, criteria: [
+            { id: "g5.1", name: "Nhóm Tham gia công tác cán bộ lớp, công tác đoàn thể, các tổ chức khác của nhà trường", maxPoints: 6, criteria: [
                 { id: "tc5.1.1", name: "Cán bộ Lớp, Chi bộ, Đoàn - Hội, Tổ/Đội/CLB, trưởng nhóm SV NCKH hoàn thành xuất sắc nhiệm vụ trong kỳ.", maxPoints: 6 },
                 { id: "tc5.1.2", name: "Cán bộ Lớp, Chi bộ, Đoàn - Hội, Tổ/Đội/CLB, trưởng nhóm SV NCKH hoàn thành tốt nhiệm vụ trong kỳ.", maxPoints: 4 },
                 { id: "tc5.1.3", name: "Cán bộ Lớp, Chi bộ, Đoàn - Hội, Tổ/Đội/CLB, trưởng nhóm SV NCKH hoàn thành nhiệm vụ trong kỳ.", maxPoints: 3 }
@@ -923,7 +989,7 @@ const ALL_CATEGORIES = [
                 { id: "tc5.2.2", name: "Tham gia hỗ trợ triển khai hoạt động của Lớp, Khoa, Trường hoặc Đại học và hoàn thành tốt nhiệm vụ được giao.", maxPoints: 4 },
                 { id: "tc5.2.3", name: "Tham gia hỗ trợ triển khai hoạt động của Lớp, Khoa, Trường hoặc Đại học và hoàn thành nhiệm vụ được giao.", maxPoints: 3 }
             ]},
-            { id: "g5.3", name: "Nhóm Có thành tích trong NCKH, cuộc thi, khen thưởng", maxPoints: 15, criteria: [
+            { id: "g5.3", name: "Nhóm Có thành tích trong nghiên cứu khoa học, tham gia các cuộc thi, sáng kiến cải tiến kỹ thuật, hoạt động khởi nghiệp và khen thưởng", maxPoints: 15, criteria: [
                 { id: "tc5.3.1", name: "Đạt giải trong các cuộc thi chính thức cấp Quốc gia, cấp Quốc tế", maxPoints: 15 },
                 { id: "tc5.3.2", name: "Đạt giải trong các cuộc thi chính thức cấp Thành phố, cấp Bộ", maxPoints: 12 },
                 { id: "tc5.3.3", name: "Đạt giải trong các cuộc thi chính thức cấp Đại học", maxPoints: 10 },
@@ -942,7 +1008,16 @@ const CRITERIA_MAP = {};
 ALL_CATEGORIES.forEach(cat => {
     cat.groups.forEach(g => {
         g.criteria.forEach(tc => {
-            const item = { ...tc, groupId: g.id, groupName: g.name, catId: cat.id, catName: cat.name, searchKey: removeAccents(`${tc.id} ${tc.name} ${g.name}`) };
+            const searchKey = normalizeCriteriaSearch(`${tc.id} ${tc.name} ${g.name} ${cat.name}`);
+            const item = {
+                ...tc,
+                groupId: g.id,
+                groupName: g.name,
+                catId: cat.id,
+                catName: cat.name,
+                searchKey,
+                searchCompactKey: searchKey.replace(/\s/g, '')
+            };
             FLAT_CRITERIA.push(item);
             CRITERIA_MAP[tc.id] = item;
         });
@@ -1447,6 +1522,7 @@ createApp({
             return { score: maxTotal, config: bestConfig, breakdown: bestBreakdown };
         };
 
+        // Điểm thực tế luôn được tính riêng, không truyền tiêu chí mục tiêu cuối kỳ vào đây.
         const baseScoreResult = computed(() => getOptimalScore(activities.value));
 
         const filteredActivities = computed(() => {
@@ -1524,7 +1600,7 @@ createApp({
             };
 
             // Kịch bản 1: các hoạt động đang tắt không được duyệt.
-            // Nếu đang sửa hoạt động bật, bản cũ vẫn có mặt ở điểm nền; bản mới thay nó ở kết quả sau.
+            // Nếu đang sửa hoạt động bật, bản cũ vẫn có mặt trong điểm trần nền; bản mới thay nó ở kết quả sau.
             const activeBeforeActs = analysisActivities.filter(act => act.enabled !== false);
             const activeAfterActs = [
                 ...analysisActivities.filter((act, index) => index !== editIndex && act.enabled !== false),
@@ -1624,18 +1700,23 @@ createApp({
                     : '';
 
                 return {
-                    baseScore: beforeResult.score,
-                    newScore: afterResult.score,
+                    // beforeResult/afterResult include final-term target criteria only as a ceiling assumption.
+                    // They are deliberately not added to baseScoreResult (the actual score shown in the header).
+                    ceilingBefore: beforeResult.score,
+                    ceilingAfter: afterResult.score,
                     diff: afterResult.score - beforeResult.score,
                     newCriteriaId,
                     newCriteriaMax: getCriteriaMaxPoints(newCriteriaId),
                     duplicateAssignments: collectDuplicateAssignments(beforeActs, beforeResult),
-                    assumedConflicts: assumedIdsForAnalysis.filter(id => {
+                    assumedConflicts: assumedIdsForAnalysis.map(id => {
                         const assumedCriterion = CRITERIA_MAP[id];
-                        return candidateCriteriaIds.has(id) ||
-                            (assumedCriterion && candidateGroupIds.has(assumedCriterion.groupId)) ||
-                            (assumedCriterion && candidateCategoryIds.has(assumedCriterion.catId));
-                    }),
+                        if (!assumedCriterion) return null;
+                        let relation = '';
+                        if (candidateCriteriaIds.has(id)) relation = 'trùng đúng tiêu chí';
+                        else if (candidateGroupIds.has(assumedCriterion.groupId)) relation = 'cùng nhóm điểm';
+                        else if (candidateCategoryIds.has(assumedCriterion.catId)) relation = 'cùng mục điểm';
+                        return relation ? { criteriaId: id, relation } : null;
+                    }).filter(Boolean),
                     reassignments: buildReassignments(beforeActs, beforeResult, afterActs, afterResult)
                 };
             };
@@ -1647,11 +1728,11 @@ createApp({
                 matchedBeforeActs, matchedBefore, matchedAfterActs, matchedAfter
             );
 
-            // Nếu hai kịch bản cho cùng điểm nền, điểm sau thêm, tiêu chí của hoạt động mới
+            // Nếu hai kịch bản cho cùng điểm trần trước/sau, tiêu chí của hoạt động mới
             // và cùng danh sách thay đổi thì chỉ hiển thị một kết quả chung.
             const scenarioSignature = result => JSON.stringify({
-                baseScore: result.baseScore,
-                newScore: result.newScore,
+                ceilingBefore: result.ceilingBefore,
+                ceilingAfter: result.ceilingAfter,
                 diff: result.diff,
                 newCriteriaId: result.newCriteriaId,
                 duplicateAssignments: [...(result.duplicateAssignments || [])]
@@ -1676,7 +1757,7 @@ createApp({
                         {
                             key: 'matching-approved',
                             title: 'Kịch bản 2: Chỉ duyệt các hoạt động đang tắt có tiêu chí trùng',
-                            description: `Giả định được duyệt: ${matchingNames.join(' · ')}. Các hoạt động đang tắt khác không được tính.`,
+                            description: `Kịch bản này giả định các hoạt động sau được duyệt: ${matchingNames.join(' · ')}. Những hoạt động đang tắt khác không được tính.`,
                             ...matchedApprovedResult
                         }
                     ]
@@ -1769,8 +1850,12 @@ createApp({
         // limit=0 trả về toàn bộ kết quả; dùng cho cửa sổ chọn mục tiêu.
         // Mặc định vẫn giới hạn 15 kết quả cho ô tìm tiêu chí khi thêm hoạt động.
         const getFilteredCriteriaOptions = (query, limit = 15) => {
-            const q = removeAccents(query);
-            const matches = FLAT_CRITERIA.filter(i => i.searchKey.includes(q));
+            const q = normalizeCriteriaSearch(query);
+            if (!q) return limit > 0 ? FLAT_CRITERIA.slice(0, limit) : FLAT_CRITERIA;
+            const compactQuery = q.replace(/\s/g, '');
+            const matches = FLAT_CRITERIA.filter(item =>
+                item.searchKey.includes(q) || item.searchCompactKey.includes(compactQuery)
+            );
             return limit > 0 ? matches.slice(0, limit) : matches;
         };
         
