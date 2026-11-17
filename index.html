@@ -275,8 +275,7 @@ html, body {
 
                             <transition-group name="list" tag="div" class="space-y-3">
 <div v-for="(opt, idx) in testActivity.options" :key="idx" class="relative group flex flex-wrap sm:flex-nowrap items-start gap-2">                                    
-                                    <div class="relative flex-1">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<div class="relative flex-1 min-w-0 basis-full sm:basis-auto">                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
                                         </div>
                                         <input type="text" 
@@ -290,8 +289,8 @@ html, body {
                                         </button>
 
                                         <!-- Dropdown -->
-                                        <div v-if="opt.showDropdown" class="criteria-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto p-2 flex flex-col gap-1">
-                                            <div v-if="getFilteredCriteriaOptions(opt.searchQuery).length === 0" class="p-4 text-center text-sm text-slate-500">
+<div v-if="opt.showDropdown" class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-300 rounded-xl shadow-2xl z-[60] max-h-64 overflow-y-auto p-2 flex flex-col gap-1">
+    <div v-if="getFilteredCriteriaOptions(opt.searchQuery).length === 0" class="p-4 text-center text-sm text-slate-500">
                                                 Không tìm thấy tiêu chí phù hợp.
                                             </div>
                                             <div v-for="tc in getFilteredCriteriaOptions(opt.searchQuery)" :key="tc.id"
@@ -473,13 +472,13 @@ html, body {
 
                         <transition-group name="list" tag="div" class="space-y-4 relative">
                             <div v-for="item in filteredActivities" :key="item.act.id" 
-                                 class="bg-white p-4 sm:p-5 rounded-xl border shadow-sm relative group transition-all"
-                                 :class="[
+<div class="flex justify-end items-center gap-2 mb-3 sm:mb-0 sm:absolute sm:top-4 sm:right-4 sm:gap-3">
+                                :class="[
                                      editingIndex === item.index ? 'ring-2 ring-indigo-400' : 'border-slate-200',
                                      item.act.enabled === false ? 'opacity-75 bg-slate-50 grayscale-[50%]' : ''
                                  ]">
                                 
-                                <div class="absolute top-4 right-4 flex items-center gap-3">
+                                <div class="flex justify-end items-center gap-2 mb-3 sm:mb-0 sm:absolute sm:top-4 sm:right-4 sm:gap-3">
                                     <!-- Toggle button -->
                                     <button @click.stop="toggleActivity(item.index)"
                                          class="w-11 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors shadow-inner"
