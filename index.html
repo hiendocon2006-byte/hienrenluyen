@@ -92,17 +92,6 @@ html, body {
         /* Tối ưu khung tiêu chí trên điện thoại */
 @media (max-width: 640px) {
 
-    /* Khung tìm kiếm tiêu chí */
-    .criteria-dropdown {
-        left: calc(50% - 50vw + 16px) !important;
-        right: auto !important;
-        width: calc(100vw - 32px) !important;
-        max-width: 560px !important;
-        max-height: 45vh !important;
-        overflow-y: auto !important;
-        z-index: 100 !important;
-    }
-
     /* Nội dung tiêu chí không bị tràn */
     #app {
         min-width: 0;
@@ -285,8 +274,7 @@ html, body {
                             </div>
 
                             <transition-group name="list" tag="div" class="space-y-3">
-                                <div v-for="(opt, idx) in testActivity.options" :key="idx" class="relative group flex items-start gap-2">
-                                    
+<div v-for="(opt, idx) in testActivity.options" :key="idx" class="relative group flex flex-wrap sm:flex-nowrap items-start gap-2">                                    
                                     <div class="relative flex-1">
                                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
