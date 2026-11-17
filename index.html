@@ -23,158 +23,145 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
-        :root {
-            color-scheme: light;
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        [v-cloak] { display: none !important; }
+        /* Fix giao diện trên điện thoại */
+html, body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    overflow-x: hidden;
+}
 
-        * {
-            box-sizing: border-box;
-        }
+#app {
+    width: 100%;
+    max-width: 1400px;
+    min-width: 0;
+    margin-left: auto;
+    margin-right: auto;
+}
 
-        html,
+@media (max-width: 640px) {
+    #app,
+    #app > div,
+    main {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    header > div {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    header > div > div {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    header > div > div:last-child {
+        flex-wrap: wrap;
+    }
+
+    main {
+        grid-template-columns: minmax(0, 1fr);
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    main > div {
+        min-width: 0;
+    }
+
+    main section {
+        min-width: 0;
+    }
+}
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
+        .list-enter-active, .list-leave-active { transition: all 0.3s ease; }
+        .list-enter-from, .list-leave-to { opacity: 0; transform: translateX(-20px); }
+        /* Tối ưu khung tiêu chí trên điện thoại */
+@media (max-width: 640px) {
+
+    /* Nội dung tiêu chí không bị tràn */
+    #app {
+        min-width: 0;
+        overflow-x: clip;
+    }
+
+    /* Cho phép nội dung dài xuống dòng hợp lý */
+    #app .break-words {
+        overflow-wrap: anywhere;
+    }
+}
+        /* SiviFal Academic Glass: nền thay đổi nhẹ theo mỗi lượt truy cập */
         body {
-            width: 100%;
-            max-width: 100%;
-            min-width: 0;
-            margin: 0;
-            overflow-x: hidden;
+            background-color: #eef2ff;
+            background-image:
+                radial-gradient(ellipse at 8% 4%, rgba(129, 140, 248, .16), transparent 34%),
+                radial-gradient(ellipse at 92% 18%, rgba(45, 212, 191, .12), transparent 30%),
+                linear-gradient(135deg, #f8fafc 0%, #f1f5f9 48%, #eef2ff 100%);
+            background-attachment: fixed;
         }
-
-        body {
-            min-height: 100vh;
-            background: #f1f5f9;
-            color: #1e293b;
-            font-family: 'Inter', sans-serif;
+        html[data-wallpaper="lavender"] body {
+            background-image: radial-gradient(ellipse at 12% 8%, rgba(167, 139, 250, .19), transparent 35%), radial-gradient(ellipse at 90% 24%, rgba(244, 114, 182, .10), transparent 32%), linear-gradient(135deg, #faf8ff, #f1f5f9 58%, #eef2ff);
         }
-
-        [v-cloak] {
-            display: none !important;
+        html[data-wallpaper="mint"] body {
+            background-image: radial-gradient(ellipse at 8% 6%, rgba(52, 211, 153, .16), transparent 34%), radial-gradient(ellipse at 92% 18%, rgba(56, 189, 248, .12), transparent 31%), linear-gradient(135deg, #f7fffc, #f1f5f9 54%, #ecfeff);
         }
-
-        #app {
-            width: 100%;
-            max-width: 1400px;
-            min-width: 0;
-            margin-inline: auto;
+        html[data-wallpaper="blue"] body {
+            background-image: radial-gradient(ellipse at 10% 5%, rgba(59, 130, 246, .17), transparent 34%), radial-gradient(ellipse at 90% 18%, rgba(99, 102, 241, .13), transparent 31%), linear-gradient(135deg, #f8fbff, #f1f5f9 52%, #eef2ff);
         }
-
-        /* Thanh cuộn */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        html[data-wallpaper="pearl"] body {
+            background-image: radial-gradient(ellipse at 8% 6%, rgba(251, 191, 36, .12), transparent 34%), radial-gradient(ellipse at 92% 20%, rgba(244, 114, 182, .11), transparent 31%), linear-gradient(135deg, #fffdf9, #f8fafc 54%, #f1f5f9);
         }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+        body::before, body::after {
+            content: "";
+            position: fixed;
+            z-index: -1;
+            width: 22rem;
+            height: 22rem;
             border-radius: 9999px;
+            filter: blur(70px);
+            opacity: .25;
+            pointer-events: none;
         }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+        body::before { top: 28%; left: -13rem; background: rgba(99, 102, 241, .22); }
+        body::after { right: -13rem; bottom: 8%; background: rgba(45, 212, 191, .20); }
+        .glass-panel {
+            background: rgba(255, 255, 255, .82);
+            border: 1px solid rgba(255, 255, 255, .86);
+            box-shadow: 0 16px 44px rgba(15, 23, 42, .06), 0 2px 8px rgba(15, 23, 42, .035);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
         }
-
-        /* Hiệu ứng */
-        .fade-enter-active,
-        .fade-leave-active {
-            transition: opacity 0.25s ease, transform 0.25s ease;
+        .app-card {
+            border: 1px solid rgba(226, 232, 240, .9);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, .045);
+            transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
         }
-
-        .fade-enter-from,
-        .fade-leave-to {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-
-        .list-enter-active,
-        .list-leave-active {
-            transition: all 0.3s ease;
-        }
-
-        .list-enter-from,
-        .list-leave-to {
-            opacity: 0;
-            transform: translateX(-12px);
-        }
-
-        /* Dropdown tìm tiêu chí */
-        .criteria-dropdown {
-            overscroll-behavior: contain;
-            scrollbar-width: thin;
-        }
-
-        /* Thẻ hoạt động */
-        .activity-card {
-            min-width: 0;
-            overflow-wrap: anywhere;
-        }
-
-        .activity-card-title {
-            min-width: 0;
-            overflow-wrap: anywhere;
-            word-break: normal;
-        }
-
-        @media (max-width: 640px) {
-            #app,
-            #app > div,
-            main,
-            main > div,
-            main section {
-                width: 100%;
-                max-width: 100%;
-                min-width: 0;
-            }
-
-            header > div {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            header > div > div {
-                max-width: 100%;
-                min-width: 0;
-            }
-
-            header > div > div:last-child {
-                flex-wrap: wrap;
-            }
-
-            main {
-                grid-template-columns: minmax(0, 1fr);
-                padding-right: 12px;
-                padding-bottom: 6.5rem;
-                padding-left: 12px;
-            }
-
-            .criteria-dropdown {
-                max-height: min(42vh, 320px);
-                width: 100%;
-                max-width: 100%;
-            }
-
-            .activity-card-controls {
-                width: 100%;
-            }
-
-            .activity-card-content,
-            .activity-card-title {
-                width: 100%;
-                min-width: 0;
-            }
-
-            .floating-criteria-button {
-                right: max(12px, env(safe-area-inset-right));
-                bottom: max(12px, env(safe-area-inset-bottom));
-                padding: 0.65rem 0.9rem;
-                font-size: 0.8rem;
-            }
+        .app-card:hover { box-shadow: 0 16px 34px rgba(15, 23, 42, .075); }
+        .criteria-scroll { scrollbar-gutter: stable; }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
         }
     </style>
+    <script>
+        (() => {
+            const wallpapers = ['lavender', 'mint', 'blue', 'pearl'];
+            const chosen = wallpapers[Math.floor(Math.random() * wallpapers.length)];
+            document.documentElement.dataset.wallpaper = chosen;
+        })();
+    </script>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col antialiased">
 
@@ -263,8 +250,8 @@
     <div v-else>
 
         <!-- Header -->
-        <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
-            <div class="w-full px-4 sm:px-6 py-3 flex flex-wrap justify-between items-center gap-4">
+        <header class="glass-panel mx-3 mt-3 rounded-[24px] sticky top-3 z-50 overflow-hidden sm:mx-5 lg:mx-6">
+            <div class="w-full px-4 sm:px-6 py-3 sm:py-3.5 flex flex-wrap justify-between items-center gap-4">
                 <div class="flex items-center space-x-3">
                  <img src="./favicon.png" alt="Logo" class="h-16 w-16 sm:h-20 sm:w-20 object-contain shrink-0">
                     <div>
@@ -313,13 +300,13 @@
         </header>
 
         <!-- Main Layout 2 Cột -->
-        <main class="flex-1 w-full px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <main class="flex-1 w-full px-3 sm:px-5 lg:px-6 py-5 sm:py-6 grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
 
             <!-- CỘT TRÁI: Ô Nhập liệu & Danh Sách Hoạt Động (col-span-2) -->
             <div class="lg:col-span-2 space-y-6">
 
                 <!-- 1. Ô Nhập liệu -->
-                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                <section class="app-card bg-white/90 backdrop-blur-sm rounded-3xl p-5 sm:p-6">
                     <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i>
@@ -345,76 +332,50 @@
                             </div>
 
                             <transition-group name="list" tag="div" class="space-y-3">
-                                <div v-for="(opt, idx) in testActivity.options"
-                                     :key="idx"
-                                     class="relative flex flex-wrap items-start gap-2 sm:flex-nowrap">
-
-                                    <!-- Ô tìm kiếm -->
-                                    <div class="relative z-[50] min-w-0 basis-full flex-1 sm:basis-0">
-                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+<div v-for="(opt, idx) in testActivity.options" :key="idx" class="relative group flex flex-wrap sm:flex-nowrap items-start gap-2">                                    
+<div class="relative flex-1 min-w-0 basis-full sm:basis-auto">                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
                                         </div>
-
-                                        <input type="text"
+                                        <input type="text" 
                                                v-model="opt.searchQuery"
                                                @focus="opt.showDropdown = true"
                                                @input="opt.showDropdown = true"
-                                               class="w-full min-w-0 rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-8 text-sm font-medium text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                                               class="w-full pl-9 pr-8 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium text-slate-800"
                                                placeholder="Nhập để tìm tiêu chí (vd: tham gia, NCKH)...">
-
-                                        <button v-if="opt.searchQuery"
-                                                type="button"
-                                                @click="clearSearchOption(opt)"
-                                                class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-700"
-                                                aria-label="Xóa nội dung tìm kiếm">
+                                        <button v-if="opt.searchQuery" @click="clearSearchOption(opt)" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-2">
                                             <i class="fa-solid fa-circle-xmark"></i>
                                         </button>
 
-                                        <!-- Kết quả tìm kiếm -->
-                                        <div v-if="opt.showDropdown"
-                                             class="criteria-dropdown absolute left-0 right-0 top-full z-[80] mt-1 flex max-h-64 w-full flex-col gap-1 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-2xl">
-                                            <div v-if="getFilteredCriteriaOptions(opt.searchQuery).length === 0"
-                                                 class="p-4 text-center text-sm text-slate-500">
+                                        <!-- Dropdown -->
+<div v-if="opt.showDropdown" class="absolute left-0 right-0 top-full mt-1 w-full max-w-full bg-white border border-slate-200 rounded-2xl shadow-2xl z-[60] max-h-72 overflow-y-auto p-2 flex flex-col gap-1">
+    <div v-if="getFilteredCriteriaOptions(opt.searchQuery).length === 0" class="p-4 text-center text-sm text-slate-500">
                                                 Không tìm thấy tiêu chí phù hợp.
                                             </div>
-
-                                            <button v-for="tc in getFilteredCriteriaOptions(opt.searchQuery)"
-                                                    :key="tc.id"
-                                                    type="button"
-                                                    @click="selectCriteriaForOption(opt, tc)"
-                                                    class="flex w-full items-start justify-between gap-3 rounded-lg border border-transparent p-3 text-left transition-colors hover:border-indigo-100 hover:bg-indigo-50">
-                                                <span class="min-w-0 flex-1">
-                                                    <span class="mb-1 block text-[10px] font-bold uppercase text-slate-500">{{ tc.catName }}</span>
-                                                    <span class="block break-words text-sm font-semibold leading-snug text-slate-800">
-                                                        <span class="font-bold text-indigo-600">[{{ tc.id }}]</span>
-                                                        {{ tc.name }}
-                                                    </span>
-                                                </span>
-                                                <span class="shrink-0 whitespace-nowrap rounded bg-indigo-100 px-2.5 py-1 text-xs font-bold text-indigo-800">
+                                            <div v-for="tc in getFilteredCriteriaOptions(opt.searchQuery)" :key="tc.id"
+                                                 @click="selectCriteriaForOption(opt, tc)"
+                                                 class="p-3 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors flex justify-between items-start gap-3 border border-transparent hover:border-indigo-100">
+                                                <div class="flex-1">
+                                                    <div class="text-[10px] text-slate-500 font-bold uppercase mb-1">{{ tc.catName }}</div>
+                                                    <div class="text-sm font-semibold text-slate-800 leading-snug">
+                                                        <span class="text-indigo-600 font-bold">[{{ tc.id }}]</span> {{ tc.name }}
+                                                    </div>
+                                                </div>
+                                                <span class="bg-indigo-100 text-indigo-800 font-bold px-2.5 py-1 rounded text-xs whitespace-nowrap">
                                                     +{{ tc.maxPoints }}đ
                                                 </span>
-                                            </button>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div v-if="opt.showDropdown" @click="opt.showDropdown = false" class="fixed inset-0 z-40 bg-transparent"></div>
 
-                                    <!-- Bấm ra ngoài để đóng kết quả tìm kiếm -->
-                                    <div v-if="opt.showDropdown"
-                                         @click="opt.showDropdown = false"
-                                         class="fixed inset-0 z-40 bg-transparent"></div>
-
-                                    <!-- Điểm tối đa và nút xóa -->
-                                    <div class="flex shrink-0 items-center gap-2">
-                                        <div class="min-w-[70px] rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-center text-sm font-black text-indigo-800">
-                                            +{{ getCriteriaMaxPoints(opt.criteriaId) }}đ
-                                        </div>
-                                        <button type="button"
-                                                @click="removeTestOption(idx)"
-                                                :disabled="testActivity.options.length === 1"
-                                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                                aria-label="Xóa tiêu chí này">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </button>
+                                    <div class="bg-indigo-50 border border-indigo-200 text-indigo-800 font-black px-4 py-2.5 rounded-xl text-sm min-w-[70px] text-center shrink-0">
+                                        +{{ getCriteriaMaxPoints(opt.criteriaId) }}đ
                                     </div>
+
+                                    <button @click="removeTestOption(idx)" :disabled="testActivity.options.length === 1" 
+                                            class="w-11 h-11 flex items-center justify-center bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 border border-slate-200 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
                                 </div>
                             </transition-group>
 
@@ -531,7 +492,7 @@
                 </section>
 
                 <!-- 2. Danh Sách Hoạt Động -->
-                <section class="bg-white rounded-2xl shadow-sm border border-slate-200">
+                <section class="app-card bg-white/90 backdrop-blur-sm rounded-3xl overflow-hidden">
                     <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-list-check text-indigo-600"></i> Danh Sách Hoạt Động ({{ activities.length }})
@@ -567,87 +528,69 @@
                             <p class="text-sm font-medium">Chưa có hoạt động nào được lưu hoặc phù hợp với bộ lọc.</p>
                         </div>
 
-                        <transition-group name="list" tag="div" class="relative space-y-4">
-                            <article v-for="item in filteredActivities"
-                                     :key="item.act.id"
-                                     class="activity-card rounded-2xl border bg-white p-4 shadow-sm transition-all sm:p-5"
-                                     :class="[
-                                         editingIndex === item.index ? 'ring-2 ring-indigo-400' : 'border-slate-200',
-                                         item.act.enabled === false ? 'bg-slate-50 opacity-80' : ''
-                                     ]">
-
-                                <!-- Tiêu đề và điều khiển: không dùng absolute trên điện thoại -->
+                        <transition-group name="list" tag="div" class="space-y-4 relative">
+                            <div v-for="item in filteredActivities" :key="item.act.id"
+                                 class="group app-card relative rounded-2xl bg-white p-4 sm:p-5"
+                                 :class="[
+                                     editingIndex === item.index ? 'ring-2 ring-indigo-400 border-indigo-300' : 'border-slate-200',
+                                     item.act.enabled === false ? 'opacity-80 bg-slate-50/90' : ''
+                                 ]">
                                 <div class="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                    <h4 class="activity-card-title flex-1 text-base font-extrabold leading-snug"
-                                        :class="item.act.enabled === false ? 'text-slate-500 line-through' : 'text-slate-800'">
-                                        {{ item.act.name }}
-                                    </h4>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-extrabold text-base sm:text-[15px] leading-snug flex flex-wrap items-center gap-2"
+                                            :class="item.act.enabled === false ? 'text-slate-500' : 'text-slate-800'">
+                                            <span class="min-w-0 break-words">{{ item.act.name }}</span>
+                                            <span v-if="item.act.enabled === false" class="text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded-full uppercase font-bold">Đã tắt</span>
+                                        </h4>
+                                    </div>
 
-                                    <div class="activity-card-controls flex shrink-0 items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2 sm:w-auto sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
-                                        <div class="flex min-w-0 items-center gap-2">
-                                            <span class="whitespace-nowrap text-xs font-semibold"
-                                                  :class="item.act.enabled !== false ? 'text-emerald-700' : 'text-slate-500'">
-                                                {{ item.act.enabled !== false ? 'Đang tính điểm' : 'Đang tắt' }}
+                                    <div class="flex shrink-0 items-center justify-between gap-3 sm:justify-end sm:pt-0.5">
+                                        <button @click.stop="toggleActivity(item.index)"
+                                                class="inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-xs font-bold transition-colors"
+                                                :class="item.act.enabled !== false ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                                :title="item.act.enabled !== false ? 'Hoạt động đang bật (có tính điểm)' : 'Hoạt động đã tắt (không tính điểm)'">
+                                            <span class="relative inline-flex h-5 w-9 items-center rounded-full p-0.5 transition-colors"
+                                                  :class="item.act.enabled !== false ? 'bg-emerald-500' : 'bg-slate-300'">
+                                                <span class="h-4 w-4 rounded-full bg-white shadow-sm transition-transform"
+                                                      :class="item.act.enabled !== false ? 'translate-x-4' : 'translate-x-0'"></span>
                                             </span>
-                                            <button type="button"
-                                                    @click.stop="toggleActivity(item.index)"
-                                                    class="flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full p-1 shadow-inner transition-colors"
-                                                    :class="item.act.enabled !== false ? 'bg-emerald-500' : 'bg-slate-300'"
-                                                    :title="item.act.enabled !== false ? 'Tắt hoạt động' : 'Bật hoạt động'"
-                                                    :aria-label="item.act.enabled !== false ? 'Tắt hoạt động' : 'Bật hoạt động'">
-                                                <span class="h-5 w-5 rounded-full bg-white shadow transition-transform"
-                                                      :class="item.act.enabled !== false ? 'translate-x-5' : 'translate-x-0'"></span>
-                                            </button>
-                                        </div>
+                                            {{ item.act.enabled !== false ? 'Đang bật' : 'Đang tắt' }}
+                                        </button>
 
-                                        <div class="flex shrink-0 items-center gap-2">
-                                            <button type="button"
-                                                    @click="editActivity(item.index)"
-                                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100"
-                                                    title="Chỉnh sửa" aria-label="Chỉnh sửa hoạt động">
+                                        <div class="flex items-center gap-1.5 sm:opacity-70 sm:group-hover:opacity-100 transition-opacity">
+                                            <button @click="editActivity(item.index)" class="w-9 h-9 flex items-center justify-center bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors" title="Chỉnh sửa" aria-label="Chỉnh sửa hoạt động">
                                                 <i class="fa-solid fa-pen text-sm"></i>
                                             </button>
-                                            <button type="button"
-                                                    @click="removeActivity(item.index)"
-                                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-500 transition-colors hover:bg-red-100"
-                                                    title="Xóa" aria-label="Xóa hoạt động">
+                                            <button @click="removeActivity(item.index)" class="w-9 h-9 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors" title="Xóa" aria-label="Xóa hoạt động">
                                                 <i class="fa-solid fa-trash text-sm"></i>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Trạng thái phân bổ điểm -->
-                                <div class="activity-card-content mt-3 min-w-0">
+                                <div class="mt-3 min-w-0">
+                                    <!-- Tiêu chí được phân bổ -->
                                     <div v-if="item.act.enabled !== false && baseScoreResult.config && baseScoreResult.config[item.index] !== undefined && baseScoreResult.config[item.index] !== -1"
-                                         class="inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 sm:text-sm">
-                                        <i class="fa-solid fa-check text-emerald-500"></i>
-                                        <span class="font-mono text-emerald-700">[{{ item.act.options[baseScoreResult.config[item.index]].criteriaId }}]</span>
-                                        <span class="break-words">{{ getCriteriaName(item.act.options[baseScoreResult.config[item.index]].criteriaId) }}</span>
-                                        <span class="rounded bg-emerald-200/60 px-1.5 py-0.5 font-black">
-                                            +{{ getCriteriaMaxPoints(item.act.options[baseScoreResult.config[item.index]].criteriaId) }}đ
-                                        </span>
+                                         class="inline-block max-w-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-bold px-3 py-2 rounded-xl break-words">
+                                        <i class="fa-solid fa-check text-emerald-500 mr-1.5"></i>
+                                        <span class="font-mono text-emerald-600">[{{ item.act.options[baseScoreResult.config[item.index]].criteriaId }}]</span>
+                                        {{ getCriteriaName(item.act.options[baseScoreResult.config[item.index]].criteriaId) }}
+                                        <span class="bg-emerald-200/60 px-1.5 py-0.5 rounded ml-1 font-black">+{{ getCriteriaMaxPoints(item.act.options[baseScoreResult.config[item.index]].criteriaId) }}đ</span>
                                     </div>
-
-                                    <div v-else-if="item.act.enabled === false"
-                                         class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-500 sm:text-sm">
-                                        <i class="fa-solid fa-ban text-slate-400"></i>
-                                        Chưa được tính điểm
+                                    <div v-else-if="item.act.enabled === false" class="inline-block bg-slate-100 border border-slate-200 text-slate-500 text-xs sm:text-sm font-bold px-3 py-2 rounded-xl">
+                                        <i class="fa-solid fa-ban text-slate-400 mr-1.5"></i> Chưa được tính điểm
                                     </div>
                                 </div>
 
-                                <!-- Các tiêu chí dự phòng / tiêu chí của hoạt động đang tắt -->
-                                <div v-if="item.act.options && item.act.options.length > 0 && (item.act.enabled === false || item.act.options.length > 1)"
-                                     class="mt-3 flex min-w-0 flex-wrap gap-2">
-                                    <div v-for="(opt, oIdx) in item.act.options"
-                                         :key="oIdx"
-                                         class="max-w-full break-words rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] leading-relaxed text-slate-600"
+                                <!-- Các tiêu chí dự phòng / lựa chọn khác -->
+                                <div v-if="item.act.options && item.act.options.length > 0 && (item.act.enabled === false || item.act.options.length > 1)" class="mt-3 flex flex-wrap gap-2">
+                                    <div v-for="(opt, oIdx) in item.act.options" :key="oIdx"
+                                         class="text-[11px] px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 bg-slate-50 whitespace-normal break-words max-w-full"
                                          :class="{'hidden': item.act.enabled !== false && baseScoreResult.config && baseScoreResult.config[item.index] === oIdx}">
-                                        <span class="font-mono text-slate-500">[{{ opt.criteriaId }}]</span>
-                                        {{ getCriteriaName(opt.criteriaId) }}
+                                        <span class="font-mono">[{{ opt.criteriaId }}]</span> {{ getCriteriaName(opt.criteriaId) }}
                                     </div>
                                 </div>
-                            </article>
+                            </div>
                         </transition-group>
                     </div>
                 </section>
@@ -655,21 +598,21 @@
 
             <!-- CỘT PHẢI: BẢNG TIÊU CHÍ (col-span-1) -->
             <div class="lg:col-span-1 space-y-4 flex flex-col h-full">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-1 max-h-[85vh] sticky top-[80px]">
+                <div class="glass-panel rounded-3xl overflow-hidden flex flex-col min-h-0 lg:h-[calc(100vh-7rem)] lg:min-h-[520px] lg:max-h-none lg:flex-none lg:sticky lg:top-24">
                     
-                    <div class="p-4 bg-slate-800 text-white flex justify-between items-center shrink-0">
+                    <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex justify-between items-center shrink-0">
                         <h3 class="font-bold text-base flex items-center gap-2">
                             <i class="fa-solid fa-chart-pie text-sky-400"></i> BẢNG TIÊU CHÍ
                         </h3>
                     </div>
 
-                    <div class="overflow-y-auto p-3 space-y-4 flex-1 bg-slate-50">
+                    <div class="criteria-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-4 bg-slate-50/65">
                         <div v-for="cat in categories" :key="cat.id" 
-                             class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                             class="bg-white/95 border border-white rounded-2xl overflow-hidden shadow-sm ring-1 ring-slate-200/70">
                             
                             <!-- Category Header -->
                             <div @click="openCategories[cat.id] = !openCategories[cat.id]" 
-                                 class="p-4 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors border-b border-slate-100 flex flex-col gap-2">
+                                 class="p-4 bg-white/75 hover:bg-white cursor-pointer transition-colors border-b border-slate-100/90 flex flex-col gap-2">
                                 <div class="flex justify-between items-start gap-3">
                                     <div class="font-bold text-sm text-slate-800 leading-snug flex-1">
                                         {{ cat.name }}
@@ -736,7 +679,7 @@
 
         <!-- Nút nổi mở cửa sổ tiêu chí mục tiêu -->
         <button v-if="currentUser && dataLoaded" type="button" @click="openAssumedCriteriaModal"
-                class="floating-criteria-button fixed bottom-5 right-5 z-[70] inline-flex items-center gap-2 rounded-full bg-violet-700 px-4 py-3 text-sm font-bold text-white shadow-xl shadow-violet-900/20 transition hover:bg-violet-800 focus:outline-none focus:ring-4 focus:ring-violet-200">
+                class="fixed bottom-5 right-5 z-[70] inline-flex items-center gap-2 rounded-full border border-white/30 bg-violet-700/90 px-4 py-3 text-sm font-bold text-white shadow-2xl shadow-violet-900/25 backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-violet-800 focus:outline-none focus:ring-4 focus:ring-violet-200">
             <i class="fa-solid fa-bullseye"></i>
             <span>Tiêu chí mục tiêu</span>
             <span class="rounded-full bg-white/20 px-2 py-0.5 text-xs">{{ assumedCriteriaIds.length }}</span>
@@ -893,9 +836,9 @@ const ALL_CATEGORIES = [
                 { id: "tc1.1.3", name: "Khai báo thông tin liên lạc và nơi cư trú theo yêu cầu của Đại học", maxPoints: 4 }
             ]},
             { id: "g1.2", name: "Nhóm Chấp hành nội quy, quy chế và các quy định khác", maxPoints: 15, criteria: [
-                { id: "tc1.2.1", name: "Tham gia Hợp lớp thường kỳ do Trường/Khoa tổ chức", maxPoints: 6 },
+                { id: "tc1.2.1", name: "Tham gia Họp lớp thường kỳ do Trường/Khoa tổ chức", maxPoints: 6 },
                 { id: "tc1.2.2", name: "Nắm vững quy định và quy chế của nhà trường", maxPoints: 6 },
-                { id: "tc1.2.3", name: "Hoàn thành mục tiêu cam kết học tập và rèn luyện", maxPoints: 6 }
+                { id: "tc1.2.3", name: "Hoàn thành mục tiêu cam kết học tập và rèn luyện (Kết quả GPA và điểm rèn luyện cuối kỳ đạt từ mức đăng ký đầu kỳ trở lên)", maxPoints: 6 }
             ]}
         ]
     },
@@ -908,7 +851,7 @@ const ALL_CATEGORIES = [
                 { id: "tc2.1.3", name: "Tham gia các buổi tư vấn xây dựng kế hoạch, động lực học tập phù hợp", maxPoints: 3 },
                 { id: "tc2.1.4", name: "Tham gia hoạt động hướng nghiệp, tìm kiếm thông tin việc làm", maxPoints: 3 },
                 { id: "tc2.1.5", name: "Tham gia khóa đào tạo kỹ năng nghề nghiệp, kỹ năng bổ trợ chuyên môn", maxPoints: 6 },
-                { id: "tc2.1.6", name: "Chủ động xây dựng, hoàn thiện và cập nhật Portfolio cá nhân", maxPoints: 3 }
+                { id: "tc2.1.6", name: "Chủ động xây dựng, hoàn thiện và cập nhật Portfolio cá nhân theo từng học kỳ.", maxPoints: 3 }
             ]},
             { id: "g2.2", name: "Nhóm Trách nhiệm và tinh thần tham gia các hoạt động", maxPoints: 12, criteria: [
                 { id: "tc2.2.1", name: "Tham gia các cuộc thi Olympic cấp Đại học, cấp quốc gia, quốc tế", maxPoints: 6 },
@@ -916,9 +859,9 @@ const ALL_CATEGORIES = [
                 { id: "tc2.2.3", name: "Tham gia công bố khoa học tại hội nghị hoặc tạp chí khoa học chuyên ngành", maxPoints: 6 }
             ]},
             { id: "g2.3", name: "Nhóm Tinh thần vượt khó, phấn đấu vươn lên trong học tập", maxPoints: 8, criteria: [
-                { id: "tc2.3.1", name: "Có nỗ lực trong học tập (GPA kỳ đánh giá cao hơn kỳ trước, giảm cảnh báo, hoặc GPA > 3.2)", maxPoints: 6 },
-                { id: "tc2.3.2", name: "Tham gia các hoạt động tăng cường kỹ năng sử dụng ngoại ngữ", maxPoints: 6 },
-                { id: "tc2.3.3", name: "Có chứng chỉ ngoại ngữ quốc tế hoặc tương đương đạt mức TOEIC 600 điểm trở lên", maxPoints: 6 },
+                { id: "tc2.3.1", name: "Có nỗ lực trong học tập (GPA kỳ đánh giá cao hơn kỳ trước, giảm mức cảnh báo học tập, hoặc duy trì điểm GPA trên 3.2).", maxPoints: 6 },
+                { id: "tc2.3.2", name: "Tham gia các hoạt động tăng cường kỹ năng sử dụng ngoại ngữ được Nhà trường ghi nhận", maxPoints: 6 },
+                { id: "tc2.3.3", name: "Có chứng chỉ ngoại ngữ quốc tế hoặc tương đương đạt mức TOEIC 600 điểm trở lên (còn hạn)", maxPoints: 6 },
                 { id: "tc2.3.4", name: "Được doanh nghiệp tuyển dụng là thực tập sinh và có thời gian thực tập hơn 30 ngày", maxPoints: 6 }
             ]}
         ]
@@ -927,25 +870,25 @@ const ALL_CATEGORIES = [
         id: "c3", name: "Mục 3: Trách nhiệm tham gia hoạt động chính trị - xã hội... (Tối đa 20đ)", maxPoints: 20,
         groups: [
             { id: "g3.1", name: "Nhóm Trách nhiệm và hiệu quả tham gia các hoạt động rèn luyện", maxPoints: 15, criteria: [
-                { id: "tc3.1.1", name: "Tham gia sự kiện chính trị - xã hội (Đại hội, Hội nghị...)", maxPoints: 3 },
+                { id: "tc3.1.1", name: "Tham gia sự kiện chính trị - xã hội (các Đại hội, Hội nghị, cuộc họp của tổ chức Đảng, Đoàn - Hội từ cấp Chi bộ, Chi đoàn, Chi hội trở lên... và các chương trình mang tính chính trị - xã hội khác).", maxPoints: 3 },
                 { id: "tc3.1.2", name: "Tham gia cổ vũ các hoạt động phong trào văn hóa, thể thao", maxPoints: 3 },
-                { id: "tc3.1.3", name: "Tham gia các hoạt động thể dục nâng cao sức khỏe được tổ chức bởi đơn vị hợp pháp", maxPoints: 4 },
-                { id: "tc3.1.4", name: "Tham gia các cuộc thi văn hóa, văn nghệ do các tổ chức, đơn vị hợp pháp tổ chức", maxPoints: 6 },
-                { id: "tc3.1.5", name: "Tham gia các giải thể thao do các tổ chức, đơn vị hợp pháp tổ chức", maxPoints: 6 },
-                { id: "tc3.1.6", name: "Tham gia các khóa đào tạo kỹ năng mềm do các đơn vị được Nhà trường công nhận", maxPoints: 6 },
-                { id: "tc3.1.7", name: "Thành viên CLB/Tổ/Đội/Nhóm SV hợp pháp, hoạt động về văn nghệ, thể thao, tình nguyện", maxPoints: 6 }
+                { id: "tc3.1.3", name: "Tham gia các hoạt động thể dục nâng cao sức khỏe được tổ chức bởi các đơn vị hợp pháp", maxPoints: 4 },
+                { id: "tc3.1.4", name: "Tham gia các cuộc thi văn hóa, văn nghệ do các tổ chức, đơn vị hợp pháp tổ chức (hát, múa, nhảy, nhạc cụ, hội họa...).", maxPoints: 6 },
+                { id: "tc3.1.5", name: "Tham gia các giải thể thao do các tổ chức, đơn vị hợp pháp tổ chức (các môn thể thao chính thức như: chạy, bóng đá, cờ vua, bóng chuyền...).", maxPoints: 6 },
+                { id: "tc3.1.6", name: "Tham gia các khóa đào tạo kỹ năng mềm do các đơn vị được Nhà trường công nhận tổ chức.", maxPoints: 6 },
+                { id: "tc3.1.7", name: "Thành viên CLB/Tổ/Đội/Nhóm SV hợp pháp, hoạt động về văn nghệ, thể thao, tình nguyện, sở thích", maxPoints: 6 }
             ]},
             { id: "g3.2", name: "Nhóm Tham gia các hoạt động công ích, tình nguyện, công tác xã hội", maxPoints: 12, criteria: [
                 { id: "tc3.2.1", name: "Tham gia hoạt động khảo sát thông tin do Đại học thực hiện", maxPoints: 3 },
-                { id: "tc3.2.2", name: "Tham gia các hoạt động tình nguyện (hỗ trợ địa phương, bảo đảm an toàn giao thông...)", maxPoints: 3 },
+                { id: "tc3.2.2", name: "Tham gia các hoạt động tình nguyện (hỗ trợ địa phương, bảo đảm an toàn giao thông khu vực cổng trường, hỗ trợ tổ chức các chương trình và sự kiện của Đại học/Trường/Khoa).", maxPoints: 3 },
                 { id: "tc3.2.3", name: "Tham gia phong trào \"cốc trà đá vì cộng đồng\", \"tuổi trẻ Bách khoa Nhân ái\"", maxPoints: 3 },
-                { id: "tc3.2.4", name: "Tham gia hiến máu nhân đạo do Đại học và các tổ chức hợp pháp phát động", maxPoints: 6 },
-                { id: "tc3.2.5", name: "Tham gia các hoạt động phổ biến, tìm hiểu bản sắc văn hóa dân tộc, văn hóa địa phương", maxPoints: 3 },
-                { id: "tc3.2.6", name: "Tham gia các đội hình hoặc chiến dịch tình nguyện (Mùa hè xanh, Tiếp sức mùa thi...)", maxPoints: 6 }
+                { id: "tc3.2.4", name: "Tham gia hiến máu nhân đạo do Đại học và các tổ chức hợp pháp phát động, tổ chức", maxPoints: 6 },
+                { id: "tc3.2.5", name: "Tham gia các hoạt động phổ biến, tìm hiểu bản sắc văn hóa dân tộc, văn hóa địa phương, văn hóa trường học,...", maxPoints: 3 },
+                { id: "tc3.2.6", name: "Tham gia các đội hình hoặc chiến dịch tình nguyện trong và ngoài Nhà trường (Mùa hè xanh, Tình nguyện mùa đông, Tiếp sức mùa thi, Tư vấn viên đồng đẳng...)", maxPoints: 6 }
             ]},
             { id: "g3.3", name: "Nhóm Tham gia tuyên truyền, phòng chống tội phạm và tệ nạn xã hội", maxPoints: 6, criteria: [
-                { id: "tc3.3.1", name: "Tham gia bảo vệ cảnh quan, môi trường, nếp sống văn minh nơi công cộng", maxPoints: 4 },
-                { id: "tc3.3.2", name: "Tham gia các hoạt động đảm bảo an ninh, trật tự và an toàn trường học", maxPoints: 4 },
+                { id: "tc3.3.1", name: "Tham gia bảo vệ cảnh quan, môi trường, nếp sống văn minh nơi công cộng.", maxPoints: 4 },
+                { id: "tc3.3.2", name: "Tham gia các hoạt động đảm bảo an ninh, trật tự và an toàn trường học.", maxPoints: 4 },
                 { id: "tc3.3.3", name: "Tham gia các diễn đàn sinh viên, các buổi toạ đàm xây dựng quy định, quy chế và pháp luật", maxPoints: 4 }
             ]}
         ]
@@ -954,16 +897,16 @@ const ALL_CATEGORIES = [
         id: "c4", name: "Mục 4: Điểm ý thức công dân trong quan hệ cộng đồng (Tối đa 15đ)", maxPoints: 15,
         groups: [
             { id: "g4.1", name: "Nhóm Tham gia tuyên truyền các chủ trương của Đảng, pháp luật...", maxPoints: 12, criteria: [
-                { id: "tc4.1.1", name: "Có hành động tích cực trên không gian mạng, phù hợp chủ trương và đường lối", maxPoints: 3 },
-                { id: "tc4.1.2", name: "Tham gia tuyên truyền đường lối của Đảng, pháp luật của Nhà nước, quy định cư trú", maxPoints: 3 },
-                { id: "tc4.1.3", name: "Tham gia các hoạt động phổ biến chủ trương của Đảng, chính sách, pháp luật", maxPoints: 4 },
+                { id: "tc4.1.1", name: "Có hành động tích cực trên không gian mạng, phù hợp với chủ trương của Đại học và đường lối, chính sách của Nhà nước.", maxPoints: 3 },
+                { id: "tc4.1.2", name: "Tham gia tuyên truyền đường lối của Đảng, pháp luật của Nhà nước, quy định của nơi cư trú hoặc quy chế của Đại học được các cấp có thẩm quyền xác nhận.", maxPoints: 3 },
+                { id: "tc4.1.3", name: "Tham gia các hoạt động phổ biến chủ trương của Đảng, chính sách, pháp luật của Nhà nước", maxPoints: 4 },
                 { id: "tc4.1.4", name: "Tham gia các cuộc thi tìm hiểu lịch sử, văn hóa, truyền thống dân tộc", maxPoints: 4 },
-                { id: "tc4.1.5", name: "Góp phần xây dựng tốt hình ảnh sinh viên Bách khoa với cơ quan, tổ chức, doanh nghiệp", maxPoints: 4 }
+                { id: "tc4.1.5", name: "Góp phần xây dựng tốt hình ảnh sinh viên Bách khoa với các cơ quan, tổ chức hay doanh nghiệp được Đại học ghi nhận", maxPoints: 4 }
             ]},
             { id: "g4.2", name: "Nhóm Trách nhiệm tham gia các hoạt động theo định hướng", maxPoints: 12, criteria: [
                 { id: "tc4.2.1", name: "Đạt loại Khá trở lên khi tham gia học \"Lớp bồi dưỡng nhận thức về Đảng\"", maxPoints: 6 },
                 { id: "tc4.2.2", name: "Được kết nạp Đảng hoặc được chuyển Đảng chính thức", maxPoints: 6 },
-                { id: "tc4.2.3", name: "Được cơ quan, công ty nơi thực tập đánh giá hoàn thành tốt nhiệm vụ trở lên", maxPoints: 6 }
+                { id: "tc4.2.3", name: "Được cơ quan, công ty hoặc tổ chức hợp pháp nơi thực tập đánh giá hoàn thành tốt nhiệm vụ trở lên", maxPoints: 6 }
             ]}
         ]
     },
@@ -971,24 +914,24 @@ const ALL_CATEGORIES = [
         id: "c5", name: "Mục 5: Trách nhiệm và kết quả tham gia công tác cán bộ lớp... (Tối đa 20đ)", maxPoints: 20,
         groups: [
             { id: "g5.1", name: "Nhóm Tham gia công tác cán bộ tại Lớp, tổ chức Đoàn - Hội...", maxPoints: 6, criteria: [
-                { id: "tc5.1.1", name: "Cán bộ Lớp, Chi bộ, Đoàn - Hội, Tổ/Đội/CLB, trưởng nhóm NCKH hoàn thành xuất sắc", maxPoints: 6 },
-                { id: "tc5.1.2", name: "Cán bộ Lớp, Chi bộ, Đoàn - Hội, Tổ/Đội/CLB, trưởng nhóm NCKH hoàn thành tốt", maxPoints: 4 },
-                { id: "tc5.1.3", name: "Cán bộ Lớp, Chi bộ, Đoàn - Hội, Tổ/Đội/CLB, trưởng nhóm NCKH hoàn thành nhiệm vụ", maxPoints: 3 }
+                { id: "tc5.1.1", name: "Cán bộ Lớp, Chi bộ, Đoàn - Hội, Tổ/Đội/CLB, trưởng nhóm SV NCKH hoàn thành xuất sắc nhiệm vụ trong kỳ.", maxPoints: 6 },
+                { id: "tc5.1.2", name: "Cán bộ Lớp, Chi bộ, Đoàn - Hội, Tổ/Đội/CLB, trưởng nhóm SV NCKH hoàn thành tốt nhiệm vụ trong kỳ.", maxPoints: 4 },
+                { id: "tc5.1.3", name: "Cán bộ Lớp, Chi bộ, Đoàn - Hội, Tổ/Đội/CLB, trưởng nhóm SV NCKH hoàn thành nhiệm vụ trong kỳ.", maxPoints: 3 }
             ]},
             { id: "g5.2", name: "Nhóm Hỗ trợ và tham gia tích cực vào các hoạt động chung", maxPoints: 10, criteria: [
-                { id: "tc5.2.1", name: "Thành viên tích cực Tổ/Đội/CLB, nhóm NCKH tham gia hỗ trợ triển khai hoạt động", maxPoints: 6 },
-                { id: "tc5.2.2", name: "Tham gia hỗ trợ triển khai hoạt động của Lớp, Khoa, Trường và hoàn thành tốt", maxPoints: 4 },
-                { id: "tc5.2.3", name: "Tham gia hỗ trợ triển khai hoạt động của Lớp, Khoa, Trường và hoàn thành nhiệm vụ", maxPoints: 3 }
+                { id: "tc5.2.1", name: "Thành viên tích cực thuộc các Tổ/Đội/CLB, nhóm SV NCKH tham gia hỗ trợ triển khai hoạt động của Lớp, Khoa, Trường hoặc Đại học.", maxPoints: 6 },
+                { id: "tc5.2.2", name: "Tham gia hỗ trợ triển khai hoạt động của Lớp, Khoa, Trường hoặc Đại học và hoàn thành tốt nhiệm vụ được giao.", maxPoints: 4 },
+                { id: "tc5.2.3", name: "Tham gia hỗ trợ triển khai hoạt động của Lớp, Khoa, Trường hoặc Đại học và hoàn thành nhiệm vụ được giao.", maxPoints: 3 }
             ]},
             { id: "g5.3", name: "Nhóm Có thành tích trong NCKH, cuộc thi, khen thưởng", maxPoints: 15, criteria: [
                 { id: "tc5.3.1", name: "Đạt giải trong các cuộc thi chính thức cấp Quốc gia, cấp Quốc tế", maxPoints: 15 },
                 { id: "tc5.3.2", name: "Đạt giải trong các cuộc thi chính thức cấp Thành phố, cấp Bộ", maxPoints: 12 },
                 { id: "tc5.3.3", name: "Đạt giải trong các cuộc thi chính thức cấp Đại học", maxPoints: 10 },
                 { id: "tc5.3.4", name: "Được khen thưởng bằng khen, huy chương tương đương cấp Bộ trở lên", maxPoints: 10 },
-                { id: "tc5.3.5", name: "Đạt thành tích trong NCKH, khởi nghiệp do Đại học/Trường/Khoa tổ chức", maxPoints: 8 },
+                { id: "tc5.3.5", name: "Đạt thành tích trong NCKH sinh viên, cuộc thi khoa học kỹ thuật, sáng kiến cải tiến kỹ thuật khởi nghiệp do đơn vị Đại học/Trường/Khoa tổ chức.", maxPoints: 8 },
                 { id: "tc5.3.6", name: "Đạt danh hiệu \"Sinh viên 5 tốt\" từ cấp Đại học trở lên", maxPoints: 8 },
-                { id: "tc5.3.7", name: "Có kết quả học tập và rèn luyện kỳ trước xuất sắc (GPA ≥ 3.6, RL ≥ 90)", maxPoints: 6 },
-                { id: "tc5.3.8", name: "Có kết quả học tập và rèn luyện kỳ trước Giỏi (GPA ≥ 3.2, RL ≥ 80)", maxPoints: 4 }
+                { id: "tc5.3.7", name: "Có kết quả học tập và rèn luyện kỳ trước đó đạt mức xuất sắc (GPA ≥ 3.6, RL ≥ 90) trở lên.", maxPoints: 6 },
+                { id: "tc5.3.8", name: "Có kết quả học tập và rèn luyện kỳ trước đó đạt mức Giỏi (GPA ≥ 3.2, RL ≥ 80) trở lên.", maxPoints: 4 }
             ]}
         ]
     }
