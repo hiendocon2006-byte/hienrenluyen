@@ -455,16 +455,11 @@ html, body {
                                             {{ scenario.diff > 0 ? '+' : '' }}{{ scenario.diff }} điểm trần
                                         </span>
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                                         <div class="score-step score-step-current">
                                             <div class="text-[10px] font-extrabold uppercase tracking-wide text-indigo-700">Điểm hiện tại</div>
                                             <div class="mt-1 text-xl font-black tabular-nums text-slate-900">{{ baseScoreResult.score }}<span class="text-xs font-bold text-slate-500">/100</span></div>
                                             <div class="text-[11px] text-slate-500">Chỉ tính hoạt động đang bật</div>
-                                        </div>
-                                        <div class="score-step">
-                                            <div class="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">Điểm trần trước hoạt động mới</div>
-                                            <div class="mt-1 text-xl font-black tabular-nums text-slate-900">{{ scenario.ceilingBefore }}<span class="text-xs font-bold text-slate-500">/100</span></div>
-                                            <div class="text-[11px] text-slate-500">Theo mục tiêu cuối kỳ và {{ scenario.key === 'matching-approved' ? 'các hoạt động giả định được duyệt' : 'hoạt động đang bật' }}</div>
                                         </div>
                                         <div class="score-step score-step-result">
                                             <div class="text-[10px] font-extrabold uppercase tracking-wide text-emerald-700">Điểm trần sau hoạt động mới</div>
@@ -472,9 +467,6 @@ html, body {
                                             <div class="text-[11px] text-emerald-700">{{ scenario.diff > 0 ? 'Tăng +' + scenario.diff + ' điểm trần' : 'Không làm tăng điểm trần' }}</div>
                                         </div>
                                     </div>
-                                    <p class="rounded-xl border border-violet-100 bg-violet-50/70 px-3 py-2 text-xs leading-relaxed text-violet-900">
-                                        Điểm hiện tại chỉ tính các hoạt động đang bật.{{ assumedCriteriaIds.length ? ' ' + assumedCriteriaIds.length + ' tiêu chí mục tiêu cuối kỳ chỉ được dùng làm giả định khi tính điểm trần và xét trùng/giới hạn tiêu chí; không cộng điểm của chúng vào điểm hiện tại.' : ' Tiêu chí mục tiêu cuối kỳ không được cộng vào điểm hiện tại.' }} Kết quả phân tích cho biết hoạt động mới có làm tăng điểm trần hay không.
-                                    </p>
                                 </div>
 
                                 <!-- Không tăng điểm: chỉ nêu kết luận và hoạt động đang chiếm tiêu chí -->
