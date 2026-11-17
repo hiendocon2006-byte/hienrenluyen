@@ -21,10 +21,64 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         [v-cloak] { display: none !important; }
-        
+        /* Fix giao diện trên điện thoại */
+html, body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+#app {
+    width: 100%;
+    max-width: 1400px;
+    min-width: 0;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 640px) {
+    #app,
+    #app > div,
+    main {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    header > div {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    header > div > div {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    header > div > div:last-child {
+        flex-wrap: wrap;
+    }
+
+    main {
+        grid-template-columns: minmax(0, 1fr);
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    main > div {
+        min-width: 0;
+    }
+
+    main section {
+        min-width: 0;
+    }
+}
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
