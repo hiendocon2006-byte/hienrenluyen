@@ -1000,15 +1000,20 @@ const CRITERIA_MAP = {};
 ALL_CATEGORIES.forEach(cat => {
     cat.groups.forEach(g => {
         g.criteria.forEach(tc => {
-            const searchKey = normalizeCriteriaSearch(`${tc.id} ${tc.name} ${g.name} ${cat.name}`);
+            // Chỉ lập chỉ mục theo mã và TÊN tiêu chí. Không đưa tên nhóm/mục vào
+            // nội dung tìm kiếm vì sẽ khiến mọi tiêu chí trong cùng nhóm bị đề xuất sai.
+            const searchIdKey = normalizeCriteriaSearch(tc.id);
+            const searchNameKey = normalizeCriteriaSearch(tc.name);
             const item = {
                 ...tc,
                 groupId: g.id,
                 groupName: g.name,
                 catId: cat.id,
                 catName: cat.name,
-                searchKey,
-                searchCompactKey: searchKey.replace(/\s/g, '')
+                searchIdKey,
+                searchIdCompactKey: searchIdKey.replace(/\s/g, ''),
+                searchNameKey,
+                searchNameTokens: searchNameKey.split(' ').filter(Boolean)
             };
             FLAT_CRITERIA.push(item);
             CRITERIA_MAP[tc.id] = item;
@@ -1842,13 +1847,47 @@ createApp({
         
         // limit=0 trả về toàn bộ kết quả; dùng cho cửa sổ chọn mục tiêu.
         // Mặc định vẫn giới hạn 15 kết quả cho ô tìm tiêu chí khi thêm hoạt động.
+        // Tìm theo mã hoặc tên riêng của tiêu chí, tuyệt đối không tìm theo tên nhóm/mục.
+        // Cụm nhiều từ phải khớp đủ các từ trong tên tiêu chí để tránh gợi ý nhiễu.
         const getFilteredCriteriaOptions = (query, limit = 15) => {
             const q = normalizeCriteriaSearch(query);
             if (!q) return limit > 0 ? FLAT_CRITERIA.slice(0, limit) : FLAT_CRITERIA;
+
             const compactQuery = q.replace(/\s/g, '');
-            const matches = FLAT_CRITERIA.filter(item =>
-                item.searchKey.includes(q) || item.searchCompactKey.includes(compactQuery)
-            );
+            const queryTokens = q.split(' ').filter(Boolean);
+            const ranked = [];
+
+            for (const item of FLAT_CRITERIA) {
+                let score = null;
+
+                // Ưu tiên tuyệt đối khi người dùng tìm bằng mã tiêu chí.
+                if (item.searchIdKey === q || item.searchIdCompactKey === compactQuery) {
+                    score = 0;
+                } else if (item.searchIdKey.startsWith(q) || item.searchIdCompactKey.startsWith(compactQuery)) {
+                    score = 1;
+                } else {
+                    const name = item.searchNameKey;
+                    if (name === q) {
+                        score = 2;
+                    } else if (name.startsWith(q)) {
+                        score = 3;
+                    } else if (name.includes(q)) {
+                        score = 4;
+                    } else {
+                        // Với cụm nhiều từ, yêu cầu tất cả từ khóa xuất hiện trong
+                        // tên tiêu chí (không chỉ trùng một từ như "tham gia").
+                        const allTokensMatch = queryTokens.every(token =>
+                            item.searchNameTokens.some(nameToken => nameToken.startsWith(token))
+                        );
+                        if (allTokensMatch) score = 5;
+                    }
+                }
+
+                if (score !== null) ranked.push({ item, score });
+            }
+
+            ranked.sort((a, b) => a.score - b.score || a.item.name.localeCompare(b.item.name, 'vi'));
+            const matches = ranked.map(entry => entry.item);
             return limit > 0 ? matches.slice(0, limit) : matches;
         };
         
