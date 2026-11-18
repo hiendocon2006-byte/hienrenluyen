@@ -4980,7 +4980,7 @@ body::before, body::after {
 
                     <!-- ADVICE ENGINE BOX: cách trình bày gọn theo bản test phân tích -->
                     <transition name="fade">
-                        <div v-if="showAdvice" class="mt-6 pt-5 border-t border-slate-200 space-y-3">
+                        <div v-if="showAdvice" class="analysis-results-panel mt-6 pt-5 border-t border-slate-200 space-y-3">
                             <div class="flex items-center justify-between gap-3">
                                 <h3 class="text-sm font-extrabold text-slate-800">Kết quả phân tích</h3>
                                 <button type="button" @click="closeAdvice"
@@ -6666,6 +6666,19 @@ document.addEventListener('pointerout', (e) => {
             <span>Mật độ hạt sáng <b id="lg-val-density">Vừa</b></span>
             <input id="lg-range-density" type="range" min="16" max="169" step="1" value="100">
         </label>
+
+        <div class="lg-studio-divider"></div>
+        <div class="lg-performance-control">
+            <label for="lg-performance-mode">HIỆU NĂNG THIẾT BỊ</label>
+            <select id="lg-performance-mode">
+                <option value="auto">Tự động thích ứng</option>
+                <option value="full">Đầy đủ hiệu ứng</option>
+                <option value="balanced">Cân bằng</option>
+                <option value="save">Tiết kiệm tài nguyên</option>
+            </select>
+            <small id="lg-performance-status" aria-live="polite">Tự động · Đang đánh giá thiết bị</small>
+        </div>
+
         <button id="lg-fluid-toggle" type="button" class="lg-fluid-toggle" aria-pressed="false">
             <i class="fa-solid fa-pause"></i><span>Tạm dừng nền</span>
         </button>
@@ -6685,6 +6698,8 @@ document.addEventListener('pointerout', (e) => {
   const rangeBlur = document.getElementById('lg-range-blur');
   const rangeSpeed = document.getElementById('lg-range-speed');
   const rangeDensity = document.getElementById('lg-range-density');
+  const performanceModeSelect = document.getElementById('lg-performance-mode');
+  const performanceStatus = document.getElementById('lg-performance-status');
   const valAlpha = document.getElementById('lg-val-alpha');
   const valBlur = document.getElementById('lg-val-blur');
   const valSpeed = document.getElementById('lg-val-speed');
@@ -6706,7 +6721,8 @@ document.addEventListener('pointerout', (e) => {
     density: 1.3,
     paused: false,
     theme: 'hustPearl',
-    preset: 'balanced'
+    preset: 'balanced',
+    performanceMode: 'auto'
   };
   const PRESETS = {
     crystal:  { alpha: 38, blur: 0 },
@@ -6739,6 +6755,8 @@ document.addEventListener('pointerout', (e) => {
     const theme = VALID_THEMES.includes(migratedTheme) ? migratedTheme : DEFAULTS.theme;
     const paused = typeof value.paused === 'boolean' ? value.paused : legacyMotion === 0;
     const storedPreset = typeof value.preset === 'string' ? value.preset : DEFAULTS.preset;
+    const validPerformanceModes = ['auto', 'full', 'balanced', 'save'];
+    const performanceMode = validPerformanceModes.includes(value.performanceMode) ? value.performanceMode : 'auto';
     const isPreviousBalancedDefault = !isLegacyShape
       && storedPreset === 'balanced'
       && (
@@ -6755,7 +6773,8 @@ document.addEventListener('pointerout', (e) => {
       density: Number.isFinite(density) ? Math.min(2.2, Math.max(0.2, Math.round(density * 10) / 10)) : DEFAULTS.density,
       paused,
       theme,
-      preset: isLegacyShape ? 'custom' : (isPreviousBalancedDefault ? 'balanced' : storedPreset)
+      preset: isLegacyShape ? 'custom' : (isPreviousBalancedDefault ? 'balanced' : storedPreset),
+      performanceMode
     };
   }
 
@@ -6785,6 +6804,7 @@ document.addEventListener('pointerout', (e) => {
     root.dataset.lgFluidSpeed = String(settings.speed);
     root.dataset.lgFluidDensity = String(settings.density);
     root.dataset.lgFluidPaused = settings.paused ? 'true' : 'false';
+    root.dataset.lgPerformanceMode = settings.performanceMode || 'auto';
     root.style.setProperty('--lg-speed', settings.speed > 0 ? Math.max(6, 18 / settings.speed) + 's' : '999s');
     const motionPaused = settings.paused || settings.speed === 0;
     backdrop.classList.toggle('lg-paused', motionPaused);
@@ -6798,7 +6818,8 @@ document.addEventListener('pointerout', (e) => {
         theme: settings.theme,
         speed: settings.speed,
         density: settings.density,
-        paused: settings.paused
+        paused: settings.paused,
+        performanceMode: settings.performanceMode || 'auto'
       }
     }));
   }
@@ -6825,6 +6846,11 @@ document.addEventListener('pointerout', (e) => {
     rangeBlur.value = Math.min(2000, blurScale);
     rangeSpeed.value = s.speed;
     rangeDensity.value = Math.min(169, Math.max(16, densityScale));
+    if (performanceModeSelect) performanceModeSelect.value = s.performanceMode;
+    if (performanceStatus) {
+      const modeLabels = { auto: 'Tự động · Đang đánh giá thiết bị', full: 'Đầy đủ hiệu ứng', balanced: 'Cân bằng', save: 'Tiết kiệm tài nguyên' };
+      performanceStatus.textContent = modeLabels[s.performanceMode] || modeLabels.auto;
+    }
     presetBtns.forEach(button => button.classList.toggle('active', button.dataset.preset === s.preset));
     publishFluidSettings(s);
   }
@@ -6937,22 +6963,55 @@ document.addEventListener('pointerout', (e) => {
 
   renderSettings(readLocalSettings(GUEST_STORAGE_KEY) || DEFAULTS);
 
+  let studioCloseTimer = 0;
+  let studioMotionToken = 0;
+  const studioReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function openStudioPopover() {
+    clearTimeout(studioCloseTimer);
+    studioMotionToken++;
+    popover.hidden = false;
+    popover.classList.remove('lg-studio-is-closing', 'lg-studio-is-opening');
+    toggleBtn.setAttribute('aria-expanded', 'true');
+    if (!studioReducedMotion) {
+      void popover.offsetWidth;
+      popover.classList.add('lg-studio-is-opening');
+    }
+  }
+
+  function closeStudioPopover() {
+    if (popover.hidden || popover.classList.contains('lg-studio-is-closing')) return;
+    clearTimeout(studioCloseTimer);
+    const token = ++studioMotionToken;
+    toggleBtn.setAttribute('aria-expanded', 'false');
+
+    if (studioReducedMotion) {
+      popover.hidden = true;
+      popover.classList.remove('lg-studio-is-opening', 'lg-studio-is-closing');
+      return;
+    }
+
+    popover.classList.remove('lg-studio-is-opening');
+    popover.classList.add('lg-studio-is-closing');
+    studioCloseTimer = window.setTimeout(() => {
+      if (token !== studioMotionToken || !popover.classList.contains('lg-studio-is-closing')) return;
+      popover.hidden = true;
+      popover.classList.remove('lg-studio-is-closing');
+    }, 165);
+  }
+
   toggleBtn.addEventListener('click', event => {
     event.stopPropagation();
-    popover.hidden = !popover.hidden;
-    toggleBtn.setAttribute('aria-expanded', popover.hidden ? 'false' : 'true');
+    if (popover.hidden || popover.classList.contains('lg-studio-is-closing')) openStudioPopover();
+    else closeStudioPopover();
   });
   document.addEventListener('click', event => {
     if (!popover.hidden && !popover.contains(event.target) && !toggleBtn.contains(event.target)) {
-      popover.hidden = true;
-      toggleBtn.setAttribute('aria-expanded', 'false');
+      closeStudioPopover();
     }
   });
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') {
-      popover.hidden = true;
-      toggleBtn.setAttribute('aria-expanded', 'false');
-    }
+    if (event.key === 'Escape') closeStudioPopover();
   });
 
   // 100% là mốc chuẩn của bộ mặc định; giá trị thực vẫn được lưu và áp dụng riêng.
@@ -6971,6 +7030,16 @@ document.addEventListener('pointerout', (e) => {
     ...current,
     density: Math.min(2.2, Math.max(0.2, DEFAULTS.density * Number(rangeDensity.value) / 100))
   }));
+  if (performanceModeSelect) {
+    performanceModeSelect.addEventListener('change', () => {
+      updateSettings({ ...current, performanceMode: performanceModeSelect.value });
+    });
+  }
+  document.addEventListener('sivifal-performance-status', event => {
+    if (performanceStatus && event.detail && event.detail.label) {
+      performanceStatus.textContent = event.detail.label;
+    }
+  });
   pauseBtn.addEventListener('click', () => updateSettings({ ...current, paused: !current.paused }));
 
   themeBtns.forEach(button => {
@@ -8034,6 +8103,32 @@ html, body{
 
     const root = document.documentElement;
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const isCompactScreen = window.matchMedia('(max-width: 760px)').matches;
+    const deviceMemory = Number(navigator.deviceMemory) || 0;
+    const cpuCores = Number(navigator.hardwareConcurrency) || 0;
+    const mobileDevice = isCoarsePointer || isCompactScreen;
+    const constrainedHardware =
+        (deviceMemory > 0 && deviceMemory <= 3) ||
+        (cpuCores > 0 && cpuCores <= 4);
+
+    // Các nấc chất lượng. Mật độ do người dùng chọn vẫn được nhân thêm ở syncParticleCount().
+    const QUALITY_PROFILES = [
+        { name: 'Tiết kiệm tối đa', maxDpr: 1, baseParticles: 24, frameInterval: 1000 / 24, orbCount: 2, touchInteraction: false },
+        { name: 'Máy cấu hình thấp', maxDpr: 1.05, baseParticles: 38, frameInterval: 1000 / 30, orbCount: 3, touchInteraction: false },
+        { name: 'Cân bằng', maxDpr: 1.25, baseParticles: 60, frameInterval: 1000 / 40, orbCount: 4, touchInteraction: true },
+        { name: 'Hiệu năng cao', maxDpr: 1.5, baseParticles: 86, frameInterval: 1000 / 50, orbCount: 5, touchInteraction: true },
+        { name: 'Đầy đủ', maxDpr: 1.75, baseParticles: 112, frameInterval: 1000 / 60, orbCount: 6, touchInteraction: true }
+    ];
+
+    const initialAutoTier = constrainedHardware ? 1 : (mobileDevice ? 2 : 3);
+    const maxAutoTier = constrainedHardware ? 2 : (mobileDevice ? 3 : 4);
+    let performanceMode = ['auto', 'full', 'balanced', 'save'].includes(root.dataset.lgPerformanceMode)
+        ? root.dataset.lgPerformanceMode : 'auto';
+    let adaptiveTier = initialAutoTier;
+    let renderProfile = { ...QUALITY_PROFILES[adaptiveTier] };
+
     const THEMES = {
         hustPearl: {
             label: 'HUST Pearl', mode: 'light', bg: '#f0e5ec', alpha: 0.43, blend: 'source-over',
@@ -8086,6 +8181,60 @@ html, body{
     }));
     let particles = [];
 
+    let adaptiveStats = {
+        windowStart: performance.now(),
+        frames: 0,
+        renderMs: 0,
+        lateFrames: 0,
+        longTasks: 0,
+        lastFrameAt: 0
+    };
+    let badPerformanceWindows = 0;
+    let goodPerformanceWindows = 0;
+    let lastQualityChangeAt = 0;
+    let longTaskObserver = null;
+
+    if (typeof PerformanceObserver !== 'undefined') {
+        try {
+            longTaskObserver = new PerformanceObserver(entries => {
+                adaptiveStats.longTasks += entries.getEntries().length;
+            });
+            longTaskObserver.observe({ entryTypes: ['longtask'] });
+        } catch (_) {
+            longTaskObserver = null;
+        }
+    }
+
+    function emitPerformanceStatus() {
+        const activeProfile = QUALITY_PROFILES[adaptiveTier];
+        const labels = {
+            auto: `Tự động · ${activeProfile.name}`,
+            full: 'Đầy đủ hiệu ứng',
+            balanced: 'Cân bằng',
+            save: 'Tiết kiệm tài nguyên'
+        };
+        document.dispatchEvent(new CustomEvent('sivifal-performance-status', {
+            detail: {
+                mode: performanceMode,
+                tier: adaptiveTier,
+                label: labels[performanceMode] || labels.auto
+            }
+        }));
+    }
+
+    function resetAdaptiveStats() {
+        adaptiveStats = {
+            windowStart: performance.now(),
+            frames: 0,
+            renderMs: 0,
+            lateFrames: 0,
+            longTasks: 0,
+            lastFrameAt: 0
+        };
+        badPerformanceWindows = 0;
+        goodPerformanceWindows = 0;
+    }
+
     // Theo dõi con trỏ để tạo tương tác đẩy hạt sáng như trong index gốc.
     const pointer = {
         x: window.innerWidth / 2,
@@ -8121,7 +8270,7 @@ html, body{
         height = nextHeight;
 
         // Render theo CSS pixel nhưng dùng thêm devicePixelRatio để canvas sắc nét.
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, renderProfile.maxDpr);
         canvas.width = Math.round(width * pixelRatio);
         canvas.height = Math.round(height * pixelRatio);
         canvas.style.width = width + 'px';
@@ -8131,10 +8280,117 @@ html, body{
         syncParticleCount();
     }
 
+    function applyQualityTier(nextTier, force = false) {
+        const tier = clamp(Math.round(nextTier), 0, QUALITY_PROFILES.length - 1);
+        if (!force && tier === adaptiveTier) return;
+
+        adaptiveTier = tier;
+        renderProfile = { ...QUALITY_PROFILES[adaptiveTier] };
+
+        // Hạ/tăng DPI thật của canvas và số hạt, không chỉ giảm tốc độ chuyển động.
+        stopRenderLoop();
+        resizeCanvas();
+        lastTime = performance.now();
+        lastRenderedAt = 0;
+        resetAdaptiveStats();
+        emitPerformanceStatus();
+        syncRenderLoop();
+    }
+
+    function applyPerformanceMode(mode) {
+        const validModes = ['auto', 'full', 'balanced', 'save'];
+        performanceMode = validModes.includes(mode) ? mode : 'auto';
+        resetAdaptiveStats();
+
+        if (performanceMode === 'full') {
+            applyQualityTier(4, true);
+        } else if (performanceMode === 'balanced') {
+            applyQualityTier(2, true);
+        } else if (performanceMode === 'save') {
+            applyQualityTier(0, true);
+        } else {
+            // Mỗi lần quay lại Auto, bắt đầu từ mức an toàn theo thiết bị;
+            // sau đó bộ đo thực tế sẽ tự tăng/giảm dần.
+            applyQualityTier(initialAutoTier, true);
+        }
+
+        emitPerformanceStatus();
+    }
+
+    function evaluateAdaptivePerformance(now, renderCost, frameGap) {
+        if (performanceMode !== 'auto' || isPaused || document.hidden) return;
+
+        adaptiveStats.frames++;
+        adaptiveStats.renderMs += renderCost;
+        if (frameGap > renderProfile.frameInterval * 1.65) adaptiveStats.lateFrames++;
+
+        const windowDuration = now - adaptiveStats.windowStart;
+        if (windowDuration < 2600 || adaptiveStats.frames < 18) return;
+
+        const averageRenderMs = adaptiveStats.renderMs / adaptiveStats.frames;
+        const lateRatio = adaptiveStats.lateFrames / adaptiveStats.frames;
+        const longTasks = adaptiveStats.longTasks;
+        const frameBudget = renderProfile.frameInterval;
+
+        // Chỉ hạ chất lượng khi có dấu hiệu lặp lại; tránh phản ứng với một cú khựng đơn lẻ.
+        const isStruggling =
+            averageRenderMs > Math.max(4.5, frameBudget * 0.38) ||
+            lateRatio > 0.16 ||
+            longTasks >= 2;
+
+        // Chỉ tăng chất lượng khi máy dư tải ổn định qua nhiều cửa sổ đo.
+        const hasHeadroom =
+            averageRenderMs < frameBudget * 0.19 &&
+            lateRatio < 0.045 &&
+            longTasks === 0;
+
+        if (isStruggling) {
+            badPerformanceWindows++;
+            goodPerformanceWindows = 0;
+        } else if (hasHeadroom) {
+            goodPerformanceWindows++;
+            badPerformanceWindows = 0;
+        } else {
+            badPerformanceWindows = 0;
+            goodPerformanceWindows = 0;
+        }
+
+        const cooldownPassed = now - lastQualityChangeAt > 3600;
+        let nextTier = adaptiveTier;
+
+        if (cooldownPassed && badPerformanceWindows >= 2) {
+            nextTier = Math.max(0, adaptiveTier - 1);
+        } else if (cooldownPassed && goodPerformanceWindows >= 3) {
+            nextTier = Math.min(maxAutoTier, adaptiveTier + 1);
+        }
+
+        // Reset sample window before a possible profile switch.
+        adaptiveStats = {
+            windowStart: now,
+            frames: 0,
+            renderMs: 0,
+            lateFrames: 0,
+            longTasks: 0,
+            lastFrameAt: adaptiveStats.lastFrameAt
+        };
+
+        if (nextTier !== adaptiveTier) {
+            lastQualityChangeAt = now;
+            applyQualityTier(nextTier);
+        } else {
+            emitPerformanceStatus();
+        }
+    }
+
     function hexToRgb(hex) {
         const n = parseInt(hex.replace('#', ''), 16);
         return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
     }
+
+    Object.values(THEMES).forEach(theme => {
+        theme.orbs.forEach(orb => { orb.rgb = hexToRgb(orb.color); });
+        theme.sparkleRgb = theme.sparkles.map(hexToRgb);
+    });
 
     function makeParticle(theme) {
         // Chỉ dùng hình khép kín: chấm ngọc, vòng tròn, sao rỗng, lục giác,
@@ -8166,6 +8422,7 @@ html, body{
             flower: 5.8 + Math.random() * 4.4
         };
 
+        const colorIdx = Math.floor(Math.random() * theme.sparkles.length);
         return {
             x: Math.random() * width,
             y: Math.random() * height,
@@ -8177,7 +8434,8 @@ html, body{
             spin: (Math.random() - 0.5) * 0.28,
             phase: Math.random() * Math.PI * 2,
             phaseSpeed: 0.45 + Math.random() * 1.5,
-            colorIdx: Math.floor(Math.random() * theme.sparkles.length),
+            colorIdx,
+            rgb: theme.sparkleRgb[colorIdx],
             offsetX: 0,
             offsetY: 0,
             hoverBoost: 0
@@ -8187,7 +8445,7 @@ html, body{
     function syncParticleCount() {
         if (!width || !height) return;
         const theme = THEMES[currentThemeKey] || THEMES.hustPearl;
-        const targetCount = Math.round(112 * densityMultiplier);
+        const targetCount = Math.round(renderProfile.baseParticles * densityMultiplier);
         while (particles.length < targetCount) particles.push(makeParticle(theme));
         if (particles.length > targetCount) particles.length = targetCount;
     }
@@ -8200,12 +8458,16 @@ html, body{
         root.dataset.themeMode = theme.mode;
         root.style.setProperty('--bg-base', theme.bg);
         document.body.style.backgroundColor = theme.bg;
-        particles.forEach(p => { p.colorIdx = Math.floor(Math.random() * theme.sparkles.length); });
+        particles.forEach(p => { p.colorIdx = Math.floor(Math.random() * theme.sparkles.length); p.rgb = theme.sparkleRgb[p.colorIdx]; });
         syncParticleCount();
+        if (typeof syncRenderLoop === 'function') syncRenderLoop();
     }
 
     function applyFluidControls(next = {}) {
         if (next.theme && THEMES[next.theme]) applyTheme(next.theme);
+        if (typeof next.performanceMode === 'string' && next.performanceMode !== performanceMode) {
+            applyPerformanceMode(next.performanceMode);
+        }
         if (Number.isFinite(Number(next.speed))) speedMultiplier = clamp(Number(next.speed), 0, 3);
         if (Number.isFinite(Number(next.density))) {
             densityMultiplier = clamp(Number(next.density), 0.2, 2.2);
@@ -8214,10 +8476,57 @@ html, body{
         if (typeof next.paused === 'boolean') isPaused = next.paused;
         if (speedMultiplier === 0) isPaused = true;
         else if (typeof next.speed === 'number' && next.speed > 0 && typeof next.paused !== 'boolean') isPaused = false;
+        syncRenderLoop();
     }
 
     let lastTime = performance.now();
-    function renderLoop(now) {
+    let lastRenderedAt = 0;
+    let renderRafId = 0;
+    let renderTimerId = 0;
+
+    function stopRenderLoop() {
+        if (renderTimerId) {
+            clearTimeout(renderTimerId);
+            renderTimerId = 0;
+        }
+        if (renderRafId) {
+            cancelAnimationFrame(renderRafId);
+            renderRafId = 0;
+        }
+    }
+
+    function queueRenderLoop() {
+        if (isPaused || document.hidden || renderRafId || renderTimerId) return;
+        const elapsed = performance.now() - lastRenderedAt;
+        const delay = Math.max(0, renderProfile.frameInterval - elapsed);
+        renderTimerId = window.setTimeout(() => {
+            renderTimerId = 0;
+            if (!isPaused && !document.hidden && !renderRafId) {
+                renderRafId = requestAnimationFrame(renderLoop);
+            }
+        }, delay);
+    }
+
+    function syncRenderLoop() {
+        if (document.hidden) {
+            stopRenderLoop();
+            return;
+        }
+        if (isPaused) {
+            stopRenderLoop();
+            lastTime = performance.now();
+            renderLoop(lastTime, true); // vẽ đúng một khung tĩnh, không tiếp tục lặp
+            return;
+        }
+        queueRenderLoop();
+    }
+
+    function renderLoop(now, forceSingleFrame = false) {
+        renderRafId = 0;
+        if (document.hidden) return;
+        const renderStartedAt = performance.now();
+        const frameGap = adaptiveStats.lastFrameAt ? now - adaptiveStats.lastFrameAt : renderProfile.frameInterval;
+        if (!forceSingleFrame) adaptiveStats.lastFrameAt = now;
         const dt = Math.min((now - lastTime) / 1000, 0.1);
         lastTime = now;
         const effectiveDt = isPaused ? 0 : dt * speedMultiplier;
@@ -8237,7 +8546,8 @@ html, body{
 
         // Sáu quầng màu chuyển động lỏng – thông số và màu lấy từ file nền.
         ctx.globalCompositeOperation = theme.blend;
-        theme.orbs.forEach((cfg, i) => {
+        for (let i = 0; i < Math.min(theme.orbs.length, renderProfile.orbCount); i++) {
+            const cfg = theme.orbs[i];
             const state = orbStates[i];
             state.px += cfg.sx * effectiveDt;
             state.py += cfg.sy * effectiveDt;
@@ -8246,7 +8556,7 @@ html, body{
             const x = width * 0.5 + Math.sin(state.px) * 0.35 * width;
             const y = height * 0.5 + Math.cos(state.py) * 0.35 * height;
             const radius = maxDim * cfg.r * (1 + Math.sin(state.ps) * 0.12);
-            const rgb = hexToRgb(cfg.color);
+            const rgb = cfg.rgb;
             const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
             gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${theme.alpha})`);
             gradient.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${theme.alpha * 0.45})`);
@@ -8255,7 +8565,7 @@ html, body{
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
-        });
+        }
 
         // Các hạt sáng lơ lửng, có phản ứng đàn hồi khi con trỏ đi qua.
         ctx.globalCompositeOperation = 'source-over';
@@ -8293,7 +8603,7 @@ html, body{
             if (p.x < -34) p.x = width + 34;
             if (p.x > width + 34) p.x = -34;
 
-            const rgb = hexToRgb(theme.sparkles[p.colorIdx % theme.sparkles.length]);
+            const rgb = p.rgb || theme.sparkleRgb[p.colorIdx % theme.sparkleRgb.length];
             const twinkle = 0.5 + 0.5 * Math.sin(p.phase);
             const alpha = Math.min(1, 0.90 + twinkle * 0.10 + p.hoverBoost * 0.12);
             const drawX = p.x + p.offsetX;
@@ -8509,7 +8819,11 @@ html, body{
             ctx.restore();
         });
 
-        requestAnimationFrame(renderLoop);
+        lastRenderedAt = now;
+        if (!forceSingleFrame && !isPaused) {
+            evaluateAdaptivePerformance(now, performance.now() - renderStartedAt, frameGap);
+            queueRenderLoop();
+        }
     }
 
     // Gộp các sự kiện resize liên tiếp để tránh reset canvas quá nhiều lần.
@@ -8519,6 +8833,7 @@ html, body{
         resizeFrame = requestAnimationFrame(() => {
             resizeFrame = 0;
             resizeCanvas();
+            if (isPaused) syncRenderLoop();
         });
     }
     window.addEventListener('resize', scheduleCanvasResize, { passive: true });
@@ -8536,7 +8851,7 @@ html, body{
     window.addEventListener('mouseleave', () => { pointer.active = false; }, { passive: true });
     window.addEventListener('blur', () => { pointer.active = false; });
     window.addEventListener('touchmove', event => {
-        if (!event.touches || !event.touches.length) return;
+        if (!renderProfile.touchInteraction || !event.touches || !event.touches.length) return;
         pointer.targetX = event.touches[0].clientX;
         pointer.targetY = event.touches[0].clientY;
         pointer.active = true;
@@ -8545,7 +8860,12 @@ html, body{
     window.addEventListener('touchcancel', () => { pointer.active = false; }, { passive: true });
 
     document.addEventListener('sivifal-fluid-settings', event => applyFluidControls(event.detail || {}));
-    document.addEventListener('visibilitychange', () => { lastTime = performance.now(); });
+    document.addEventListener('visibilitychange', () => {
+        lastTime = performance.now();
+        resetAdaptiveStats();
+        if (document.hidden) stopRenderLoop();
+        else syncRenderLoop();
+    });
 
     window.setFluidTheme = applyTheme;
     window.SiviFalFluidScene = {
@@ -8554,13 +8874,26 @@ html, body{
         setDensity(value) { applyFluidControls({ density: Number(value) }); },
         setPaused(value) { applyFluidControls({ paused: Boolean(value) }); },
         setPlaying(value) { applyFluidControls({ paused: !Boolean(value) }); },
-        getState() { return { theme: currentThemeKey, speed: speedMultiplier, density: densityMultiplier, paused: isPaused }; }
+        setPerformanceMode(value) { applyFluidControls({ performanceMode: String(value) }); },
+        getState() {
+            return {
+                theme: currentThemeKey,
+                speed: speedMultiplier,
+                density: densityMultiplier,
+                paused: isPaused,
+                performanceMode,
+                performanceProfile: QUALITY_PROFILES[adaptiveTier].name
+            };
+        }
     };
 
+    // Áp dụng chế độ hiệu năng đã lưu; mặc định là tự động thích ứng.
+    applyPerformanceMode(performanceMode);
     resizeCanvas();
     const initialTheme = THEMES[root.dataset.lgFluidTheme] ? root.dataset.lgFluidTheme : 'hustPearl';
     applyTheme(initialTheme);
-    requestAnimationFrame(renderLoop);
+    emitPerformanceStatus();
+    syncRenderLoop();
 })();
 </script>
 
@@ -9755,23 +10088,6 @@ html, body{
 </style>
 
 
-<style id="sivifal-three-theme-background-tone-v12">
-/* Background base tones are slightly deeper; original theme hues, orb colours,
-   sparkle colours and animation intensities are intentionally unchanged. */
-</style>
-
-
-<style id="sivifal-liquid-glass-defaults-v13">
-/* The studio remains fully adjustable: defaults are 48% transparency, 3px blur,
-   1.0x motion and 130% particle density. Existing slider ranges are retained. */
-</style>
-
-
-<style id="sivifal-relative-slider-scales-v14">
-/* Relative slider scales: 100% = default glass opacity 48%, blur 3px,
-   and particle density 130%. Secondary values show the actual applied values. */
-</style>
-
 <style id="sivifal-luminous-particle-polish-v15">
 /* Optical particle mix: fine dust, pearl cores, diamond glints, glass bokeh and delicate light trails. */
 #lg-fluid-canvas {
@@ -10023,10 +10339,7 @@ html, body{
 }
 
 /* Giữ chữ và điểm số nguyên độ đậm, không làm mờ nội dung. */
-#app .dashboard-sidebar .criteria-scroll,
-#app .dashboard-sidebar .criteria-scroll * {
-    opacity: 1 !important;
-}
+
 </style>
 <style id="sivifal-criteria-balanced-v22">
 /* Bảng tiêu chí: độ trong ở mức trung gian, có thể nhìn nền nhưng chữ vẫn nổi rõ. */
@@ -10390,7 +10703,6 @@ html body #lg-studio-popover.lg-studio-global-portal {
     left: var(--lg-studio-left, 8px) !important;
     right: auto !important;
     bottom: auto !important;
-    transform: none !important;
 
     display: block;
     width: min(340px, calc(100vw - 16px)) !important;
@@ -10684,6 +10996,571 @@ html body #lg-studio-popover.lg-studio-global-portal[hidden] {
     }
     .activity-criterion-code { font-size: 10px !important; }
     .activity-criterion-points { padding: 3px 6px !important; font-size: 10px !important; }
+}
+</style>
+
+
+<style id="sivifal-performance-motion-polish-v29">
+/* Motion tuned for responsiveness: animate composited properties only. */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity .18s ease, transform .18s cubic-bezier(.2,.75,.25,1) !important;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0 !important;
+    transform: translate3d(0,-6px,0) !important;
+}
+
+.list-enter-active,
+.list-leave-active {
+    transition: opacity .18s ease, transform .18s cubic-bezier(.2,.75,.25,1) !important;
+}
+.list-enter-from,
+.list-leave-to {
+    opacity: 0 !important;
+    transform: translate3d(0,8px,0) !important;
+}
+.list-move {
+    transition: transform .22s cubic-bezier(.2,.75,.25,1) !important;
+}
+
+/* Studio popup: quick, soft scale-and-rise; close has its own matching exit. */
+#lg-studio-popover.lg-studio-is-opening {
+    animation: sfStudioPopupIn .19s cubic-bezier(.2,.8,.2,1) both !important;
+}
+#lg-studio-popover.lg-studio-is-closing {
+    animation: sfStudioPopupOut .15s cubic-bezier(.4,0,.8,.2) both !important;
+}
+@keyframes sfStudioPopupIn {
+    from { opacity: 0; transform: translate3d(0,-7px,0) scale(.985); }
+    to   { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes sfStudioPopupOut {
+    from { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+    to   { opacity: 0; transform: translate3d(0,-5px,0) scale(.99); }
+}
+
+/* Search dropdown and result rows enter without animating filter/blur. */
+#app .search-dropdown {
+    transform-origin: top left !important;
+    animation: sfPopupDropIn .19s cubic-bezier(.2,.8,.2,1) both !important;
+}
+#app .search-dropdown > div {
+    animation-name: sfPopupRowIn !important;
+    animation-duration: .18s !important;
+    animation-timing-function: cubic-bezier(.2,.8,.2,1) !important;
+    animation-fill-mode: both !important;
+}
+@keyframes sfPopupDropIn {
+    from { opacity: 0; transform: translate3d(0,-7px,0) scale(.99); }
+    to   { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes sfPopupRowIn {
+    from { opacity: 0; transform: translate3d(0,5px,0); }
+    to   { opacity: 1; transform: translate3d(0,0,0); }
+}
+
+/* The target-criteria dialog and toasts use the same short motion language. */
+#app .assumed-criteria-dialog {
+    animation: sfCriteriaDialogIn .21s cubic-bezier(.2,.8,.2,1) both !important;
+}
+@keyframes sfCriteriaDialogIn {
+    from { opacity: 0; transform: translate3d(0,9px,0) scale(.99); }
+    to   { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+#app .fixed.bottom-8.left-1\/2 {
+    animation: sfToastIn .18s cubic-bezier(.2,.8,.2,1) both !important;
+}
+@keyframes sfToastIn {
+    from { opacity: 0; transform: translate3d(-50%,8px,0); }
+    to   { opacity: 1; transform: translate3d(-50%,0,0); }
+}
+
+/* Reduce continuous decorative work on compact devices, while preserving the look. */
+@media (max-width: 760px) {
+    #app .search-dropdown::before { animation-duration: 5s !important; }
+    #app .search-dropdown > div { animation-delay: 0s !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .fade-enter-active, .fade-leave-active,
+    .list-enter-active, .list-leave-active, .list-move,
+    #lg-studio-popover,
+    #app .search-dropdown,
+    #app .search-dropdown > div,
+    #app .assumed-criteria-dialog,
+    #app .fixed.bottom-8.left-1\/2 {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+</style>
+
+
+<style id="sivifal-liquid-glass-surface-balance-v30">
+/* Match the activity-card Liquid Glass material across the criteria board,
+   analysis results and Liquid Glass Studio. Preserve semantic colours/text. */
+
+/* 1) Criteria board: translucent glass shell; keep the ruby title bar untouched. */
+#app .dashboard-sidebar > .glass-panel {
+    background: linear-gradient(130deg,
+        rgba(255,255,255,.84) 0%,
+        rgba(255,249,251,.62) 60%,
+        rgba(255,240,244,.72) 100%) !important;
+    border: 1.5px solid rgba(255,255,255,.96) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(195%) !important;
+    backdrop-filter: blur(28px) saturate(195%) !important;
+    box-shadow:
+        0 16px 36px rgba(74,7,21,.09),
+        0 3px 10px rgba(74,7,21,.04),
+        inset 0 2px 1.5px rgba(255,255,255,1) !important;
+}
+
+/* Glass depth behind the scrollable criteria groups. */
+#app .dashboard-sidebar > .glass-panel > .criteria-scroll {
+    background: linear-gradient(135deg,
+        rgba(255,255,255,.24),
+        rgba(255,239,245,.16)) !important;
+    background-color: transparent !important;
+    -webkit-backdrop-filter: blur(18px) saturate(165%) !important;
+    backdrop-filter: blur(18px) saturate(165%) !important;
+}
+
+/* Each criteria category becomes a clear, translucent pane instead of a flat white card. */
+#app .dashboard-sidebar > .glass-panel > .criteria-scroll > div {
+    background: linear-gradient(130deg,
+        rgba(255,255,255,.82) 0%,
+        rgba(255,249,251,.61) 62%,
+        rgba(255,240,244,.70) 100%) !important;
+    background-color: transparent !important;
+    border: 1.25px solid rgba(255,255,255,.91) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(175%) !important;
+    backdrop-filter: blur(22px) saturate(175%) !important;
+    box-shadow:
+        0 12px 26px rgba(74,7,21,.065),
+        inset 0 1.5px 1px rgba(255,255,255,.95) !important;
+}
+
+/* Header of each category is translucent; the main red board heading is unchanged. */
+#app .dashboard-sidebar > .glass-panel > .criteria-scroll > div > div:first-child {
+    background: linear-gradient(110deg,
+        rgba(255,255,255,.48),
+        rgba(255,241,245,.34)) !important;
+    background-color: transparent !important;
+    border-bottom-color: rgba(255,255,255,.58) !important;
+}
+
+/* Nested criterion groups have a light glass fill, while approved green status stays semantic. */
+#app .dashboard-sidebar .criteria-scroll .rounded-xl.border {
+    background: rgba(255,255,255,.57) !important;
+    border-color: rgba(255,255,255,.82) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(155%) !important;
+    backdrop-filter: blur(14px) saturate(155%) !important;
+}
+#app .dashboard-sidebar .criteria-scroll .space-y-1\\.5 > div.bg-emerald-50 {
+    background: rgba(16,185,129,.16) !important;
+    border-color: rgba(16,185,129,.36) !important;
+}
+
+/* 2) Analysis results: make the revealed result area and its scenario cards
+   use the same translucent material as activity cards. */
+#app .analysis-results-panel {
+    position: relative !important;
+    isolation: isolate !important;
+    padding: 18px !important;
+    border: 1px solid rgba(255,255,255,.82) !important;
+    border-radius: 22px !important;
+    background: linear-gradient(130deg,
+        rgba(255,255,255,.82) 0%,
+        rgba(255,249,251,.60) 60%,
+        rgba(255,240,244,.69) 100%) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(180%) !important;
+    backdrop-filter: blur(26px) saturate(180%) !important;
+    box-shadow:
+        0 14px 32px rgba(74,7,21,.075),
+        inset 0 1.5px 1px rgba(255,255,255,.94) !important;
+}
+
+#app .analysis-results-panel .analysis-scenario {
+    background: linear-gradient(130deg,
+        rgba(255,255,255,.84) 0%,
+        rgba(255,249,251,.62) 60%,
+        rgba(255,240,244,.71) 100%) !important;
+    border: 1.25px solid rgba(255,255,255,.94) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(175%) !important;
+    backdrop-filter: blur(24px) saturate(175%) !important;
+    box-shadow:
+        0 10px 26px rgba(74,7,21,.065),
+        inset 0 1px 0 rgba(255,255,255,.98) !important;
+}
+
+/* Preserve the positive/negative decision cues without restoring opaque white fills. */
+#app .analysis-results-panel .analysis-scenario-positive {
+    background: linear-gradient(135deg,
+        rgba(220,252,231,.67),
+        rgba(255,255,255,.58)) !important;
+    border-color: rgba(52,211,153,.38) !important;
+}
+#app .analysis-results-panel .analysis-scenario-negative {
+    background: linear-gradient(135deg,
+        rgba(255,247,237,.72),
+        rgba(255,255,255,.59)) !important;
+    border-color: rgba(251,191,36,.38) !important;
+}
+
+/* Inner decision banners retain their green/amber meaning but gain slight translucency. */
+#app .analysis-results-panel .analysis-decision-banner {
+    -webkit-backdrop-filter: blur(10px) saturate(145%) !important;
+    backdrop-filter: blur(10px) saturate(145%) !important;
+}
+
+/* 3) Liquid Glass Studio: match activity-card opacity/blur rather than near-opaque white. */
+html body #lg-studio-popover.lg-studio-global-portal {
+    background: linear-gradient(130deg,
+        rgba(255,255,255,.84) 0%,
+        rgba(255,249,251,.62) 60%,
+        rgba(255,240,244,.71) 100%) !important;
+    border-color: rgba(255,255,255,.96) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(195%) !important;
+    backdrop-filter: blur(28px) saturate(195%) !important;
+    box-shadow:
+        0 24px 60px rgba(67,16,33,.20),
+        0 7px 20px rgba(67,16,33,.07),
+        inset 0 1.5px 1px rgba(255,255,255,.96) !important;
+}
+
+/* On smaller screens keep a slightly lighter blur to reduce GPU load. */
+@media (max-width: 760px) {
+    #app .dashboard-sidebar > .glass-panel,
+    #app .dashboard-sidebar > .glass-panel > .criteria-scroll > div,
+    #app .analysis-results-panel,
+    #app .analysis-results-panel .analysis-scenario,
+    html body #lg-studio-popover.lg-studio-global-portal {
+        -webkit-backdrop-filter: blur(20px) saturate(170%) !important;
+        backdrop-filter: blur(20px) saturate(170%) !important;
+    }
+}
+</style>
+
+
+<style id="sivifal-clearer-analysis-and-criteria-glass-v31">
+/* Slightly clearer glass for the two requested regions only.
+   Text, borders and semantic status colors remain crisp. */
+
+/* A) Analysis popup/result panel (first screenshot). */
+#app .analysis-results-panel {
+    background: linear-gradient(132deg,
+        rgba(255,255,255,.73) 0%,
+        rgba(255,249,251,.51) 58%,
+        rgba(255,240,244,.59) 100%) !important;
+    border-color: rgba(255,255,255,.80) !important;
+    -webkit-backdrop-filter: blur(23px) saturate(175%) !important;
+    backdrop-filter: blur(23px) saturate(175%) !important;
+}
+
+#app .analysis-results-panel .analysis-scenario {
+    background: linear-gradient(132deg,
+        rgba(255,255,255,.73) 0%,
+        rgba(255,249,251,.51) 58%,
+        rgba(255,240,244,.60) 100%) !important;
+    border-color: rgba(255,255,255,.85) !important;
+    -webkit-backdrop-filter: blur(21px) saturate(170%) !important;
+    backdrop-filter: blur(21px) saturate(170%) !important;
+}
+
+/* Keep positive/negative scenario identity while allowing more background through. */
+#app .analysis-results-panel .analysis-scenario-positive {
+    background: linear-gradient(132deg,
+        rgba(220,252,231,.55),
+        rgba(255,255,255,.47)) !important;
+    border-color: rgba(52,211,153,.34) !important;
+}
+#app .analysis-results-panel .analysis-scenario-negative {
+    background: linear-gradient(132deg,
+        rgba(255,247,237,.59),
+        rgba(255,255,255,.48)) !important;
+    border-color: rgba(251,191,36,.34) !important;
+}
+
+/* Score tiles inside the analysis result. */
+#app .analysis-results-panel .analysis-scenario > .grid > div {
+    background: rgba(255,255,255,.46) !important;
+    border-color: rgba(255,255,255,.72) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+    backdrop-filter: blur(12px) saturate(150%) !important;
+}
+
+/* Decision banner keeps its green/amber tint, but is no longer a solid block. */
+#app .analysis-results-panel .analysis-decision-banner.bg-emerald-50 {
+    background: rgba(209,250,229,.48) !important;
+}
+#app .analysis-results-panel .analysis-decision-banner.bg-amber-50 {
+    background: rgba(254,243,199,.48) !important;
+}
+
+/* Allocation and approved-assignment boxes inside the analysis result. */
+#app .analysis-results-panel .analysis-assignment {
+    background: rgba(224,231,255,.39) !important;
+    border-color: rgba(165,180,252,.45) !important;
+}
+#app .analysis-results-panel .analysis-scenario > div[class*="bg-emerald-50"] {
+    background: rgba(209,250,229,.43) !important;
+    border-color: rgba(110,231,183,.38) !important;
+}
+#app .analysis-results-panel .analysis-scenario > div[class*="bg-white/55"] {
+    background: rgba(255,255,255,.43) !important;
+    border-color: rgba(255,255,255,.78) !important;
+}
+#app .analysis-results-panel .analysis-scenario .bg-slate-50\/80 {
+    background: rgba(241,245,249,.42) !important;
+}
+#app .analysis-results-panel .analysis-scenario .bg-emerald-50\/80 {
+    background: rgba(209,250,229,.46) !important;
+}
+
+/* B) Criteria board and its nested category/group cards (second screenshot). */
+#app .dashboard-sidebar > .glass-panel {
+    background: linear-gradient(132deg,
+        rgba(255,255,255,.76),
+        rgba(255,248,251,.55),
+        rgba(255,239,244,.62)) !important;
+    border-color: rgba(255,255,255,.88) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(185%) !important;
+    backdrop-filter: blur(26px) saturate(185%) !important;
+}
+
+#app .dashboard-sidebar > .glass-panel > .criteria-scroll {
+    background: linear-gradient(135deg,
+        rgba(255,255,255,.17),
+        rgba(255,239,245,.10)) !important;
+    background-color: transparent !important;
+    -webkit-backdrop-filter: blur(15px) saturate(155%) !important;
+    backdrop-filter: blur(15px) saturate(155%) !important;
+}
+
+#app .dashboard-sidebar > .glass-panel > .criteria-scroll > div {
+    background: linear-gradient(132deg,
+        rgba(255,255,255,.72),
+        rgba(255,249,251,.50),
+        rgba(255,240,244,.57)) !important;
+    background-color: transparent !important;
+    border-color: rgba(255,255,255,.84) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(170%) !important;
+    backdrop-filter: blur(20px) saturate(170%) !important;
+    box-shadow:
+        0 10px 23px rgba(74,7,21,.055),
+        inset 0 1.5px 1px rgba(255,255,255,.88) !important;
+}
+
+#app .dashboard-sidebar > .glass-panel > .criteria-scroll > div > div:first-child {
+    background: linear-gradient(110deg,
+        rgba(255,255,255,.39),
+        rgba(255,241,245,.27)) !important;
+    background-color: transparent !important;
+    border-bottom-color: rgba(255,255,255,.48) !important;
+}
+
+/* Inner criterion rows/groups become more transparent; readable text is untouched. */
+#app .dashboard-sidebar .criteria-scroll .rounded-xl.border {
+    background: rgba(255,255,255,.45) !important;
+    border-color: rgba(255,255,255,.74) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+    backdrop-filter: blur(12px) saturate(150%) !important;
+}
+
+/* Approved rows retain a subtle green state, now with more glass transparency. */
+#app .dashboard-sidebar .criteria-scroll .bg-emerald-50 {
+    background-color: rgba(16,185,129,.12) !important;
+    border-color: rgba(16,185,129,.31) !important;
+}
+
+/* Slightly reduce blur on compact devices to keep compositing cost reasonable. */
+@media (max-width: 760px) {
+    #app .analysis-results-panel,
+    #app .analysis-results-panel .analysis-scenario,
+    #app .dashboard-sidebar > .glass-panel,
+    #app .dashboard-sidebar > .glass-panel > .criteria-scroll > div {
+        -webkit-backdrop-filter: blur(17px) saturate(160%) !important;
+        backdrop-filter: blur(17px) saturate(160%) !important;
+    }
+    #app .analysis-results-panel .analysis-scenario > .grid > div,
+    #app .dashboard-sidebar .criteria-scroll .rounded-xl.border {
+        -webkit-backdrop-filter: blur(9px) saturate(140%) !important;
+        backdrop-filter: blur(9px) saturate(140%) !important;
+    }
+}
+</style>
+
+
+<style id="sivifal-background-alpha-only-v32">
+/*
+  Alpha-only Liquid Glass adjustment:
+  - expose the wallpaper/background through the surfaces
+  - preserve the original foreground/text/status colours and saturation
+  - do not apply opacity to parent elements
+*/
+
+/* 1) Analysis result outer panel and scenario cards: same hues, less white fill. */
+#app .analysis-results-panel {
+    background: linear-gradient(132deg,
+        rgba(255,255,255,.46) 0%,
+        rgba(255,249,251,.32) 58%,
+        rgba(255,240,244,.37) 100%) !important;
+    /* Do not wash out the green/amber text or status colours. */
+    -webkit-backdrop-filter: blur(23px) saturate(190%) !important;
+    backdrop-filter: blur(23px) saturate(190%) !important;
+}
+
+#app .analysis-results-panel .analysis-scenario {
+    background: linear-gradient(132deg,
+        rgba(255,255,255,.43) 0%,
+        rgba(255,249,251,.29) 58%,
+        rgba(255,240,244,.34) 100%) !important;
+    -webkit-backdrop-filter: blur(21px) saturate(185%) !important;
+    backdrop-filter: blur(21px) saturate(185%) !important;
+}
+
+/* Keep a discernible emerald/amber tint, but allow the wallpaper to show through. */
+#app .analysis-results-panel .analysis-scenario-positive {
+    background: linear-gradient(132deg,
+        rgba(16,185,129,.25),
+        rgba(255,255,255,.25)) !important;
+}
+#app .analysis-results-panel .analysis-scenario-negative {
+    background: linear-gradient(132deg,
+        rgba(245,158,11,.22),
+        rgba(255,255,255,.25)) !important;
+}
+
+/* Inner score tiles/cards: lower fill only, not text opacity. */
+#app .analysis-results-panel .analysis-scenario > .grid > div {
+    background: rgba(255,255,255,.30) !important;
+}
+#app .analysis-results-panel .analysis-decision-banner.bg-emerald-50 {
+    background: rgba(16,185,129,.32) !important;
+}
+#app .analysis-results-panel .analysis-decision-banner.bg-amber-50 {
+    background: rgba(245,158,11,.28) !important;
+}
+#app .analysis-results-panel .analysis-assignment {
+    background: rgba(99,102,241,.13) !important;
+}
+#app .analysis-results-panel .analysis-scenario > div[class*="bg-emerald-50"] {
+    background: rgba(16,185,129,.22) !important;
+}
+#app .analysis-results-panel .analysis-scenario > div[class*="bg-white/55"] {
+    background: rgba(255,255,255,.28) !important;
+}
+#app .analysis-results-panel .analysis-scenario .bg-slate-50\/80 {
+    background: rgba(148,163,184,.13) !important;
+}
+#app .analysis-results-panel .analysis-scenario .bg-emerald-50\/80 {
+    background: rgba(16,185,129,.22) !important;
+}
+
+/* 2) Criteria board outer shell and category cards. Reduce only fill alpha. */
+#app .dashboard-sidebar > .glass-panel {
+    background: linear-gradient(132deg,
+        rgba(255,255,255,.53),
+        rgba(255,248,251,.35),
+        rgba(255,239,244,.41)) !important;
+}
+#app .dashboard-sidebar > .glass-panel > .criteria-scroll {
+    background: linear-gradient(135deg,
+        rgba(255,255,255,.10),
+        rgba(255,239,245,.055)) !important;
+    background-color: transparent !important;
+}
+#app .dashboard-sidebar > .glass-panel > .criteria-scroll > div {
+    background: linear-gradient(132deg,
+        rgba(255,255,255,.43),
+        rgba(255,249,251,.28),
+        rgba(255,240,244,.33)) !important;
+    background-color: transparent !important;
+}
+#app .dashboard-sidebar > .glass-panel > .criteria-scroll > div > div:first-child {
+    background: linear-gradient(110deg,
+        rgba(255,255,255,.24),
+        rgba(255,241,245,.15)) !important;
+    background-color: transparent !important;
+}
+
+/* Criterion group rows: retain their own semantic colour, use less opaque fills. */
+#app .dashboard-sidebar .criteria-scroll .rounded-xl.border {
+    background: rgba(255,255,255,.29) !important;
+}
+#app .dashboard-sidebar .criteria-scroll .bg-emerald-50 {
+    background-color: rgba(16,185,129,.22) !important;
+}
+
+/* 3) Cards in the result/criteria areas above their parent surfaces.
+   Keep borders, text and score labels fully opaque. */
+#app .analysis-results-panel .rounded-lg.border,
+#app .analysis-results-panel .rounded-xl.border {
+    background-color: rgba(255,255,255,.27);
+}
+#app .analysis-results-panel .analysis-decision-banner.bg-emerald-50 {
+    background-color: rgba(16,185,129,.32) !important;
+}
+#app .analysis-results-panel .analysis-decision-banner.bg-amber-50 {
+    background-color: rgba(245,158,11,.28) !important;
+}
+
+/* The same transparency treatment, with a smaller blur radius, on mobile GPUs. */
+@media (max-width: 760px) {
+    #app .analysis-results-panel,
+    #app .analysis-results-panel .analysis-scenario,
+    #app .dashboard-sidebar > .glass-panel,
+    #app .dashboard-sidebar > .glass-panel > .criteria-scroll > div {
+        -webkit-backdrop-filter: blur(16px) saturate(175%) !important;
+        backdrop-filter: blur(16px) saturate(175%) !important;
+    }
+}
+</style>
+
+
+<style id="sivifal-adaptive-performance-control-v33">
+.lg-performance-control {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin: 2px 0 12px;
+    min-width: 0;
+}
+.lg-performance-control > label {
+    color: #881337;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .075em;
+}
+#lg-performance-mode {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 7px 10px;
+    border: 1px solid rgba(190,41,66,.20);
+    border-radius: 11px;
+    color: #54202e;
+    background: rgba(255,255,255,.72);
+    font-size: 12px;
+    font-weight: 750;
+    outline: none;
+}
+#lg-performance-mode:focus-visible {
+    border-color: rgba(190,41,66,.5);
+    box-shadow: 0 0 0 3px rgba(190,41,66,.10);
+}
+#lg-performance-status {
+    display: block;
+    min-height: 15px;
+    color: #78616a;
+    font-size: 10px;
+    line-height: 1.4;
+    font-weight: 650;
+}
+@media (max-width: 380px) {
+    .lg-performance-control { gap: 5px; }
+    #lg-performance-mode { min-height: 34px; font-size: 11px; }
 }
 </style>
 
