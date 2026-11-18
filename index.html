@@ -10363,33 +10363,37 @@ html body #app .dashboard-primary.dashboard-primary > section.app-card:nth-of-ty
 
 
 
-<style id="sivifal-studio-popup-single-source-v27">
-/* Liquid Glass Studio: one source of truth for placement and appearance. */
+<style id="sivifal-studio-popup-single-source-v28">
+/* Popup Liquid Glass Studio: luôn ở lớp body, luôn neo theo nút mở. */
 #lg-studio-dock {
     position: relative !important;
     overflow: visible !important;
 }
 
-#lg-studio-popover {
-    position: absolute !important;
-    top: calc(100% + 10px) !important;
-    right: 0 !important;
+html body #lg-studio-popover.lg-studio-global-portal {
+    position: fixed !important;
+    top: var(--lg-studio-top, 120px) !important;
+    left: var(--lg-studio-left, 8px) !important;
+    right: auto !important;
     bottom: auto !important;
-    left: auto !important;
-    z-index: 12020 !important;
+    transform: none !important;
 
     display: block;
-    width: min(340px, calc(100vw - 24px)) !important;
+    width: min(340px, calc(100vw - 16px)) !important;
     min-width: 0 !important;
-    max-width: calc(100vw - 24px) !important;
-    max-height: min(72vh, 620px) !important;
+    max-width: min(340px, calc(100vw - 16px)) !important;
+    max-height: min(72dvh, 620px) !important;
+    height: auto !important;
     box-sizing: border-box !important;
+
     margin: 0 !important;
     padding: 14px !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
     overscroll-behavior: contain !important;
+    scrollbar-gutter: stable !important;
 
+    z-index: 30000 !important;
     border: 1px solid rgba(255,255,255,.98) !important;
     border-radius: 20px !important;
     background: linear-gradient(145deg,
@@ -10402,13 +10406,14 @@ html body #app .dashboard-primary.dashboard-primary > section.app-card:nth-of-ty
         0 7px 20px rgba(67,16,33,.08),
         inset 0 1px 0 rgba(255,255,255,1) !important;
     isolation: isolate !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
-#lg-studio-popover[hidden] {
+html body #lg-studio-popover.lg-studio-global-portal[hidden] {
     display: none !important;
 }
 
-/* Small content details are grouped here too; no scattered popup overrides. */
 #lg-studio-popover,
 #lg-studio-popover * {
     text-shadow: none !important;
@@ -10419,14 +10424,8 @@ html body #app .dashboard-primary.dashboard-primary > section.app-card:nth-of-ty
     min-width: 0 !important;
     max-width: 100% !important;
 }
-
-#lg-studio-popover .lg-studio-row > span {
-    color: #4b4050 !important;
-}
-
-#lg-studio-popover .lg-studio-row b {
-    color: #9f1239 !important;
-}
+#lg-studio-popover .lg-studio-row > span { color: #4b4050 !important; }
+#lg-studio-popover .lg-studio-row b { color: #9f1239 !important; }
 
 #lg-studio-popover .lg-studio-presets {
     display: grid !important;
@@ -10435,7 +10434,6 @@ html body #app .dashboard-primary.dashboard-primary > section.app-card:nth-of-ty
     min-width: 0 !important;
     margin-bottom: 13px !important;
 }
-
 #lg-studio-popover .lg-studio-presets button {
     min-width: 0 !important;
     max-width: 100% !important;
@@ -10444,7 +10442,6 @@ html body #app .dashboard-primary.dashboard-primary > section.app-card:nth-of-ty
     white-space: nowrap !important;
     font-size: 10px !important;
 }
-
 #lg-studio-popover input[type="range"] {
     display: block !important;
     width: 100% !important;
@@ -10453,142 +10450,109 @@ html body #app .dashboard-primary.dashboard-primary > section.app-card:nth-of-ty
     box-sizing: border-box !important;
 }
 
-/* On layouts up to the dashboard's single-column breakpoint, portal to body.
-   The JS below places it immediately beside the toggle, not in the viewport centre. */
-@media (max-width: 1099px) {
-    html body #lg-studio-popover.lg-studio-mobile-portal {
-        position: fixed !important;
-        top: var(--lg-studio-mobile-top, 120px) !important;
-        left: var(--lg-studio-mobile-left, 8px) !important;
-        right: auto !important;
-        bottom: auto !important;
-        transform: none !important;
-
-        width: min(340px, calc(100vw - 16px)) !important;
-        max-width: min(340px, calc(100vw - 16px)) !important;
-        max-height: min(72dvh, 620px) !important;
-        z-index: 30000 !important;
-        margin: 0 !important;
-    }
-
-    html body #lg-studio-popover.lg-studio-mobile-portal[hidden] {
-        display: none !important;
-    }
-}
-
 @media (max-width: 380px) {
-    html body #lg-studio-popover.lg-studio-mobile-portal {
+    html body #lg-studio-popover.lg-studio-global-portal {
         width: calc(100vw - 16px) !important;
         max-width: calc(100vw - 16px) !important;
         max-height: min(70dvh, 580px) !important;
         padding: 12px !important;
     }
-    html body #lg-studio-popover.lg-studio-mobile-portal .lg-studio-title {
+    html body #lg-studio-popover.lg-studio-global-portal .lg-studio-title {
         font-size: 12px !important;
     }
-    html body #lg-studio-popover.lg-studio-mobile-portal .lg-studio-presets button {
+    html body #lg-studio-popover.lg-studio-global-portal .lg-studio-presets button {
         font-size: 9.5px !important;
     }
 }
 </style>
 
 
-<script id="sivifal-studio-popup-single-controller-v27">
+<script id="sivifal-studio-popup-single-controller-v28">
 (() => {
     const dock = document.getElementById('lg-studio-dock');
     const popover = document.getElementById('lg-studio-popover');
     const toggle = document.getElementById('lg-studio-toggle');
     if (!dock || !popover || !toggle) return;
 
-    const compact = window.matchMedia('(max-width: 1099px)');
     let rafId = 0;
 
-    function ensureLayer() {
-        if (compact.matches) {
-            if (popover.parentElement !== document.body) {
-                document.body.appendChild(popover);
-            }
-            popover.classList.add('lg-studio-mobile-portal');
-        } else {
-            if (popover.parentElement !== dock) {
-                dock.appendChild(popover);
-            }
-            popover.classList.remove('lg-studio-mobile-portal');
-            popover.style.removeProperty('--lg-studio-mobile-left');
-            popover.style.removeProperty('--lg-studio-mobile-top');
+    // Luôn đặt popup trực tiếp dưới body để thoát mọi stacking/overflow context
+    // của header, dock và các wrapper thay đổi theo breakpoint.
+    function ensureGlobalLayer() {
+        if (popover.parentElement !== document.body) {
+            document.body.appendChild(popover);
         }
+        popover.classList.add('lg-studio-global-portal');
     }
 
-    function placeBesideToggle() {
-        ensureLayer();
-        if (!compact.matches || popover.hidden) return;
+    function positionPopover() {
+        ensureGlobalLayer();
+        if (popover.hidden) return;
 
         const anchor = toggle.getBoundingClientRect();
-        const viewport = window.visualViewport;
-        const viewLeft = viewport ? viewport.offsetLeft : 0;
-        const viewTop = viewport ? viewport.offsetTop : 0;
-        const viewWidth = viewport ? viewport.width : document.documentElement.clientWidth;
-        const viewHeight = viewport ? viewport.height : window.innerHeight;
+        const vv = window.visualViewport;
+
+        // visualViewport giúp xử lý cả zoom trình duyệt và viewport đang bị thu hẹp.
+        const viewLeft = vv ? vv.offsetLeft : 0;
+        const viewTop = vv ? vv.offsetTop : 0;
+        const viewWidth = vv ? vv.width : document.documentElement.clientWidth;
+        const viewHeight = vv ? vv.height : window.innerHeight;
 
         const margin = 8;
-        const panelWidth = Math.min(340, Math.max(220, viewWidth - margin * 2));
+        const panelWidth = Math.min(340, Math.max(180, viewWidth - margin * 2));
         const minLeft = viewLeft + margin;
         const maxLeft = Math.max(minLeft, viewLeft + viewWidth - panelWidth - margin);
 
-        // Align panel's left edge with the toggle. If that would overflow,
-        // clamp it to the nearest safe position while keeping it nearby.
-        const left = Math.max(minLeft, Math.min(anchor.left, maxLeft));
-
-        popover.style.setProperty('--lg-studio-mobile-left', `${Math.round(left)}px`);
+        // Mặc định căn theo mép trái nút. Nếu bị tràn thì chỉ dịch vừa đủ để nằm gọn.
+        let left = anchor.left;
+        if (anchor.right > viewLeft + viewWidth - margin && anchor.left + panelWidth > viewLeft + viewWidth - margin) {
+            left = anchor.right - panelWidth;
+        }
+        left = Math.max(minLeft, Math.min(left, maxLeft));
+        popover.style.setProperty('--lg-studio-left', `${Math.round(left)}px`);
 
         const maxHeight = Math.min(viewHeight * 0.72, 620);
         const panelHeight = Math.min(Math.max(popover.scrollHeight, 180), maxHeight);
         const minTop = viewTop + margin;
         const maxTop = Math.max(minTop, viewTop + viewHeight - panelHeight - margin);
 
-        // Prefer below the toggle; move above only when the panel cannot fit.
+        // Ưu tiên mở dưới nút; nếu không đủ chỗ thì lật lên trên.
         let top = anchor.bottom + 8;
-        if (top > maxTop) {
+        if (top + panelHeight > viewTop + viewHeight - margin) {
             const above = anchor.top - panelHeight - 8;
             top = above >= minTop ? above : maxTop;
         }
         top = Math.max(minTop, Math.min(top, maxTop));
-        popover.style.setProperty('--lg-studio-mobile-top', `${Math.round(top)}px`);
+        popover.style.setProperty('--lg-studio-top', `${Math.round(top)}px`);
     }
 
-    function schedulePlace() {
+    function schedulePosition() {
         if (rafId) cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(() => {
             rafId = 0;
-            placeBesideToggle();
+            positionPopover();
         });
     }
 
-    // Apply mode immediately, including when the popup starts closed.
-    ensureLayer();
+    // Portal ngay lúc tải trang, không có tình huống đổi qua lại ở mốc 1099px.
+    ensureGlobalLayer();
 
-    // Original handler toggles [hidden] first; this handler positions after that.
-    toggle.addEventListener('click', schedulePlace);
+    // Listener gốc bật/tắt [hidden]; listener này căn popup sau khi đã hiện.
+    toggle.addEventListener('click', schedulePosition);
 
-    window.addEventListener('resize', schedulePlace, { passive: true });
-    window.addEventListener('orientationchange', schedulePlace, { passive: true });
-
-    if (typeof compact.addEventListener === 'function') {
-        compact.addEventListener('change', schedulePlace);
-    } else if (typeof compact.addListener === 'function') {
-        compact.addListener(schedulePlace);
-    }
+    window.addEventListener('resize', schedulePosition, { passive: true });
+    window.addEventListener('orientationchange', schedulePosition, { passive: true });
 
     if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', schedulePlace, { passive: true });
-        window.visualViewport.addEventListener('scroll', schedulePlace, { passive: true });
+        window.visualViewport.addEventListener('resize', schedulePosition, { passive: true });
+        window.visualViewport.addEventListener('scroll', schedulePosition, { passive: true });
     }
 
-    // Keep the portal stable if the original header controller relocates the dock.
+    // Giữ popup ở body nếu controller cũ có thao tác di chuyển dock.
     const observer = new MutationObserver(() => {
-        if (compact.matches && popover.parentElement !== document.body) {
-            ensureLayer();
-            if (!popover.hidden) schedulePlace();
+        if (popover.parentElement !== document.body) {
+            ensureGlobalLayer();
+            if (!popover.hidden) schedulePosition();
         }
     });
     observer.observe(dock, { childList: true });
