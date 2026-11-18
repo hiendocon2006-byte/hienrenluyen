@@ -5170,29 +5170,18 @@ body::before, body::after {
                                     </div>
                                 </div>
 
-                                <div class="mt-3 min-w-0">
-                                    <!-- Tiêu chí được phân bổ -->
-                                    <div v-if="item.act.enabled !== false && baseScoreResult.config && baseScoreResult.config[item.index] !== undefined && baseScoreResult.config[item.index] !== -1"
-                                         class="activity-criterion-chip activity-criterion-chip-approved">
-                                        <i class="fa-solid fa-check activity-criterion-check"></i>
-                                        <span class="activity-criterion-code">[{{ item.act.options[baseScoreResult.config[item.index]].criteriaId }}]</span>
-                                        <span class="activity-criterion-name"
-                                              :title="getCriteriaName(item.act.options[baseScoreResult.config[item.index]].criteriaId)">
-                                            {{ getActivityCriterionLabel(item.act.options[baseScoreResult.config[item.index]].criteriaId) }}
-                                        </span>
-                                        <span class="activity-criterion-points">+{{ getCriteriaMaxPoints(item.act.options[baseScoreResult.config[item.index]].criteriaId) }}đ</span>
-                                    </div>
-
-                                </div>
-
-                                <!-- Các tiêu chí dự phòng / lựa chọn khác -->
-                                <div v-if="item.act.options && item.act.options.length > 0 && (item.act.enabled === false || item.act.options.length > 1)" class="mt-3 flex flex-wrap gap-2">
+                                <!-- Mỗi lựa chọn chỉ render MỘT thẻ; thẻ được duyệt đổi style ngay tại chỗ. -->
+                                <div v-if="item.act.options && item.act.options.length > 0" class="mt-3 flex flex-wrap gap-2">
                                     <div v-for="(opt, oIdx) in item.act.options" :key="oIdx"
-                                         class="activity-criterion-chip activity-criterion-chip-pending"
-                                         :class="{'hidden': item.act.enabled !== false && baseScoreResult.config && baseScoreResult.config[item.index] !== undefined && baseScoreResult.config[item.index] !== -1 && item.act.options[baseScoreResult.config[item.index]] && item.act.options[baseScoreResult.config[item.index]].criteriaId === opt.criteriaId}"
+                                         class="activity-criterion-chip"
+                                         :class="isActivityCriterionApproved(item, oIdx) ? 'activity-criterion-chip-approved' : 'activity-criterion-chip-pending'"
                                          :title="'[' + opt.criteriaId + '] ' + getCriteriaName(opt.criteriaId)">
+                                        <i v-if="isActivityCriterionApproved(item, oIdx)"
+                                           class="fa-solid fa-check activity-criterion-check"></i>
                                         <span class="activity-criterion-code">[{{ opt.criteriaId }}]</span>
                                         <span class="activity-criterion-name">{{ getActivityCriterionLabel(opt.criteriaId) }}</span>
+                                        <span v-if="isActivityCriterionApproved(item, oIdx)"
+                                              class="activity-criterion-points">+{{ getCriteriaMaxPoints(opt.criteriaId) }}đ</span>
                                     </div>
                                 </div>
                             </div>
@@ -6429,6 +6418,11 @@ createApp({
             // Không rút gọn quá sớm: nếu cần dấu ..., luôn giữ ít nhất 18 từ.
             return words.length > 18 ? words.slice(0, 18).join(' ') + '…' : fullName;
         };
+        const isActivityCriterionApproved = (item, optionIndex) => {
+            if (!item || !item.act || item.act.enabled === false) return false;
+            const selectedIndex = baseScoreResult.value?.config?.[item.index];
+            return Number.isInteger(selectedIndex) && selectedIndex >= 0 && selectedIndex === optionIndex;
+        };
         const getCriteriaMaxPoints = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].maxPoints : 0;
 
         // Tra cứu các hoạt động đang bật được thuật toán phân bổ vào tiêu chí này.
@@ -6594,7 +6588,7 @@ createApp({
             assumedCriteriaIds, assumedCriteriaSearch, showAssumedCriteriaModal,
             openAssumedCriteriaModal, closeAssumedCriteriaModal, addAssumedCriteria, removeAssumedCriteria,
             editingIndex, scoreRank, rankBadgeClass, activityFilter, activitiesListVisible, filteredActivities, toggleActivity,
-            getCatScore, getGroupScore, getCriteriaScore, getCriteriaName, getActivityCriterionLabel, getCriteriaMaxPoints,
+            getCatScore, getGroupScore, getCriteriaScore, getCriteriaName, getActivityCriterionLabel, isActivityCriterionApproved, getCriteriaMaxPoints,
             getApprovedActivityNamesForCriteria, getApprovedActivityTooltip,
             getFilteredCriteriaOptions, selectCriteriaForOption, clearSearchOption, addTestOption, removeTestOption,
             runAdvice, commitActivity, editActivity, cancelEdit, removeActivity, confirmReset, exportJSON, handleFileImport
