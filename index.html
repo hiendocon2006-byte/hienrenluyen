@@ -187,7 +187,15 @@ html, body {
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
         }
-    </style>
+    
+/* Search-only criteria picker: results appear only while the user is searching. */
+#app .assumed-criteria-search-results {
+  position: relative;
+  z-index: 5;
+  overscroll-behavior: contain;
+}
+
+</style>
     <style id="sivifal-aurora-v3">
         /* SiviFal Aurora Glass v3 — tươi sáng, giàu màu sắc nhưng ưu tiên khả năng đọc */
         :root {
@@ -5290,11 +5298,11 @@ body::before, body::after {
                     <div class="min-w-0">
                         <h2 id="assumed-criteria-title" class="flex flex-wrap items-center gap-2 text-lg font-extrabold text-violet-900 sm:text-xl">
                             <i class="fa-solid fa-bullseye text-violet-600"></i>
-                            Tiêu chí mặc định được duyệt
+                            Tiêu chí mặc định được duyệt / mục tiêu cuối kỳ
                             <span class="rounded-full bg-violet-100 px-2.5 py-0.5 text-sm text-violet-800">{{ assumedCriteriaIds.length }}</span>
                         </h2>
                         <p class="mt-1 text-xs leading-relaxed text-slate-500 sm:text-sm">
-                            Các tiêu chí này chỉ được giả định đã đạt khi phân tích giới hạn điểm.
+                            Các tiêu chí này chỉ được giả định đã đạt khi phân tích giới hạn điểm; không cộng vào tổng điểm rèn luyện hiện tại.
                         </p>
                     </div>
                     <button type="button" @click="closeAssumedCriteriaModal"
@@ -5304,7 +5312,7 @@ body::before, body::after {
                     </button>
                 </header>
 
-                <div class="border-b border-slate-200 px-4 py-3 sm:px-6">
+                <div class="relative border-b border-slate-200 px-4 py-3 sm:px-6">
                     <label for="assumed-criteria-search" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Tìm tiêu chí</label>
                     <div class="relative">
                         <i class="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-violet-400"></i>
@@ -5312,40 +5320,33 @@ body::before, body::after {
                                class="w-full rounded-xl border border-violet-200 bg-violet-50/40 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-violet-400 focus:bg-white focus:ring-2 focus:ring-violet-200"
                                placeholder="Nhập mã hoặc tên tiêu chí, ví dụ: 4.2.1, ngoại ngữ, tình nguyện...">
                     </div>
+                    <div v-if="assumedCriteriaSearch.trim()" class="assumed-criteria-search-results mt-2 max-h-[28vh] overflow-y-auto rounded-xl border border-rose-100 bg-white/90 p-2 shadow-lg">
+                        <div v-if="getFilteredCriteriaOptions(assumedCriteriaSearch, 0).length === 0" class="p-4 text-center text-sm text-slate-500">
+                            Không tìm thấy tiêu chí phù hợp.
+                        </div>
+                        <button v-for="tc in getFilteredCriteriaOptions(assumedCriteriaSearch, 0)" :key="tc.id"
+                                type="button" @click="addAssumedCriteria(tc)"
+                                :disabled="assumedCriteriaIds.includes(tc.id)"
+                                class="flex w-full items-center justify-between gap-3 rounded-lg border border-transparent p-3 text-left transition hover:border-rose-100 hover:bg-rose-50 disabled:cursor-default disabled:bg-slate-50 disabled:opacity-70">
+                            <span class="min-w-0">
+                                <span class="mb-0.5 block text-[10px] font-bold uppercase text-slate-400">{{ tc.catName }} · {{ tc.groupName }}</span>
+                                <span class="block text-sm font-semibold leading-snug text-slate-800"><span class="text-rose-700">[{{ tc.id }}]</span> {{ tc.name }}</span>
+                            </span>
+                            <span class="shrink-0 rounded-md px-2.5 py-1 text-xs font-bold"
+                                  :class="assumedCriteriaIds.includes(tc.id) ? 'bg-slate-200 text-slate-500' : 'bg-rose-100 text-rose-800'">
+                                {{ assumedCriteriaIds.includes(tc.id) ? 'Đã chọn' : '+' + tc.maxPoints + 'đ' }}
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto p-4 md:grid-cols-5 md:overflow-hidden sm:p-5">
-                    <section class="flex min-h-0 flex-col rounded-xl border border-slate-200 md:col-span-3">
-                        <div class="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5">
-                            <h3 class="text-sm font-bold text-slate-800">Danh sách tiêu chí</h3>
-                            <span class="text-xs text-slate-400">{{ getFilteredCriteriaOptions(assumedCriteriaSearch, 0).length }} kết quả</span>
-                        </div>
-                        <div class="max-h-[38vh] flex-1 space-y-1 overflow-y-auto p-2 md:max-h-none">
-                            <div v-if="getFilteredCriteriaOptions(assumedCriteriaSearch, 0).length === 0" class="p-6 text-center text-sm text-slate-500">
-                                Không tìm thấy tiêu chí phù hợp.
-                            </div>
-                            <button v-for="tc in getFilteredCriteriaOptions(assumedCriteriaSearch, 0)" :key="tc.id"
-                                    type="button" @click="addAssumedCriteria(tc)"
-                                    :disabled="assumedCriteriaIds.includes(tc.id)"
-                                    class="flex w-full items-center justify-between gap-3 rounded-lg border border-transparent p-3 text-left transition hover:border-violet-100 hover:bg-violet-50 disabled:cursor-default disabled:bg-slate-50 disabled:opacity-70">
-                                <span class="min-w-0">
-                                    <span class="mb-0.5 block text-[10px] font-bold uppercase text-slate-400">{{ tc.catName }} · {{ tc.groupName }}</span>
-                                    <span class="block text-sm font-semibold leading-snug text-slate-800"><span class="text-violet-700">[{{ tc.id }}]</span> {{ tc.name }}</span>
-                                </span>
-                                <span class="shrink-0 rounded-md px-2.5 py-1 text-xs font-bold"
-                                      :class="assumedCriteriaIds.includes(tc.id) ? 'bg-slate-200 text-slate-500' : 'bg-violet-100 text-violet-800'">
-                                    {{ assumedCriteriaIds.includes(tc.id) ? 'Đã chọn' : '+' + tc.maxPoints + 'đ' }}
-                                </span>
-                            </button>
-                        </div>
-                    </section>
-
-                    <aside class="flex min-h-0 flex-col rounded-xl border border-violet-200 bg-violet-50/40 md:col-span-2">
+                <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+                    <aside class="flex min-h-0 h-full flex-col rounded-xl border border-violet-200 bg-violet-50/40">
                         <div class="flex items-center justify-between gap-2 border-b border-violet-100 px-3 py-2.5">
                             <h3 class="text-sm font-bold text-violet-900">Tiêu chí đã chọn</h3>
                             <span class="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-800">{{ assumedCriteriaIds.length }}</span>
                         </div>
-                        <div class="max-h-[28vh] flex-1 space-y-2 overflow-y-auto p-3 md:max-h-none">
+                        <div class="min-h-[120px] flex-1 space-y-2 overflow-y-auto p-3">
                             <p v-if="assumedCriteriaIds.length === 0" class="rounded-lg border border-dashed border-violet-200 bg-white p-4 text-center text-sm text-slate-500">
                                 Chưa có tiêu chí mục tiêu. Chọn tiêu chí ở danh sách bên trái.
                             </p>
