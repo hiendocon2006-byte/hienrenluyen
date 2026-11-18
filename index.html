@@ -6937,22 +6937,55 @@ document.addEventListener('pointerout', (e) => {
 
   renderSettings(readLocalSettings(GUEST_STORAGE_KEY) || DEFAULTS);
 
+  let studioCloseTimer = 0;
+  let studioMotionToken = 0;
+  const studioReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function openStudioPopover() {
+    clearTimeout(studioCloseTimer);
+    studioMotionToken++;
+    popover.hidden = false;
+    popover.classList.remove('lg-studio-is-closing', 'lg-studio-is-opening');
+    toggleBtn.setAttribute('aria-expanded', 'true');
+    if (!studioReducedMotion) {
+      void popover.offsetWidth;
+      popover.classList.add('lg-studio-is-opening');
+    }
+  }
+
+  function closeStudioPopover() {
+    if (popover.hidden || popover.classList.contains('lg-studio-is-closing')) return;
+    clearTimeout(studioCloseTimer);
+    const token = ++studioMotionToken;
+    toggleBtn.setAttribute('aria-expanded', 'false');
+
+    if (studioReducedMotion) {
+      popover.hidden = true;
+      popover.classList.remove('lg-studio-is-opening', 'lg-studio-is-closing');
+      return;
+    }
+
+    popover.classList.remove('lg-studio-is-opening');
+    popover.classList.add('lg-studio-is-closing');
+    studioCloseTimer = window.setTimeout(() => {
+      if (token !== studioMotionToken || !popover.classList.contains('lg-studio-is-closing')) return;
+      popover.hidden = true;
+      popover.classList.remove('lg-studio-is-closing');
+    }, 165);
+  }
+
   toggleBtn.addEventListener('click', event => {
     event.stopPropagation();
-    popover.hidden = !popover.hidden;
-    toggleBtn.setAttribute('aria-expanded', popover.hidden ? 'false' : 'true');
+    if (popover.hidden || popover.classList.contains('lg-studio-is-closing')) openStudioPopover();
+    else closeStudioPopover();
   });
   document.addEventListener('click', event => {
     if (!popover.hidden && !popover.contains(event.target) && !toggleBtn.contains(event.target)) {
-      popover.hidden = true;
-      toggleBtn.setAttribute('aria-expanded', 'false');
+      closeStudioPopover();
     }
   });
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') {
-      popover.hidden = true;
-      toggleBtn.setAttribute('aria-expanded', 'false');
-    }
+    if (event.key === 'Escape') closeStudioPopover();
   });
 
   // 100% là mốc chuẩn của bộ mặc định; giá trị thực vẫn được lưu và áp dụng riêng.
@@ -8034,6 +8067,21 @@ html, body{
 
     const root = document.documentElement;
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const isCompactScreen = window.matchMedia('(max-width: 760px)').matches;
+    const deviceMemory = Number(navigator.deviceMemory) || 0;
+    const cpuCores = Number(navigator.hardwareConcurrency) || 0;
+    const lowEndDevice = (deviceMemory > 0 && deviceMemory <= 3) || (cpuCores > 0 && cpuCores <= 4);
+    const mobileDevice = isCoarsePointer || isCompactScreen;
+    const renderProfile = {
+        maxDpr: lowEndDevice ? 1.1 : (mobileDevice ? 1.35 : 1.75),
+        baseParticles: lowEndDevice ? 44 : (mobileDevice ? 72 : 112),
+        frameInterval: lowEndDevice ? 1000 / 30 : (mobileDevice ? 1000 / 40 : 1000 / 60),
+        orbCount: lowEndDevice ? 4 : (mobileDevice ? 5 : 6),
+        touchInteraction: !lowEndDevice
+    };
+
     const THEMES = {
         hustPearl: {
             label: 'HUST Pearl', mode: 'light', bg: '#f0e5ec', alpha: 0.43, blend: 'source-over',
@@ -8121,7 +8169,7 @@ html, body{
         height = nextHeight;
 
         // Render theo CSS pixel nhưng dùng thêm devicePixelRatio để canvas sắc nét.
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, renderProfile.maxDpr);
         canvas.width = Math.round(width * pixelRatio);
         canvas.height = Math.round(height * pixelRatio);
         canvas.style.width = width + 'px';
@@ -8135,6 +8183,11 @@ html, body{
         const n = parseInt(hex.replace('#', ''), 16);
         return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
     }
+
+    Object.values(THEMES).forEach(theme => {
+        theme.orbs.forEach(orb => { orb.rgb = hexToRgb(orb.color); });
+        theme.sparkleRgb = theme.sparkles.map(hexToRgb);
+    });
 
     function makeParticle(theme) {
         // Chỉ dùng hình khép kín: chấm ngọc, vòng tròn, sao rỗng, lục giác,
@@ -8166,6 +8219,7 @@ html, body{
             flower: 5.8 + Math.random() * 4.4
         };
 
+        const colorIdx = Math.floor(Math.random() * theme.sparkles.length);
         return {
             x: Math.random() * width,
             y: Math.random() * height,
@@ -8177,7 +8231,8 @@ html, body{
             spin: (Math.random() - 0.5) * 0.28,
             phase: Math.random() * Math.PI * 2,
             phaseSpeed: 0.45 + Math.random() * 1.5,
-            colorIdx: Math.floor(Math.random() * theme.sparkles.length),
+            colorIdx,
+            rgb: theme.sparkleRgb[colorIdx],
             offsetX: 0,
             offsetY: 0,
             hoverBoost: 0
@@ -8187,7 +8242,7 @@ html, body{
     function syncParticleCount() {
         if (!width || !height) return;
         const theme = THEMES[currentThemeKey] || THEMES.hustPearl;
-        const targetCount = Math.round(112 * densityMultiplier);
+        const targetCount = Math.round(renderProfile.baseParticles * densityMultiplier);
         while (particles.length < targetCount) particles.push(makeParticle(theme));
         if (particles.length > targetCount) particles.length = targetCount;
     }
@@ -8200,8 +8255,9 @@ html, body{
         root.dataset.themeMode = theme.mode;
         root.style.setProperty('--bg-base', theme.bg);
         document.body.style.backgroundColor = theme.bg;
-        particles.forEach(p => { p.colorIdx = Math.floor(Math.random() * theme.sparkles.length); });
+        particles.forEach(p => { p.colorIdx = Math.floor(Math.random() * theme.sparkles.length); p.rgb = theme.sparkleRgb[p.colorIdx]; });
         syncParticleCount();
+        if (typeof syncRenderLoop === 'function') syncRenderLoop();
     }
 
     function applyFluidControls(next = {}) {
@@ -8214,10 +8270,54 @@ html, body{
         if (typeof next.paused === 'boolean') isPaused = next.paused;
         if (speedMultiplier === 0) isPaused = true;
         else if (typeof next.speed === 'number' && next.speed > 0 && typeof next.paused !== 'boolean') isPaused = false;
+        syncRenderLoop();
     }
 
     let lastTime = performance.now();
-    function renderLoop(now) {
+    let lastRenderedAt = 0;
+    let renderRafId = 0;
+    let renderTimerId = 0;
+
+    function stopRenderLoop() {
+        if (renderTimerId) {
+            clearTimeout(renderTimerId);
+            renderTimerId = 0;
+        }
+        if (renderRafId) {
+            cancelAnimationFrame(renderRafId);
+            renderRafId = 0;
+        }
+    }
+
+    function queueRenderLoop() {
+        if (isPaused || document.hidden || renderRafId || renderTimerId) return;
+        const elapsed = performance.now() - lastRenderedAt;
+        const delay = Math.max(0, renderProfile.frameInterval - elapsed);
+        renderTimerId = window.setTimeout(() => {
+            renderTimerId = 0;
+            if (!isPaused && !document.hidden && !renderRafId) {
+                renderRafId = requestAnimationFrame(renderLoop);
+            }
+        }, delay);
+    }
+
+    function syncRenderLoop() {
+        if (document.hidden) {
+            stopRenderLoop();
+            return;
+        }
+        if (isPaused) {
+            stopRenderLoop();
+            lastTime = performance.now();
+            renderLoop(lastTime, true); // vẽ đúng một khung tĩnh, không tiếp tục lặp
+            return;
+        }
+        queueRenderLoop();
+    }
+
+    function renderLoop(now, forceSingleFrame = false) {
+        renderRafId = 0;
+        if (document.hidden) return;
         const dt = Math.min((now - lastTime) / 1000, 0.1);
         lastTime = now;
         const effectiveDt = isPaused ? 0 : dt * speedMultiplier;
@@ -8237,7 +8337,8 @@ html, body{
 
         // Sáu quầng màu chuyển động lỏng – thông số và màu lấy từ file nền.
         ctx.globalCompositeOperation = theme.blend;
-        theme.orbs.forEach((cfg, i) => {
+        for (let i = 0; i < Math.min(theme.orbs.length, renderProfile.orbCount); i++) {
+            const cfg = theme.orbs[i];
             const state = orbStates[i];
             state.px += cfg.sx * effectiveDt;
             state.py += cfg.sy * effectiveDt;
@@ -8246,7 +8347,7 @@ html, body{
             const x = width * 0.5 + Math.sin(state.px) * 0.35 * width;
             const y = height * 0.5 + Math.cos(state.py) * 0.35 * height;
             const radius = maxDim * cfg.r * (1 + Math.sin(state.ps) * 0.12);
-            const rgb = hexToRgb(cfg.color);
+            const rgb = cfg.rgb;
             const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
             gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${theme.alpha})`);
             gradient.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${theme.alpha * 0.45})`);
@@ -8255,7 +8356,7 @@ html, body{
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
-        });
+        }
 
         // Các hạt sáng lơ lửng, có phản ứng đàn hồi khi con trỏ đi qua.
         ctx.globalCompositeOperation = 'source-over';
@@ -8293,7 +8394,7 @@ html, body{
             if (p.x < -34) p.x = width + 34;
             if (p.x > width + 34) p.x = -34;
 
-            const rgb = hexToRgb(theme.sparkles[p.colorIdx % theme.sparkles.length]);
+            const rgb = p.rgb || theme.sparkleRgb[p.colorIdx % theme.sparkleRgb.length];
             const twinkle = 0.5 + 0.5 * Math.sin(p.phase);
             const alpha = Math.min(1, 0.90 + twinkle * 0.10 + p.hoverBoost * 0.12);
             const drawX = p.x + p.offsetX;
@@ -8509,7 +8610,8 @@ html, body{
             ctx.restore();
         });
 
-        requestAnimationFrame(renderLoop);
+        lastRenderedAt = now;
+        if (!forceSingleFrame && !isPaused) queueRenderLoop();
     }
 
     // Gộp các sự kiện resize liên tiếp để tránh reset canvas quá nhiều lần.
@@ -8519,6 +8621,7 @@ html, body{
         resizeFrame = requestAnimationFrame(() => {
             resizeFrame = 0;
             resizeCanvas();
+            if (isPaused) syncRenderLoop();
         });
     }
     window.addEventListener('resize', scheduleCanvasResize, { passive: true });
@@ -8536,7 +8639,7 @@ html, body{
     window.addEventListener('mouseleave', () => { pointer.active = false; }, { passive: true });
     window.addEventListener('blur', () => { pointer.active = false; });
     window.addEventListener('touchmove', event => {
-        if (!event.touches || !event.touches.length) return;
+        if (!renderProfile.touchInteraction || !event.touches || !event.touches.length) return;
         pointer.targetX = event.touches[0].clientX;
         pointer.targetY = event.touches[0].clientY;
         pointer.active = true;
@@ -8545,7 +8648,11 @@ html, body{
     window.addEventListener('touchcancel', () => { pointer.active = false; }, { passive: true });
 
     document.addEventListener('sivifal-fluid-settings', event => applyFluidControls(event.detail || {}));
-    document.addEventListener('visibilitychange', () => { lastTime = performance.now(); });
+    document.addEventListener('visibilitychange', () => {
+        lastTime = performance.now();
+        if (document.hidden) stopRenderLoop();
+        else syncRenderLoop();
+    });
 
     window.setFluidTheme = applyTheme;
     window.SiviFalFluidScene = {
@@ -8560,7 +8667,7 @@ html, body{
     resizeCanvas();
     const initialTheme = THEMES[root.dataset.lgFluidTheme] ? root.dataset.lgFluidTheme : 'hustPearl';
     applyTheme(initialTheme);
-    requestAnimationFrame(renderLoop);
+    syncRenderLoop();
 })();
 </script>
 
@@ -9755,23 +9862,6 @@ html, body{
 </style>
 
 
-<style id="sivifal-three-theme-background-tone-v12">
-/* Background base tones are slightly deeper; original theme hues, orb colours,
-   sparkle colours and animation intensities are intentionally unchanged. */
-</style>
-
-
-<style id="sivifal-liquid-glass-defaults-v13">
-/* The studio remains fully adjustable: defaults are 48% transparency, 3px blur,
-   1.0x motion and 130% particle density. Existing slider ranges are retained. */
-</style>
-
-
-<style id="sivifal-relative-slider-scales-v14">
-/* Relative slider scales: 100% = default glass opacity 48%, blur 3px,
-   and particle density 130%. Secondary values show the actual applied values. */
-</style>
-
 <style id="sivifal-luminous-particle-polish-v15">
 /* Optical particle mix: fine dust, pearl cores, diamond glints, glass bokeh and delicate light trails. */
 #lg-fluid-canvas {
@@ -10023,10 +10113,7 @@ html, body{
 }
 
 /* Giữ chữ và điểm số nguyên độ đậm, không làm mờ nội dung. */
-#app .dashboard-sidebar .criteria-scroll,
-#app .dashboard-sidebar .criteria-scroll * {
-    opacity: 1 !important;
-}
+
 </style>
 <style id="sivifal-criteria-balanced-v22">
 /* Bảng tiêu chí: độ trong ở mức trung gian, có thể nhìn nền nhưng chữ vẫn nổi rõ. */
@@ -10390,7 +10477,6 @@ html body #lg-studio-popover.lg-studio-global-portal {
     left: var(--lg-studio-left, 8px) !important;
     right: auto !important;
     bottom: auto !important;
-    transform: none !important;
 
     display: block;
     width: min(340px, calc(100vw - 16px)) !important;
@@ -10684,6 +10770,103 @@ html body #lg-studio-popover.lg-studio-global-portal[hidden] {
     }
     .activity-criterion-code { font-size: 10px !important; }
     .activity-criterion-points { padding: 3px 6px !important; font-size: 10px !important; }
+}
+</style>
+
+
+<style id="sivifal-performance-motion-polish-v29">
+/* Motion tuned for responsiveness: animate composited properties only. */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity .18s ease, transform .18s cubic-bezier(.2,.75,.25,1) !important;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0 !important;
+    transform: translate3d(0,-6px,0) !important;
+}
+
+.list-enter-active,
+.list-leave-active {
+    transition: opacity .18s ease, transform .18s cubic-bezier(.2,.75,.25,1) !important;
+}
+.list-enter-from,
+.list-leave-to {
+    opacity: 0 !important;
+    transform: translate3d(0,8px,0) !important;
+}
+.list-move {
+    transition: transform .22s cubic-bezier(.2,.75,.25,1) !important;
+}
+
+/* Studio popup: quick, soft scale-and-rise; close has its own matching exit. */
+#lg-studio-popover.lg-studio-is-opening {
+    animation: sfStudioPopupIn .19s cubic-bezier(.2,.8,.2,1) both !important;
+}
+#lg-studio-popover.lg-studio-is-closing {
+    animation: sfStudioPopupOut .15s cubic-bezier(.4,0,.8,.2) both !important;
+}
+@keyframes sfStudioPopupIn {
+    from { opacity: 0; transform: translate3d(0,-7px,0) scale(.985); }
+    to   { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes sfStudioPopupOut {
+    from { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+    to   { opacity: 0; transform: translate3d(0,-5px,0) scale(.99); }
+}
+
+/* Search dropdown and result rows enter without animating filter/blur. */
+#app .search-dropdown {
+    transform-origin: top left !important;
+    animation: sfPopupDropIn .19s cubic-bezier(.2,.8,.2,1) both !important;
+}
+#app .search-dropdown > div {
+    animation-name: sfPopupRowIn !important;
+    animation-duration: .18s !important;
+    animation-timing-function: cubic-bezier(.2,.8,.2,1) !important;
+    animation-fill-mode: both !important;
+}
+@keyframes sfPopupDropIn {
+    from { opacity: 0; transform: translate3d(0,-7px,0) scale(.99); }
+    to   { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes sfPopupRowIn {
+    from { opacity: 0; transform: translate3d(0,5px,0); }
+    to   { opacity: 1; transform: translate3d(0,0,0); }
+}
+
+/* The target-criteria dialog and toasts use the same short motion language. */
+#app .assumed-criteria-dialog {
+    animation: sfCriteriaDialogIn .21s cubic-bezier(.2,.8,.2,1) both !important;
+}
+@keyframes sfCriteriaDialogIn {
+    from { opacity: 0; transform: translate3d(0,9px,0) scale(.99); }
+    to   { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+#app .fixed.bottom-8.left-1\/2 {
+    animation: sfToastIn .18s cubic-bezier(.2,.8,.2,1) both !important;
+}
+@keyframes sfToastIn {
+    from { opacity: 0; transform: translate3d(-50%,8px,0); }
+    to   { opacity: 1; transform: translate3d(-50%,0,0); }
+}
+
+/* Reduce continuous decorative work on compact devices, while preserving the look. */
+@media (max-width: 760px) {
+    #app .search-dropdown::before { animation-duration: 5s !important; }
+    #app .search-dropdown > div { animation-delay: 0s !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .fade-enter-active, .fade-leave-active,
+    .list-enter-active, .list-leave-active, .list-move,
+    #lg-studio-popover,
+    #app .search-dropdown,
+    #app .search-dropdown > div,
+    #app .assumed-criteria-dialog,
+    #app .fixed.bottom-8.left-1\/2 {
+        animation: none !important;
+        transition: none !important;
+    }
 }
 </style>
 
