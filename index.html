@@ -5189,7 +5189,7 @@ body::before, body::after {
                                 <div v-if="item.act.options && item.act.options.length > 0 && (item.act.enabled === false || item.act.options.length > 1)" class="mt-3 flex flex-wrap gap-2">
                                     <div v-for="(opt, oIdx) in item.act.options" :key="oIdx"
                                          class="activity-criterion-chip activity-criterion-chip-pending"
-                                         :class="{'hidden': item.act.enabled !== false && baseScoreResult.config && baseScoreResult.config[item.index] === oIdx}"
+                                         :class="{'hidden': item.act.enabled !== false && baseScoreResult.config && baseScoreResult.config[item.index] !== undefined && baseScoreResult.config[item.index] !== -1 && item.act.options[baseScoreResult.config[item.index]] && item.act.options[baseScoreResult.config[item.index]].criteriaId === opt.criteriaId}"
                                          :title="'[' + opt.criteriaId + '] ' + getCriteriaName(opt.criteriaId)">
                                         <span class="activity-criterion-code">[{{ opt.criteriaId }}]</span>
                                         <span class="activity-criterion-name">{{ getActivityCriterionLabel(opt.criteriaId) }}</span>
