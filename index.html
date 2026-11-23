@@ -6461,10 +6461,7 @@ createApp({
                     const match = String(category.name || '').match(/^Mục\s*\d+/i);
                     return match ? match[0] : category.id;
                 });
-                if (changedCategories.length) {
-                    return `Tiêu chí mục tiêu ${targetLabels} làm thay đổi phân bổ điểm ở ${changedCategories.join(', ')}.`;
-                }
-                return `Tiêu chí mục tiêu ${targetLabels} làm thay đổi cách phân bổ tiêu chí.`;
+              
             };
 
             const makeScenarioResult = (beforeActs, afterActs, includeDisabled = false) => {
