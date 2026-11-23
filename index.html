@@ -5045,13 +5045,13 @@ body::before, body::after {
                                 <div v-if="!scenario.hideAllocationDetails" class="analysis-assignment rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
                                     <div class="text-xs uppercase tracking-wide font-bold text-indigo-700 mb-1">Hoạt động mới được phân vào</div>
                                     <div v-if="scenario.newCriteriaId" class="text-sm font-bold text-indigo-900">
-                                        [{{ scenario.newCriteriaId }}] {{ getCriteriaName(scenario.newCriteriaId) }}
+                                        [{{ scenario.newCriteriaId }}] {{ getCriteriaShortName(scenario.newCriteriaId) }}
                                         <span class="text-indigo-700 font-semibold">(tối đa +{{ scenario.newCriteriaMax }}đ)</span>
                                     </div>
                                     <p v-else class="text-sm text-slate-600">Không tìm được tiêu chí phân bổ cho hoạt động mới.</p>
                                 </div>
 
-                                <div v-if="!scenario.hideAllocationDetails && scenario.assumedApprovedAssignments && scenario.assumedApprovedAssignments.length"
+                                <div v-if="scenario.assumedApprovedAssignments && scenario.assumedApprovedAssignments.length"
                                      class="rounded-lg border border-emerald-100 bg-emerald-50/55 p-3 space-y-2">
                                     <div class="text-xs uppercase tracking-wide font-bold text-emerald-800">Hoạt động đang tắt giả định được duyệt</div>
                                     <div v-for="(item, idx) in scenario.assumedApprovedAssignments" :key="scenario.key + '-approved-' + idx"
@@ -5071,12 +5071,12 @@ body::before, body::after {
                                         </div>
                                         <div class="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 text-xs">
                                             <div class="min-w-0 rounded-lg bg-slate-50/80 p-2 text-slate-600 break-words">
-                                                <div class="line-through">[{{ re.oldTc }}] {{ getCriteriaName(re.oldTc) }}</div>
+                                                <div class="line-through">[{{ re.oldTc }}] {{ getCriteriaShortName(re.oldTc) }}</div>
                                                 <div>+{{ re.oldPts }}đ tối đa</div>
                                             </div>
                                             <i class="fa-solid fa-arrow-right text-indigo-500"></i>
                                             <div class="min-w-0 rounded-lg bg-emerald-50/80 p-2 text-emerald-800 font-semibold break-words">
-                                                <div>[{{ re.newTc }}] {{ getCriteriaName(re.newTc) }}</div>
+                                                <div>[{{ re.newTc }}] {{ getCriteriaShortName(re.newTc) }}</div>
                                                 <div>+{{ re.newPts }}đ tối đa</div>
                                             </div>
                                         </div>
@@ -5873,196 +5873,243 @@ createApp({
             return { score: totalScore, breakdown };
         };
 
-        // Tính điểm tối đa của một tập tiêu chí. Dùng chung cho đánh giá cấu hình
-        // và cận trên của thuật toán tìm kiếm để tránh duyệt nhánh không thể tốt hơn.
-        const scoreForCriteriaSet = (criteriaSet) => {
+        // Đánh giá điểm từ một tập tiêu chí đã đạt (bao gồm cả tiêu chí mục tiêu giả định).
+        // Trả cả điểm theo nhóm/mục để giải thích chính xác phần điểm bị giới hạn.
+        const getCriteriaSetBreakdown = (criteriaSet) => {
             let totalScore = 0;
-            for (const cat of categories.value) {
-                let catPoints = 0;
-                for (const group of cat.groups) {
-                    let groupPoints = 0;
+            const breakdown = { categories: {}, groups: {}, criteria: {} };
+
+            for (const category of categories.value) {
+                let categoryRaw = 0;
+                for (const group of category.groups) {
+                    let groupRaw = 0;
                     for (const criterion of group.criteria) {
-                        if (criteriaSet.has(criterion.id)) groupPoints += criterion.maxPoints;
+                        const points = criteriaSet.has(criterion.id) ? criterion.maxPoints : 0;
+                        groupRaw += points;
+                        breakdown.criteria[criterion.id] = points;
                     }
-                    catPoints += Math.min(groupPoints, group.maxPoints);
+                    const groupScore = Math.min(groupRaw, group.maxPoints);
+                    breakdown.groups[group.id] = groupScore;
+                    categoryRaw += groupScore;
                 }
-                totalScore += Math.min(catPoints, cat.maxPoints);
+                const categoryScore = Math.min(categoryRaw, category.maxPoints);
+                breakdown.categories[category.id] = categoryScore;
+                totalScore += categoryScore;
             }
-            return totalScore;
+
+            return { score: totalScore, breakdown };
         };
 
-        // includeDisabled=true chỉ dùng với danh sách mô phỏng đã được caller chọn lọc.
-        // Ở kịch bản 2, caller chỉ đưa vào các hoạt động tắt có tiêu chí trùng với hoạt động mới.
-        // Không thay đổi trạng thái enabled trong dữ liệu gốc của người dùng.
-        const getOptimalScore = (acts, includeDisabled = false, assumedIds = []) => {
+        const scoreForCriteriaSet = (criteriaSet) => getCriteriaSetBreakdown(criteriaSet).score;
+
+        // Tối ưu toàn bộ cách phân bổ: tối đa điểm trần trước, sau đó ưu tiên
+        // ít thay đổi hoạt động cũ nhất. Khi hòa điểm, ưu tiên tiêu chí có lợi
+        // hơn cho hoạt động mới và giữ thứ tự lựa chọn ổn định.
+        const getOptimalScore = (acts, includeDisabled = false, assumedIds = [], preferredAssignments = null) => {
             const validAssumedIds = [...new Set((assumedIds || []).filter(id => CRITERIA_MAP[id]))];
-            if (acts.length === 0) {
-                const emptyResult = evaluateConfig([], [], validAssumedIds);
-                return { score: emptyResult.score, config: [], breakdown: emptyResult.breakdown };
+            const preferred = preferredAssignments instanceof Map ? preferredAssignments : new Map();
+            if (!acts.length) {
+                const empty = getCriteriaSetBreakdown(new Set(validAssumedIds));
+                return { score: empty.score, config: [], breakdown: empty.breakdown };
             }
 
-            const isEligible = (act) => includeDisabled || act.enabled !== false;
+            const isEligible = act => includeDisabled || act.enabled !== false;
+            const optionIds = act => [...new Set((act.options || [])
+                .map(option => option && option.criteriaId)
+                .filter(id => id && CRITERIA_MAP[id]))];
 
-            // Sắp xếp bản mô phỏng để xét hoạt động ít lựa chọn và có tiêu chí hiếm trước.
-            // Kết quả cuối cùng vẫn được ánh xạ về đúng thứ tự acts ban đầu.
             const optionFrequency = new Map();
             for (const act of acts) {
                 if (!isEligible(act)) continue;
-                const ids = new Set((act.options || []).map(option => option && option.criteriaId).filter(Boolean));
-                for (const id of ids) optionFrequency.set(id, (optionFrequency.get(id) || 0) + 1);
+                for (const id of optionIds(act)) optionFrequency.set(id, (optionFrequency.get(id) || 0) + 1);
             }
 
             const searchItems = acts.map((act, originalIndex) => ({ act, originalIndex }));
-            const uniqueOptionCount = (act) =>
-                new Set((act.options || []).map(option => option && option.criteriaId).filter(Boolean)).size;
-            const rarityScore = (act) =>
-                [...new Set((act.options || []).map(option => option && option.criteriaId).filter(Boolean))]
-                    .reduce((sum, id) => sum + 1 / (optionFrequency.get(id) || 1), 0);
-            const maxOptionPoints = (act) =>
-                Math.max(0, ...(act.options || []).map(option =>
-                    option && CRITERIA_MAP[option.criteriaId] ? CRITERIA_MAP[option.criteriaId].maxPoints : 0
-                ));
-
+            const rarityScore = act => optionIds(act).reduce((sum, id) => sum + 1 / (optionFrequency.get(id) || 1), 0);
             searchItems.sort((a, b) => {
-                const countDiff = uniqueOptionCount(a.act) - uniqueOptionCount(b.act);
-                if (countDiff !== 0) return countDiff;
+                const aCount = optionIds(a.act).length;
+                const bCount = optionIds(b.act).length;
+                if (aCount !== bCount) return aCount - bCount;
                 const rarityDiff = rarityScore(b.act) - rarityScore(a.act);
-                if (rarityDiff !== 0) return rarityDiff;
-                return maxOptionPoints(b.act) - maxOptionPoints(a.act);
+                if (Math.abs(rarityDiff) > 1e-9) return rarityDiff;
+                const aMax = Math.max(0, ...optionIds(a.act).map(id => CRITERIA_MAP[id].maxPoints));
+                const bMax = Math.max(0, ...optionIds(b.act).map(id => CRITERIA_MAP[id].maxPoints));
+                return bMax - aMax;
             });
 
             const searchActs = searchItems.map(item => item.act);
-            const toOriginalConfig = (searchConfig) => {
-                const originalConfig = new Array(acts.length).fill(-1);
+            const toOriginalConfig = searchConfig => {
+                const original = new Array(acts.length).fill(-1);
                 searchItems.forEach((item, searchIndex) => {
-                    originalConfig[item.originalIndex] = searchConfig[searchIndex] ?? -1;
+                    original[item.originalIndex] = searchConfig[searchIndex] ?? -1;
                 });
-                return originalConfig;
+                return original;
             };
 
-            let maxTotal = -1;
-            let bestConfig = [];
+            const candidateAct = acts.find(act => act && act._analysisKey === 'new-candidate');
+            const candidateMaxPoints = candidateAct
+                ? Math.max(0, ...optionIds(candidateAct).map(id => CRITERIA_MAP[id].maxPoints))
+                : 0;
+            const preferredCriteriaSet = new Set([...validAssumedIds, ...preferred.values()]);
+            const emptyCost = () => ({ changes: 0, changeWeight: 0, candidatePenalty: 0, optionOrder: 0 });
+            const compareCost = (a, b) => {
+                if (!b) return -1;
+                for (const key of ['changes', 'changeWeight', 'candidatePenalty', 'optionOrder']) {
+                    if (a[key] !== b[key]) return a[key] - b[key];
+                }
+                return 0;
+            };
+            const addAssignmentCost = (cost, act, originalIndex, optionIndex, criteriaId) => {
+                const next = { ...cost };
+                const key = act && act._analysisKey;
+                if (key && preferred.has(key) && preferred.get(key) !== criteriaId) {
+                    next.changes += 1;
+                    // Khi số lần đổi bằng nhau, cố gắng giữ các hoạt động cũ ở đầu danh sách.
+                    next.changeWeight += acts.length - originalIndex;
+                }
+                if (key === 'new-candidate') {
+                    const points = CRITERIA_MAP[criteriaId] ? CRITERIA_MAP[criteriaId].maxPoints : 0;
+                    const alreadyOccupied = preferredCriteriaSet.has(criteriaId);
+                    next.candidatePenalty += (alreadyOccupied ? 100000 : 0) + (candidateMaxPoints - points) * 100 + optionIndex;
+                }
+                next.optionOrder += optionIndex;
+                return next;
+            };
+            const costForConfig = config => {
+                let cost = emptyCost();
+                acts.forEach((act, index) => {
+                    const optionIndex = config[index];
+                    if (optionIndex === undefined || optionIndex < 0 || !act.options?.[optionIndex]) return;
+                    cost = addAssignmentCost(cost, act, index, optionIndex, act.options[optionIndex].criteriaId);
+                });
+                return cost;
+            };
+
+            let bestScore = -1;
+            let bestConfig = new Array(acts.length).fill(-1);
             let bestBreakdown = {};
+            let bestCost = null;
 
-            // Tạo nghiệm tham lam ban đầu để có mốc điểm tốt sớm, giúp cắt bỏ các nhánh kém hơn.
+            // Nghiệm tham lam ban đầu giúp có cận điểm tốt trước khi DFS.
             const greedyCriteria = new Set(validAssumedIds);
-            const greedyCounts = new Map(validAssumedIds.map(id => [id, 1]));
-            const greedySearchConfig = [];
-
-            for (const act of searchActs) {
-                if (!isEligible(act) || !Array.isArray(act.options) || act.options.length === 0) {
-                    greedySearchConfig.push(-1);
+            const greedyConfigSearch = [];
+            for (const item of searchItems) {
+                const act = item.act;
+                const originalIndex = item.originalIndex;
+                if (!isEligible(act) || !Array.isArray(act.options) || !act.options.length) {
+                    greedyConfigSearch.push(-1);
                     continue;
                 }
-
-                let chosenIndex = 0;
-                let chosenScore = -1;
-                let chosenDuplicatePenalty = Infinity;
-                let chosenPoints = -1;
-
-                for (let optionIndex = 0; optionIndex < act.options.length; optionIndex++) {
-                    const criteriaId = act.options[optionIndex] && act.options[optionIndex].criteriaId;
-                    const possibleCriteria = new Set(greedyCriteria);
-                    if (criteriaId) possibleCriteria.add(criteriaId);
-
-                    const possibleScore = scoreForCriteriaSet(possibleCriteria);
-                    const duplicatePenalty = criteriaId && (greedyCounts.get(criteriaId) || 0) > 0 ? 1 : 0;
-                    const points = CRITERIA_MAP[criteriaId] ? CRITERIA_MAP[criteriaId].maxPoints : 0;
-
-                    if (possibleScore > chosenScore ||
-                        (possibleScore === chosenScore && duplicatePenalty < chosenDuplicatePenalty) ||
-                        (possibleScore === chosenScore && duplicatePenalty === chosenDuplicatePenalty && points > chosenPoints)) {
-                        chosenIndex = optionIndex;
-                        chosenScore = possibleScore;
-                        chosenDuplicatePenalty = duplicatePenalty;
-                        chosenPoints = points;
-                    }
+                const currentScore = scoreForCriteriaSet(greedyCriteria);
+                const options = act.options.map((option, optionIndex) => ({
+                    optionIndex,
+                    criteriaId: option && option.criteriaId,
+                    points: option && CRITERIA_MAP[option.criteriaId] ? CRITERIA_MAP[option.criteriaId].maxPoints : 0
+                })).filter(item => item.criteriaId && CRITERIA_MAP[item.criteriaId]);
+                options.sort((a, b) => {
+                    const aSet = new Set(greedyCriteria); aSet.add(a.criteriaId);
+                    const bSet = new Set(greedyCriteria); bSet.add(b.criteriaId);
+                    const marginalDiff = (scoreForCriteriaSet(bSet) - currentScore) - (scoreForCriteriaSet(aSet) - currentScore);
+                    if (marginalDiff) return marginalDiff;
+                    const preferredId = preferred.get(act._analysisKey);
+                    const aPreferred = preferredId === a.criteriaId ? 1 : 0;
+                    const bPreferred = preferredId === b.criteriaId ? 1 : 0;
+                    if (aPreferred !== bPreferred) return bPreferred - aPreferred;
+                    if (act._analysisKey === 'new-candidate' && a.points !== b.points) return b.points - a.points;
+                    return a.optionIndex - b.optionIndex;
+                });
+                const chosen = options[0];
+                if (!chosen) {
+                    greedyConfigSearch.push(-1);
+                    continue;
                 }
-
-                const chosenCriteriaId = act.options[chosenIndex] && act.options[chosenIndex].criteriaId;
-                if (chosenCriteriaId) {
-                    greedyCounts.set(chosenCriteriaId, (greedyCounts.get(chosenCriteriaId) || 0) + 1);
-                    greedyCriteria.add(chosenCriteriaId);
-                }
-                greedySearchConfig.push(chosenIndex);
+                greedyCriteria.add(chosen.criteriaId);
+                greedyConfigSearch.push(chosen.optionIndex);
             }
 
-            bestConfig = toOriginalConfig(greedySearchConfig);
+            bestConfig = toOriginalConfig(greedyConfigSearch);
             const greedyResult = evaluateConfig(bestConfig, acts, validAssumedIds);
-            maxTotal = greedyResult.score;
+            bestScore = greedyResult.score;
             bestBreakdown = greedyResult.breakdown;
+            bestCost = costForConfig(bestConfig);
 
-            const selectedCounts = new Map(validAssumedIds.map(id => [id, 1]));
             const selectedCriteria = new Set(validAssumedIds);
-            const visitedStates = Array.from({ length: searchActs.length + 1 }, () => new Set());
+            const currentSearchConfig = [];
+            const visitedStates = Array.from({ length: searchActs.length + 1 }, () => new Map());
 
-            const getOptimisticUpperBound = (idx) => {
-                const possibleCriteria = new Set(selectedCriteria);
-
-                // Cận trên lạc quan: giả định mọi tiêu chí còn có thể chọn đều đạt được.
-                // Đây là cận không thấp hơn điểm của bất kỳ phương án hoàn chỉnh nào bên dưới nhánh.
+            const getOptimisticUpperBound = idx => {
+                const possible = new Set(selectedCriteria);
                 for (let i = idx; i < searchActs.length; i++) {
-                    if (!isEligible(searchActs[i]) || !Array.isArray(searchActs[i].options)) continue;
-                    for (const option of searchActs[i].options) {
-                        if (option && option.criteriaId) possibleCriteria.add(option.criteriaId);
-                    }
+                    const act = searchActs[i];
+                    if (!isEligible(act)) continue;
+                    for (const id of optionIds(act)) possible.add(id);
                 }
-                return scoreForCriteriaSet(possibleCriteria);
+                return scoreForCriteriaSet(possible);
             };
 
-            const dfs = (idx, currentSearchConfig) => {
-                // Cùng tập tiêu chí tại cùng vị trí có cùng khả năng đạt điểm ở các hoạt động còn lại.
+            const dfs = (idx, cost) => {
                 const stateKey = [...selectedCriteria].sort().join('|');
-                if (visitedStates[idx].has(stateKey)) return;
-                visitedStates[idx].add(stateKey);
+                const previousCost = visitedStates[idx].get(stateKey);
+                if (previousCost && compareCost(previousCost, cost) <= 0) return;
+                visitedStates[idx].set(stateKey, { ...cost });
 
-                if (getOptimisticUpperBound(idx) <= maxTotal) return;
+                // Chỉ cắt nhánh khi cận trên thấp hơn điểm tốt nhất; nhánh hòa điểm
+                // vẫn được xét để tìm cách phân bổ ít xáo trộn hơn.
+                if (getOptimisticUpperBound(idx) < bestScore) return;
 
                 if (idx === searchActs.length) {
-                    const currentConfig = toOriginalConfig(currentSearchConfig);
-                    const result = evaluateConfig(currentConfig, acts, validAssumedIds);
-                    if (result.score > maxTotal) {
-                        maxTotal = result.score;
-                        bestConfig = currentConfig;
+                    const config = toOriginalConfig(currentSearchConfig);
+                    const result = evaluateConfig(config, acts, validAssumedIds);
+                    if (result.score > bestScore || (result.score === bestScore && compareCost(cost, bestCost) < 0)) {
+                        bestScore = result.score;
+                        bestConfig = config;
                         bestBreakdown = result.breakdown;
+                        bestCost = { ...cost };
                     }
                     return;
                 }
 
                 const act = searchActs[idx];
-                if (!isEligible(act) || !Array.isArray(act.options) || act.options.length === 0) {
+                const originalIndex = searchItems[idx].originalIndex;
+                if (!isEligible(act) || !Array.isArray(act.options) || !act.options.length) {
                     currentSearchConfig.push(-1);
-                    dfs(idx + 1, currentSearchConfig);
+                    dfs(idx + 1, cost);
                     currentSearchConfig.pop();
                     return;
                 }
 
-                for (let optionIndex = 0; optionIndex < act.options.length; optionIndex++) {
-                    const criteriaId = act.options[optionIndex] && act.options[optionIndex].criteriaId;
-                    if (criteriaId) {
-                        const count = selectedCounts.get(criteriaId) || 0;
-                        selectedCounts.set(criteriaId, count + 1);
-                        selectedCriteria.add(criteriaId);
-                    }
+                const currentScore = scoreForCriteriaSet(selectedCriteria);
+                const options = act.options.map((option, optionIndex) => ({
+                    optionIndex,
+                    criteriaId: option && option.criteriaId,
+                    points: option && CRITERIA_MAP[option.criteriaId] ? CRITERIA_MAP[option.criteriaId].maxPoints : 0
+                })).filter(item => item.criteriaId && CRITERIA_MAP[item.criteriaId]);
+                const preferredId = preferred.get(act._analysisKey);
+                options.sort((a, b) => {
+                    const aSet = new Set(selectedCriteria); aSet.add(a.criteriaId);
+                    const bSet = new Set(selectedCriteria); bSet.add(b.criteriaId);
+                    const marginalDiff = (scoreForCriteriaSet(bSet) - currentScore) - (scoreForCriteriaSet(aSet) - currentScore);
+                    if (marginalDiff) return marginalDiff;
+                    const aPreferred = preferredId === a.criteriaId ? 1 : 0;
+                    const bPreferred = preferredId === b.criteriaId ? 1 : 0;
+                    if (aPreferred !== bPreferred) return bPreferred - aPreferred;
+                    if (act._analysisKey === 'new-candidate' && a.points !== b.points) return b.points - a.points;
+                    return a.optionIndex - b.optionIndex;
+                });
 
-                    currentSearchConfig.push(optionIndex);
-                    dfs(idx + 1, currentSearchConfig);
+                for (const option of options) {
+                    const wasSelected = selectedCriteria.has(option.criteriaId);
+                    selectedCriteria.add(option.criteriaId);
+                    currentSearchConfig.push(option.optionIndex);
+                    const nextCost = addAssignmentCost(cost, act, originalIndex, option.optionIndex, option.criteriaId);
+                    dfs(idx + 1, nextCost);
                     currentSearchConfig.pop();
-
-                    if (criteriaId) {
-                        const count = (selectedCounts.get(criteriaId) || 1) - 1;
-                        if (count <= 0) {
-                            selectedCounts.delete(criteriaId);
-                            selectedCriteria.delete(criteriaId);
-                        } else {
-                            selectedCounts.set(criteriaId, count);
-                        }
-                    }
+                    if (!wasSelected && !validAssumedIds.includes(option.criteriaId)) selectedCriteria.delete(option.criteriaId);
                 }
             };
 
-            dfs(0, []);
-            return { score: maxTotal, config: bestConfig, breakdown: bestBreakdown };
+            dfs(0, emptyCost());
+            return { score: bestScore, config: bestConfig, breakdown: bestBreakdown };
         };
 
         // Điểm thực tế chỉ tính các hoạt động đang bật, không cộng tiêu chí mục tiêu.
@@ -6123,50 +6170,39 @@ createApp({
         };
 
         const runAdvice = () => {
-            // Giữ thuật toán phân tích của bản test: thử phân bổ tối ưu trong hai kịch bản,
-            // sau đó chỉ ghi lại những hoạt động cũ thực sự phải đổi tiêu chí.
             const cleanOptions = [...new Map(
                 (testActivity.value.options || [])
                     .filter(option => option && option.criteriaId && CRITERIA_MAP[option.criteriaId])
                     .map(option => [option.criteriaId, { criteriaId: option.criteriaId }])
             ).values()];
-            if (cleanOptions.length === 0) return triggerToast("⚠️ Vui lòng chọn ít nhất 1 tiêu chí!");
+            if (!cleanOptions.length) return triggerToast('⚠️ Vui lòng chọn ít nhất 1 tiêu chí!');
 
             const editIndex = editingIndex.value;
-            const assumedIdsForAnalysis = [...new Set(
-                (assumedCriteriaIds.value || []).filter(id => CRITERIA_MAP[id])
-            )];
-            const analysisActivities = activities.value.map((act, index) => ({
-                ...act,
-                _analysisKey: `existing-${index}`
-            }));
+            const assumedIdsForAnalysis = [...new Set((assumedCriteriaIds.value || []).filter(id => CRITERIA_MAP[id]))];
+            const analysisActivities = activities.value.map((act, index) => ({ ...act, _analysisKey: `existing-${index}` }));
+            const editedActivityKey = editIndex !== null ? `existing-${editIndex}` : null;
+            const candidateCriteriaIds = new Set(cleanOptions.map(option => option.criteriaId));
             const candidateActivity = {
                 id: editIndex !== null && activities.value[editIndex]?.id
                     ? activities.value[editIndex].id
                     : `analysis-${Date.now()}-${Math.random()}`,
                 _analysisKey: 'new-candidate',
-                name: testActivity.value.name.trim() || (editIndex !== null
-                    ? (activities.value[editIndex]?.name || 'Hoạt động đang phân tích')
-                    : 'Hoạt động đang phân tích'),
+                name: String(testActivity.value.name || '').trim() || 'Hoạt động đang phân tích',
                 options: cleanOptions,
                 enabled: true
             };
 
-            const candidateCriteriaIds = new Set(cleanOptions.map(option => option.criteriaId));
-            const editedActivityKey = editIndex !== null ? `existing-${editIndex}` : null;
-
-            // Kịch bản 1: chỉ tính hoạt động đang bật; hoạt động đang tắt không được duyệt.
+            // Kịch bản 1: chỉ các hoạt động đang bật được tính.
             const activeBeforeActs = analysisActivities.filter(act => act.enabled !== false);
             const activeAfterActs = [
                 ...analysisActivities.filter((act, index) => index !== editIndex && act.enabled !== false),
                 candidateActivity
             ];
 
-            // Kịch bản 2: giả định được duyệt các hoạt động đang tắt có ít nhất một tiêu chí
-            // trùng trực tiếp với lựa chọn của hoạt động mới; các hoạt động tắt còn lại bị loại.
+            // Kịch bản 2: chỉ giả định duyệt hoạt động đang tắt có tiêu chí trùng trực tiếp
+            // với lựa chọn của hoạt động mới; không kéo các hoạt động không liên quan vào phân tích.
             const matchingDisabledActs = analysisActivities.filter((act, index) =>
-                index !== editIndex &&
-                act.enabled === false &&
+                index !== editIndex && act.enabled === false &&
                 (act.options || []).some(option => option && candidateCriteriaIds.has(option.criteriaId))
             );
             const matchedBeforeActs = [...activeBeforeActs, ...matchingDisabledActs];
@@ -6179,28 +6215,31 @@ createApp({
             const getAssignedCriteriaId = (act, result, index) => {
                 const optionIndex = result?.config?.[index];
                 if (optionIndex === undefined || optionIndex === -1) return '';
-                return act.options && act.options[optionIndex]
-                    ? act.options[optionIndex].criteriaId || ''
-                    : '';
+                return act.options?.[optionIndex]?.criteriaId || '';
             };
 
-            // Chỉ ghi nhận hoạt động cũ bị tác động trực tiếp bởi tiêu chí hoạt động mới đăng ký.
-            // Không liệt kê các thay đổi phụ do thuật toán tìm một cấu hình tối ưu khác có cùng điểm.
-            const buildReassignments = (beforeActs, beforeResult, afterActs, afterResult, relatedCriteriaIds) => {
+            const buildPreferredAssignments = (beforeActs, beforeResult) => {
+                const preferred = new Map();
+                beforeActs.forEach((act, index) => {
+                    const criteriaId = getAssignedCriteriaId(act, beforeResult, index);
+                    if (act._analysisKey && criteriaId) preferred.set(act._analysisKey, criteriaId);
+                });
+                return preferred;
+            };
+
+            // Chỉ ghi các hoạt động cũ thật sự phải đổi tiêu chí trong nghiệm tối ưu cuối cùng.
+            const buildReassignments = (beforeActs, beforeResult, afterActs, afterResult) => {
                 const afterIndexByKey = new Map();
                 afterActs.forEach((act, index) => {
                     if (act._analysisKey) afterIndexByKey.set(act._analysisKey, index);
                 });
-
                 const changes = [];
                 beforeActs.forEach((oldAct, oldIndex) => {
                     const afterIndex = afterIndexByKey.get(oldAct._analysisKey);
                     if (afterIndex === undefined) return;
-
                     const oldTc = getAssignedCriteriaId(oldAct, beforeResult, oldIndex);
                     const newTc = getAssignedCriteriaId(afterActs[afterIndex], afterResult, afterIndex);
-                    // Chỉ coi là liên quan khi hoạt động cũ đang giữ một tiêu chí mà hoạt động mới cũng chọn.
-                    if (oldTc && relatedCriteriaIds.has(oldTc) && newTc && oldTc !== newTc) {
+                    if (oldTc && newTc && oldTc !== newTc) {
                         changes.push({
                             key: oldAct._analysisKey,
                             name: oldAct.name,
@@ -6215,153 +6254,258 @@ createApp({
                 return changes;
             };
 
-            // Khi điểm không tăng, nêu đúng nguyên nhân bằng một câu ngắn.
-            const buildDecisionReason = (beforeActs, beforeResult, afterActs, afterResult, candidateIndex, newCriteriaId) => {
-                if (!newCriteriaId) return 'Các tiêu chí đã chọn không làm tăng điểm trần hiện tại.';
+            const getCategoryDeltas = (beforeResult, afterResult) => categories.value.map(category => {
+                const before = Number(beforeResult.breakdown?.categories?.[category.id] || 0);
+                const after = Number(afterResult.breakdown?.categories?.[category.id] || 0);
+                const delta = after - before;
+                const match = String(category.name || '').match(/^Mục\s*\d+/i);
+                return { id: category.id, label: match ? match[0] : category.id, before, after, delta };
+            }).filter(item => item.delta !== 0);
 
-                // Ưu tiên người đã giữ tiêu chí này trước khi thêm hoạt động mới.
-                const previouslyApprovedActivity = beforeActs.find((act, index) =>
+            const formatSignedPoints = value => `${value > 0 ? '+' : ''}${value}đ`;
+            const shortGroupName = groupName => {
+                const clean = String(groupName || '').replace(/^Nhóm\s+/i, '').trim();
+                const words = clean.split(/\s+/).filter(Boolean);
+                return words.length > 5 ? words.slice(0, 5).join(' ') + '...' : clean;
+            };
+            const summarizeCategoryDeltas = deltas => deltas
+                .map(item => `${item.label} ${formatSignedPoints(item.delta)}`)
+                .join(' · ');
+
+            const getDecisionReason = (beforeActs, beforeResult, newCriteriaId, diff, assumedIds, includeDisabled = false) => {
+                if (diff < 0) return `Phương án mới làm giảm ${Math.abs(diff)}đ điểm trần.`;
+                if (!newCriteriaId) return 'Không tìm được tiêu chí có thể làm tăng điểm trần.';
+
+                const ownerIndex = beforeActs.findIndex((act, index) =>
                     act._analysisKey !== editedActivityKey &&
                     getAssignedCriteriaId(act, beforeResult, index) === newCriteriaId
                 );
-                if (previouslyApprovedActivity) {
-                    return `Tiêu chí [${newCriteriaId}] ${getCriteriaName(newCriteriaId)} đã được duyệt bởi hoạt động ${previouslyApprovedActivity.name}.`;
+                if (ownerIndex >= 0) {
+                    if (includeDisabled && beforeActs[ownerIndex].enabled === false) return '';
+                    return `Tiêu chí [${newCriteriaId}] ${getCriteriaShortName(newCriteriaId)} đã được hoạt động ${beforeActs[ownerIndex].name} sử dụng.`;
+                }
+                if (assumedIds.includes(newCriteriaId)) {
+                    return `Tiêu chí mục tiêu [${newCriteriaId}] ${getCriteriaShortName(newCriteriaId)} đã được tính vào điểm trần.`;
                 }
 
-                const alreadyApprovedActivity = afterActs.find((act, index) =>
-                    index !== candidateIndex &&
-                    getAssignedCriteriaId(act, afterResult, index) === newCriteriaId
-                );
-                if (alreadyApprovedActivity) {
-                    return `Tiêu chí [${newCriteriaId}] ${getCriteriaName(newCriteriaId)} đã được duyệt bởi hoạt động ${alreadyApprovedActivity.name}.`;
-                }
-
-                if (assumedIdsForAnalysis.includes(newCriteriaId)) {
-                    return `Tiêu chí mục tiêu [${newCriteriaId}] ${getCriteriaName(newCriteriaId)} đã được tính vào điểm trần.`;
-                }
-
-                for (const category of categories.value) {
-                    for (const group of category.groups) {
-                        if (!group.criteria.some(criterion => criterion.id === newCriteriaId)) continue;
-                        const groupScore = Number(afterResult.breakdown?.groups?.[group.id] || 0);
-                        const categoryScore = Number(afterResult.breakdown?.categories?.[category.id] || 0);
-                        if (groupScore >= group.maxPoints) return `Nhóm ${group.name} đã đạt điểm tối đa.`;
-                        if (categoryScore >= category.maxPoints) return `Mục ${category.name} đã đạt điểm tối đa.`;
+                const meta = CRITERIA_MAP[newCriteriaId];
+                if (meta) {
+                    const category = categories.value.find(item => item.id === meta.catId);
+                    const group = category?.groups?.find(item => item.id === meta.groupId);
+                    const groupScore = Number(beforeResult.breakdown?.groups?.[meta.groupId] || 0);
+                    const categoryScore = Number(beforeResult.breakdown?.categories?.[meta.catId] || 0);
+                    if (group && groupScore >= group.maxPoints) {
+                        const activitiesInGroup = beforeActs.filter((act, index) => {
+                            const id = getAssignedCriteriaId(act, beforeResult, index);
+                            return id && CRITERIA_MAP[id]?.groupId === group.id;
+                        }).map(act => act.name).filter(Boolean);
+                        const names = [...new Set(activitiesInGroup)];
+                        const owners = !includeDisabled && names.length ? ` nhờ ${names.join(' và ')}` : '';
+                        return `Nhóm ${shortGroupName(group.name)} đã đạt tối đa ${group.maxPoints}đ${owners}.`;
+                    }
+                    if (category && categoryScore >= category.maxPoints) {
+                        return `${category.name.split(':')[0]} đã đạt tối đa ${category.maxPoints}đ.`;
                     }
                 }
 
-                return `Tiêu chí [${newCriteriaId}] ${getCriteriaName(newCriteriaId)} không làm tăng điểm trần hiện tại.`;
+                const duplicateOwners = cleanOptions.map(option => {
+                    const index = beforeActs.findIndex((act, actIndex) =>
+                        act._analysisKey !== editedActivityKey &&
+                        !(includeDisabled && act.enabled === false) &&
+                        getAssignedCriteriaId(act, beforeResult, actIndex) === option.criteriaId
+                    );
+                    return index >= 0 ? beforeActs[index].name : '';
+                }).filter(Boolean);
+                if (duplicateOwners.length) {
+                    return `Các tiêu chí phù hợp đã được ${[...new Set(duplicateOwners)].join(', ')} sử dụng.`;
+                }
+                return 'Các tiêu chí đã chọn không làm tăng điểm trần hiện tại.';
             };
 
-            const makeScenarioResult = (beforeActs, afterActs, includeDisabledForScenario = false) => {
-                // Tiêu chí mục tiêu vẫn tham gia tính điểm trần, nhưng không cần sinh đoạn giải thích dài.
-                const beforeResult = getOptimalScore(beforeActs, includeDisabledForScenario, assumedIdsForAnalysis);
-                const afterResult = getOptimalScore(afterActs, includeDisabledForScenario, assumedIdsForAnalysis);
+            const solveScenario = (beforeActs, afterActs, includeDisabled, assumedIds) => {
+                const beforeResult = getOptimalScore(beforeActs, includeDisabled, assumedIds);
+                const preferred = buildPreferredAssignments(beforeActs, beforeResult);
+                // Khi điểm tối ưu bằng nhau, getOptimalScore giữ nguyên phân bổ cũ nhiều nhất có thể.
+                const afterResult = getOptimalScore(afterActs, includeDisabled, assumedIds, preferred);
                 const candidateIndex = afterActs.findIndex(act => act._analysisKey === 'new-candidate');
                 const candidateOptionIndex = candidateIndex >= 0 ? afterResult.config[candidateIndex] : -1;
                 const newCriteriaId = candidateOptionIndex !== undefined && candidateOptionIndex !== -1
                     ? candidateActivity.options[candidateOptionIndex]?.criteriaId || ''
                     : '';
-                const newCriteriaMax = getCriteriaMaxPoints(newCriteriaId);
-
-                // Xác định tiêu chí đã được duyệt từ phương án TRƯỚC khi thêm hoạt động mới.
-                // Không lấy phương án sau tối ưu vì thuật toán có thể chuyển hoạt động cũ sang tiêu chí
-                // khác chỉ để tạo ra một cấu hình tương đương điểm, khiến hoạt động mới bị hiểu nhầm là được phân bổ.
-                const duplicateCriteriaAssignments = cleanOptions.map(option => {
-                    const criteriaId = option.criteriaId;
-                    const approvedActivityIndex = beforeActs.findIndex((act, index) =>
-                        act._analysisKey !== editedActivityKey &&
-                        getAssignedCriteriaId(act, beforeResult, index) === criteriaId
-                    );
-                    if (approvedActivityIndex < 0) return null;
-                    const approvedActivity = beforeActs[approvedActivityIndex];
-                    return {
-                        criteriaId,
-                        criteriaName: getCriteriaName(criteriaId),
-                        activityName: approvedActivity.name,
-                        activityKey: approvedActivity._analysisKey
-                    };
-                }).filter(Boolean);
-                const allCandidateCriteriaAlreadyApproved = cleanOptions.length > 0 &&
-                    duplicateCriteriaAssignments.length === cleanOptions.length;
                 const diff = afterResult.score - beforeResult.score;
-                // Nếu điểm không tăng và tất cả tiêu chí lựa chọn đã có hoạt động duyệt,
-                // chỉ hiển thị các dòng tiêu chí đã được duyệt bởi hoạt động nào.
-                const hideAllocationDetails = diff <= 0 && allCandidateCriteriaAlreadyApproved;
+                const categoryDeltas = getCategoryDeltas(beforeResult, afterResult);
+                const reassignments = buildReassignments(beforeActs, beforeResult, afterActs, afterResult);
 
-                const assumedApprovedAssignments = includeDisabledForScenario
+                // Tính phần điểm mà riêng tiêu chí mới đóng góp sau khi cố định cách phân bổ các hoạt động cũ.
+                const finalCriteriaWithoutCandidate = new Set(assumedIds);
+                afterActs.forEach((act, index) => {
+                    if (act._analysisKey === 'new-candidate') return;
+                    const criteriaId = getAssignedCriteriaId(act, afterResult, index);
+                    if (criteriaId) finalCriteriaWithoutCandidate.add(criteriaId);
+                });
+                const scoreWithoutCandidate = scoreForCriteriaSet(finalCriteriaWithoutCandidate);
+                const withCandidateCriteria = new Set(finalCriteriaWithoutCandidate);
+                if (newCriteriaId) withCandidateCriteria.add(newCriteriaId);
+                const candidateContribution = Math.max(0, scoreForCriteriaSet(withCandidateCriteria) - scoreWithoutCandidate);
+
+                let candidateLimitNote = '';
+                const criterionAlreadyPresentWithoutCandidate = !!newCriteriaId && finalCriteriaWithoutCandidate.has(newCriteriaId);
+                const criterionMeta = newCriteriaId ? CRITERIA_MAP[newCriteriaId] : null;
+                if (criterionMeta && !criterionAlreadyPresentWithoutCandidate && criterionMeta.maxPoints > candidateContribution) {
+                    const category = categories.value.find(item => item.id === criterionMeta.catId);
+                    const group = category?.groups?.find(item => item.id === criterionMeta.groupId);
+                    const withoutCandidateBreakdown = getCriteriaSetBreakdown(finalCriteriaWithoutCandidate).breakdown;
+                    const groupScore = Number(withoutCandidateBreakdown.groups?.[criterionMeta.groupId] || 0);
+                    const categoryScore = Number(withoutCandidateBreakdown.categories?.[criterionMeta.catId] || 0);
+                    const groupRemaining = group ? Math.max(0, group.maxPoints - groupScore) : Infinity;
+                    const categoryRemaining = category ? Math.max(0, category.maxPoints - categoryScore) : Infinity;
+                    let limitText = '';
+                    if (group && groupRemaining <= categoryRemaining && groupRemaining < criterionMeta.maxPoints) {
+                        limitText = `Nhóm ${shortGroupName(group.name)} chỉ còn ${groupRemaining}đ`;
+                    } else if (category && categoryRemaining < criterionMeta.maxPoints) {
+                        limitText = `${category.name.split(':')[0]} chỉ còn ${categoryRemaining}đ`;
+                    }
+                    if (limitText) {
+                        candidateLimitNote = `Tiêu chí [${newCriteriaId}] ${getCriteriaShortName(newCriteriaId)} tối đa ${criterionMeta.maxPoints}đ, nhưng chỉ đóng góp ${candidateContribution}đ vì ${limitText}.`;
+                    }
+                }
+
+                const assumedApprovedAssignments = includeDisabled
                     ? afterActs.map((act, index) => ({ act, index }))
                         .filter(item => item.act.enabled === false && item.act._analysisKey !== 'new-candidate')
                         .map(item => {
                             const criteriaId = getAssignedCriteriaId(item.act, afterResult, item.index);
-                            return {
+                            return criteriaId ? {
                                 name: item.act.name,
                                 criteriaId,
-                                criteriaName: criteriaId ? getCriteriaName(criteriaId) : ''
-                            };
-                        })
+                                criteriaName: getCriteriaShortName(criteriaId)
+                            } : null;
+                        }).filter(Boolean)
                     : [];
+
+                // Chỉ báo tiêu chí đã được dùng khi hoạt động mới không làm tăng điểm trần.
+                const duplicateCriteriaAssignments = [];
+                if (diff <= 0 && newCriteriaId) {
+                    const ownerIndex = beforeActs.findIndex((act, index) =>
+                        act._analysisKey !== editedActivityKey &&
+                        !(includeDisabled && act.enabled === false) &&
+                        getAssignedCriteriaId(act, beforeResult, index) === newCriteriaId
+                    );
+                    if (ownerIndex >= 0) duplicateCriteriaAssignments.push({
+                        criteriaId: newCriteriaId,
+                        criteriaName: getCriteriaShortName(newCriteriaId),
+                        activityName: beforeActs[ownerIndex].name,
+                        activityKey: beforeActs[ownerIndex]._analysisKey
+                    });
+                }
 
                 return {
                     baseScore: beforeResult.score,
                     newScore: afterResult.score,
                     diff,
                     newCriteriaId,
-                    newCriteriaMax,
-                    hideAllocationDetails,
-                    duplicateCriteriaAssignments: hideAllocationDetails ? duplicateCriteriaAssignments : [],
-                    decisionReason: diff <= 0 && !hideAllocationDetails
-                        ? buildDecisionReason(beforeActs, beforeResult, afterActs, afterResult, candidateIndex, newCriteriaId)
+                    newCriteriaMax: getCriteriaMaxPoints(newCriteriaId),
+                    candidateContribution,
+                    categoryDeltas,
+                    categoryDeltaSummary: summarizeCategoryDeltas(categoryDeltas),
+                    candidateLimitNote,
+                    duplicateCriteriaAssignments,
+                    hideAllocationDetails: diff <= 0,
+                    decisionReason: diff <= 0
+                        ? getDecisionReason(beforeActs, beforeResult, newCriteriaId, diff, assumedIds, includeDisabled)
                         : '',
                     assumedApprovedAssignments,
-                    reassignments: hideAllocationDetails
-                        ? []
-                        : buildReassignments(beforeActs, beforeResult, afterActs, afterResult, candidateCriteriaIds)
+                    reassignments: diff > 0 ? reassignments : []
                 };
+            };
+
+            const outcomeSignature = result => JSON.stringify({
+                diff: result.diff,
+                newCriteriaId: result.newCriteriaId,
+                categoryDeltas: (result.categoryDeltas || []).map(item => ({ id: item.id, delta: item.delta })),
+                reassignments: [...(result.reassignments || [])]
+                    .map(item => ({ key: item.key, oldTc: item.oldTc, newTc: item.newTc }))
+                    .sort((a, b) => a.key.localeCompare(b.key)),
+                duplicateCriteriaAssignments: (result.duplicateCriteriaAssignments || [])
+                    .map(item => ({ criteriaId: item.criteriaId, activityKey: item.activityKey })),
+                decisionReason: result.diff <= 0 ? result.decisionReason : ''
+            });
+            // Khi xét tác động của tiêu chí mục tiêu, bỏ qua việc nó làm tăng đồng đều
+            // điểm nền và điểm sau; chỉ coi là ảnh hưởng nếu đổi mức tăng hoặc cách phân bổ.
+            const targetEffectSignature = result => JSON.stringify({
+                diff: result.diff,
+                newCriteriaId: result.newCriteriaId,
+                categoryDeltas: (result.categoryDeltas || []).map(item => ({ id: item.id, delta: item.delta })),
+                reassignments: [...(result.reassignments || [])]
+                    .map(item => ({ key: item.key, oldTc: item.oldTc, newTc: item.newTc }))
+                    .sort((a, b) => a.key.localeCompare(b.key))
+            });
+
+            const buildTargetImpactNote = (beforeActs, afterActs, includeDisabled, result) => {
+                if (!assumedIdsForAnalysis.length) return '';
+                const withoutTargets = solveScenario(beforeActs, afterActs, includeDisabled, []);
+                if (targetEffectSignature(withoutTargets) === targetEffectSignature(result)) return '';
+
+                const relevantTargets = assumedIdsForAnalysis.filter(criteriaId => {
+                    const reducedTargets = assumedIdsForAnalysis.filter(id => id !== criteriaId);
+                    const reducedResult = solveScenario(beforeActs, afterActs, includeDisabled, reducedTargets);
+                    return targetEffectSignature(reducedResult) !== targetEffectSignature(result);
+                });
+                const idsToShow = relevantTargets.length ? relevantTargets : assumedIdsForAnalysis;
+                const targetLabels = idsToShow.map(id => `[${id}] ${getCriteriaShortName(id)}`).join(', ');
+
+                if (withoutTargets.diff !== result.diff) {
+                    return `Tiêu chí mục tiêu ${targetLabels} làm mức tăng thay đổi từ ${formatSignedPoints(withoutTargets.diff)} thành ${formatSignedPoints(result.diff)}.`;
+                }
+                const changedCategories = categories.value.filter(category => {
+                    const withDelta = Number(result.categoryDeltas.find(item => item.id === category.id)?.delta || 0);
+                    const withoutDelta = Number(withoutTargets.categoryDeltas.find(item => item.id === category.id)?.delta || 0);
+                    return withDelta !== withoutDelta;
+                }).map(category => {
+                    const match = String(category.name || '').match(/^Mục\s*\d+/i);
+                    return match ? match[0] : category.id;
+                });
+                if (changedCategories.length) {
+                    return `Tiêu chí mục tiêu ${targetLabels} làm thay đổi phân bổ điểm ở ${changedCategories.join(', ')}.`;
+                }
+                return `Tiêu chí mục tiêu ${targetLabels} làm thay đổi cách phân bổ tiêu chí.`;
+            };
+
+            const makeScenarioResult = (beforeActs, afterActs, includeDisabled = false) => {
+                const result = solveScenario(beforeActs, afterActs, includeDisabled, assumedIdsForAnalysis);
+                const targetImpactNote = buildTargetImpactNote(beforeActs, afterActs, includeDisabled, result);
+                const descriptionParts = [
+                    result.categoryDeltaSummary,
+                    targetImpactNote || result.candidateLimitNote
+                ].filter(Boolean);
+                result.description = descriptionParts.join(' · ');
+                // Tránh lặp nguyên nhân: nếu dòng mô tả đã nêu giới hạn/tiêu chí mục tiêu
+                // hoặc dòng trùng tiêu chí đã đủ giải thích, không hiện thêm decisionReason.
+                if (result.diff <= 0 && (targetImpactNote || result.candidateLimitNote || result.duplicateCriteriaAssignments.length)) {
+                    result.decisionReason = '';
+                }
+                return result;
             };
 
             const notApprovedResult = makeScenarioResult(activeBeforeActs, activeAfterActs, false);
             const matchedApprovedResult = makeScenarioResult(matchedBeforeActs, matchedAfterActs, true);
 
-            // Mô tả ngắn tác động khi các hoạt động đang tắt có tiêu chí trùng được duyệt.
-            const assumedActivityNames = matchingDisabledActs
-                .map(act => String(act.name || '').trim())
-                .filter(Boolean);
-            const assumedApprovalImpact = matchedApprovedResult.diff - notApprovedResult.diff;
-            const assumedImpactLabel = `${assumedApprovalImpact < 0 ? '−' : '+'}${Math.abs(assumedApprovalImpact)}đ`;
-            const assumedApprovalDescription = assumedActivityNames.length === 1
-                ? `Nếu hoạt động ${assumedActivityNames[0]} (${assumedImpactLabel}) được duyệt.`
-                : `Nếu các hoạt động ${assumedActivityNames.join(', ')} (${assumedImpactLabel}) được duyệt.`;
-
-            // Nếu hai kịch bản cho cùng kết quả phân bổ và cùng điểm thì gộp thành một thẻ.
-            const scenarioSignature = result => JSON.stringify({
-                baseScore: result.baseScore,
-                newScore: result.newScore,
-                diff: result.diff,
-                newCriteriaId: result.newCriteriaId,
-                duplicateCriteriaAssignments: [...(result.duplicateCriteriaAssignments || [])]
-                    .map(item => ({ criteriaId: item.criteriaId, activityKey: item.activityKey }))
-                    .sort((a, b) => a.criteriaId.localeCompare(b.criteriaId)),
-                hideAllocationDetails: result.hideAllocationDetails,
-                reassignments: [...result.reassignments]
-                    .map(item => ({ key: item.key, oldTc: item.oldTc, newTc: item.newTc }))
-                    .sort((a, b) => a.key.localeCompare(b.key))
-            });
-            const scenariosAreDifferent = scenarioSignature(notApprovedResult) !== scenarioSignature(matchedApprovedResult);
-
+            // Hai kịch bản có cùng điểm, cùng tiêu chí mới và cùng điều chuyển thì gộp thành một.
+            // Không tách chỉ vì danh sách giả định duyệt khác nhau nhưng không làm thay đổi kết quả.
+            const scenariosAreDifferent = outcomeSignature(notApprovedResult) !== outcomeSignature(matchedApprovedResult);
             if (scenariosAreDifferent) {
                 adviceResult.value = {
                     displayScenarios: [
                         {
                             key: 'not-approved',
                             title: 'Kịch bản 1: Hoạt động đang tắt không được duyệt',
-                            description: notApprovedResult.hideAllocationDetails ? '' : 'Giả định hoạt động mới được duyệt.',
+                            description: notApprovedResult.description,
                             ...notApprovedResult
                         },
                         {
                             key: 'matching-approved',
-                            title: 'Kịch bản 2: Các hoạt động đang tắt có tiêu chí trùng được duyệt',
-                            description: matchedApprovedResult.hideAllocationDetails ? '' : assumedApprovalDescription,
+                            title: 'Kịch bản 2: Các hoạt động liên quan được duyệt',
+                            description: matchedApprovedResult.description,
                             ...matchedApprovedResult
                         }
                     ]
@@ -6371,7 +6515,10 @@ createApp({
                     displayScenarios: [{
                         key: 'single-result',
                         title: 'Kết quả phân tích',
-                        description: '',
+                        description: [
+                            notApprovedResult.description,
+                            matchingDisabledActs.length ? 'Mức tăng không đổi khi các hoạt động liên quan được duyệt.' : ''
+                        ].filter(Boolean).join(' · '),
                         ...notApprovedResult
                     }]
                 };
@@ -6412,6 +6559,11 @@ createApp({
         const getCriteriaScore = (id) => baseScoreResult.value.breakdown?.criteria?.[id] || 0;
         
         const getCriteriaName = (id) => CRITERIA_MAP[id] ? CRITERIA_MAP[id].name : "Không rõ";
+        const getCriteriaShortName = (id) => {
+            const fullName = getCriteriaName(id).trim();
+            const words = fullName.split(/\s+/).filter(Boolean);
+            return words.length > 5 ? words.slice(0, 5).join(' ') + '...' : fullName;
+        };
         const getActivityCriterionLabel = (id) => {
             const fullName = getCriteriaName(id).trim();
             const words = fullName.split(/\s+/).filter(Boolean);
@@ -6588,7 +6740,7 @@ createApp({
             assumedCriteriaIds, assumedCriteriaSearch, showAssumedCriteriaModal,
             openAssumedCriteriaModal, closeAssumedCriteriaModal, addAssumedCriteria, removeAssumedCriteria,
             editingIndex, scoreRank, rankBadgeClass, activityFilter, activitiesListVisible, filteredActivities, toggleActivity,
-            getCatScore, getGroupScore, getCriteriaScore, getCriteriaName, getActivityCriterionLabel, isActivityCriterionApproved, getCriteriaMaxPoints,
+            getCatScore, getGroupScore, getCriteriaScore, getCriteriaName, getCriteriaShortName, getActivityCriterionLabel, isActivityCriterionApproved, getCriteriaMaxPoints,
             getApprovedActivityNamesForCriteria, getApprovedActivityTooltip,
             getFilteredCriteriaOptions, selectCriteriaForOption, clearSearchOption, addTestOption, removeTestOption,
             runAdvice, commitActivity, editActivity, cancelEdit, removeActivity, confirmReset, exportJSON, handleFileImport
