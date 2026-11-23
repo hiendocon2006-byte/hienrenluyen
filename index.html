@@ -4911,7 +4911,7 @@ body::before, body::after {
 
                     <div class="space-y-5">
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Tên hoạt động <span class="font-normal text-slate-500">(chỉ bắt buộc khi thêm vào danh sách)</span>:</label>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Tên hoạt động <span class="font-normal text-slate-500"></span>:</label>
                             <input v-model="testActivity.name" type="text" 
                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" 
                                    placeholder="VD: Tham gia Mùa hè xanh, NCKH cấp trường...">
@@ -5006,7 +5006,6 @@ body::before, body::after {
                                     <div class="min-w-0 flex-1">
                                         <h4 v-if="scenario.title && scenario.title.trim() !== 'Kết quả phân tích'"
                                             class="analysis-scenario-title text-sm font-extrabold text-slate-800">{{ scenario.title }}</h4>
-                                        <p v-if="scenario.description" class="mt-1 text-xs text-slate-500">{{ scenario.description }}</p>
                                     </div>
                                 </div>
 
@@ -5033,11 +5032,11 @@ body::before, body::after {
 
                                 <div class="grid grid-cols-2 gap-3">
                                     <div class="rounded-lg border border-white/70 bg-white/65 p-3">
-                                        <div class="text-xs font-semibold text-slate-600">Điểm trần trước khi thêm</div>
+                                        <div class="text-xs font-semibold text-slate-600">Điểm trước khi thêm</div>
                                         <div class="mt-1 text-2xl font-black tabular-nums text-slate-800">{{ scenario.baseScore }}<span class="ml-1 text-sm font-semibold text-slate-500">/100</span></div>
                                     </div>
                                     <div class="rounded-lg border border-white/70 bg-white/75 p-3">
-                                        <div class="text-xs font-semibold" :class="scenario.diff > 0 ? 'text-emerald-700' : 'text-slate-600'">Điểm trần sau khi thêm</div>
+                                        <div class="text-xs font-semibold" :class="scenario.diff > 0 ? 'text-emerald-700' : 'text-slate-600'">Điểm sau khi thêm</div>
                                         <div class="mt-1 text-2xl font-black tabular-nums" :class="scenario.diff > 0 ? 'text-emerald-700' : 'text-slate-800'">{{ scenario.newScore }}<span class="ml-1 text-sm font-semibold text-slate-500">/100</span></div>
                                     </div>
                                 </div>
@@ -5053,7 +5052,7 @@ body::before, body::after {
 
                                 <div v-if="scenario.assumedApprovedAssignments && scenario.assumedApprovedAssignments.length"
                                      class="rounded-lg border border-emerald-100 bg-emerald-50/55 p-3 space-y-2">
-                                    <div class="text-xs uppercase tracking-wide font-bold text-emerald-800">Hoạt động đang tắt giả định được duyệt</div>
+                                    <div class="text-xs uppercase tracking-wide font-bold text-emerald-800">Nếu các hoạt động liên quan được duyệt</div>
                                     <div v-for="(item, idx) in scenario.assumedApprovedAssignments" :key="scenario.key + '-approved-' + idx"
                                          class="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 text-xs">
                                         <span class="font-semibold text-slate-700">{{ item.name }}</span>
@@ -6262,16 +6261,12 @@ createApp({
                 return { id: category.id, label: match ? match[0] : category.id, before, after, delta };
             }).filter(item => item.delta !== 0);
 
-            const formatSignedPoints = value => `${value > 0 ? '+' : ''}${value}đ`;
             const shortGroupName = groupName => {
                 const clean = String(groupName || '').replace(/^Nhóm\s+/i, '').trim();
                 const words = clean.split(/\s+/).filter(Boolean);
                 return words.length > 5 ? words.slice(0, 5).join(' ') + '...' : clean;
             };
-            const summarizeCategoryDeltas = deltas => deltas
-                .map(item => `${item.label} ${formatSignedPoints(item.delta)}`)
-                .join(' · ');
-
+            
             const getDecisionReason = (beforeActs, beforeResult, newCriteriaId, diff, assumedIds, includeDisabled = false) => {
                 if (diff < 0) return `Phương án mới làm giảm ${Math.abs(diff)}đ điểm trần.`;
                 if (!newCriteriaId) return 'Không tìm được tiêu chí có thể làm tăng điểm trần.';
@@ -6336,39 +6331,6 @@ createApp({
                 const categoryDeltas = getCategoryDeltas(beforeResult, afterResult);
                 const reassignments = buildReassignments(beforeActs, beforeResult, afterActs, afterResult);
 
-                // Tính phần điểm mà riêng tiêu chí mới đóng góp sau khi cố định cách phân bổ các hoạt động cũ.
-                const finalCriteriaWithoutCandidate = new Set(assumedIds);
-                afterActs.forEach((act, index) => {
-                    if (act._analysisKey === 'new-candidate') return;
-                    const criteriaId = getAssignedCriteriaId(act, afterResult, index);
-                    if (criteriaId) finalCriteriaWithoutCandidate.add(criteriaId);
-                });
-                const scoreWithoutCandidate = scoreForCriteriaSet(finalCriteriaWithoutCandidate);
-                const withCandidateCriteria = new Set(finalCriteriaWithoutCandidate);
-                if (newCriteriaId) withCandidateCriteria.add(newCriteriaId);
-                const candidateContribution = Math.max(0, scoreForCriteriaSet(withCandidateCriteria) - scoreWithoutCandidate);
-
-                let candidateLimitNote = '';
-                const criterionAlreadyPresentWithoutCandidate = !!newCriteriaId && finalCriteriaWithoutCandidate.has(newCriteriaId);
-                const criterionMeta = newCriteriaId ? CRITERIA_MAP[newCriteriaId] : null;
-                if (criterionMeta && !criterionAlreadyPresentWithoutCandidate && criterionMeta.maxPoints > candidateContribution) {
-                    const category = categories.value.find(item => item.id === criterionMeta.catId);
-                    const group = category?.groups?.find(item => item.id === criterionMeta.groupId);
-                    const withoutCandidateBreakdown = getCriteriaSetBreakdown(finalCriteriaWithoutCandidate).breakdown;
-                    const groupScore = Number(withoutCandidateBreakdown.groups?.[criterionMeta.groupId] || 0);
-                    const categoryScore = Number(withoutCandidateBreakdown.categories?.[criterionMeta.catId] || 0);
-                    const groupRemaining = group ? Math.max(0, group.maxPoints - groupScore) : Infinity;
-                    const categoryRemaining = category ? Math.max(0, category.maxPoints - categoryScore) : Infinity;
-                    let limitText = '';
-                    if (group && groupRemaining <= categoryRemaining && groupRemaining < criterionMeta.maxPoints) {
-                        limitText = `Nhóm ${shortGroupName(group.name)} chỉ còn ${groupRemaining}đ`;
-                    } else if (category && categoryRemaining < criterionMeta.maxPoints) {
-                        limitText = `${category.name.split(':')[0]} chỉ còn ${categoryRemaining}đ`;
-                    }
-                    if (limitText) {
-                        candidateLimitNote = `Tiêu chí [${newCriteriaId}] ${getCriteriaShortName(newCriteriaId)} tối đa ${criterionMeta.maxPoints}đ, nhưng chỉ đóng góp ${candidateContribution}đ vì ${limitText}.`;
-                    }
-                }
 
                 const assumedApprovedAssignments = includeDisabled
                     ? afterActs.map((act, index) => ({ act, index }))
@@ -6405,10 +6367,7 @@ createApp({
                     diff,
                     newCriteriaId,
                     newCriteriaMax: getCriteriaMaxPoints(newCriteriaId),
-                    candidateContribution,
                     categoryDeltas,
-                    categoryDeltaSummary: summarizeCategoryDeltas(categoryDeltas),
-                    candidateLimitNote,
                     duplicateCriteriaAssignments,
                     hideAllocationDetails: diff <= 0,
                     decisionReason: diff <= 0
@@ -6470,10 +6429,6 @@ createApp({
                 }
                 return `Tiêu chí mục tiêu ${targetLabels} làm thay đổi cách phân bổ tiêu chí.`;
             };
-
-            const makeScenarioResult = (beforeActs, afterActs, includeDisabled = false) => {
-                const result = solveScenario(beforeActs, afterActs, includeDisabled, assumedIdsForAnalysis);
-                const targetImpactNote = buildTargetImpactNote(beforeActs, afterActs, includeDisabled, result);
                 const descriptionParts = [
                     result.categoryDeltaSummary,
                     targetImpactNote || result.candidateLimitNote
